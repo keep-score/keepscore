@@ -2,10 +2,9 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Scoreboard de Billard Anglais</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -18,6 +17,7 @@
             overflow: hidden;
             margin: 0;
             user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .main-container {
@@ -25,72 +25,96 @@
             display: flex;
             flex-direction: column;
             padding: 0.75rem;
-            padding-bottom: 5rem; 
+            padding-bottom: 6rem; 
             gap: 0.5rem;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        .scores-wrapper {
-            display: grid;
+        /* View Management */
+        .view-section {
+            flex: 1;
+            display: none; /* Hidden by default */
+            width: 100%;
+            height: 100%;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .view-section.active {
+            display: grid; /* or flex, depending on content */
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* VIEW 1: SCOREBOARD */
+        #view-scores.active {
             grid-template-columns: 1fr 1fr;
             gap: 0.75rem;
-            flex: 1; 
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        body.advanced-mode .scores-wrapper {
-            flex: 0.65; 
-        }
-
-        #advanced-panel {
-            flex: 0;
-            height: 0;
-            opacity: 0;
-            pointer-events: none;
-            overflow: hidden;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
-            border-radius: 1.5rem;
-            border: 2px solid #333;
-            box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
-        }
-
-        body.advanced-mode #advanced-panel {
-            flex: 0.35; 
-            height: auto;
-            opacity: 1;
-            pointer-events: auto;
-            padding: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
 
         .score-box {
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: space-around;
-            cursor: pointer;
+            height: 100%;
+            border-radius: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border: 4px solid rgba(0,0,0,0.2);
+        }
+
+        /* VIEW 2: STATS */
+        #view-stats.active {
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .stat-column {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+            border-radius: 2rem;
+            justify-content: center;
+        }
+
+        .stat-card {
+            background: rgba(0,0,0,0.3);
+            border-radius: 1rem;
+            padding: 1rem;
+            border: 2px solid rgba(255,255,255,0.05);
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        /* VIEW 3: TIMER */
+        #view-timer.active {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(145deg, #1a1a1a, #0a0a0a);
+            border-radius: 2rem;
+            border: 2px solid #333;
         }
 
         .cue-ball {
-            width: clamp(24px, 4vw, 36px);
-            height: clamp(24px, 4vw, 36px);
+            width: clamp(28px, 6vw, 44px);
+            height: clamp(28px, 6vw, 44px);
             background-color: #ffffff;
             background: radial-gradient(circle at 30% 30%, #ffffff 0%, #f0f0f0 50%, #d1d1d1 100%);
             border-radius: 50%;
             position: relative;
             box-shadow: 2px 4px 10px rgba(0,0,0,0.5);
-            display: inline-block;
             cursor: pointer;
-            transition: all 0.2s ease;
-            flex-shrink: 0;
             margin-top: 4px;
-            border: none;
+            transition: all 0.2s ease;
         }
 
         .cue-ball.inactive {
@@ -101,72 +125,43 @@
 
         .spot {
             position: absolute;
-            width: 15%;
-            height: 15%;
+            width: 15%; height: 15%;
             background-color: #cc0000;
             border-radius: 50%;
         }
-
         .spot-1 { top: 20%; left: 50%; transform: translateX(-50%); }
         .spot-2 { top: 60%; left: 25%; }
         .spot-3 { top: 60%; left: 75%; }
-
-        .btn-active:active {
-            transform: scale(0.92);
-        }
 
         .bg-red-pool { background: linear-gradient(135deg, #dc2626, #991b1b); }
         .bg-blue-pool { background: linear-gradient(135deg, #2563eb, #1e40af); }
 
         .score-text {
-            /* Significantly reduced minimum size (6rem) and used vw for better width scaling */
-            font-size: clamp(6rem, 28vw, 25rem); 
+            font-size: clamp(8rem, 40vh, 35rem); 
             font-weight: 900;
             line-height: 0.75;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             text-shadow: 0 10px 20px rgba(0,0,0,0.4);
             font-variant-numeric: tabular-nums;
         }
 
-        body.advanced-mode .score-text {
-             /* Reduced for advanced mode as well to stay safe */
-            font-size: clamp(4rem, 15vh, 15rem);
-        }
-
-        .player-name-container {
-            width: 100%;
-            max-width: 90%;
-            display: grid;
-            place-content: center;
-            overflow: hidden;
-            position: relative;
-            -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
-            mask-image: linear-gradient(to right, black 85%, transparent 100%);
-        }
-
         .player-name {
             outline: none; 
-            border-bottom: 2px solid transparent;
-            transition: border-bottom 0.2s;
-            padding: 2px 10px;
+            padding: 4px 12px;
             white-space: nowrap; 
-            line-height: 1.1;
-            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-size: clamp(1.5rem, 5vw, 3rem);
             font-weight: 900;
             text-transform: uppercase;
-            display: block;
-            user-select: text;
+            border-radius: 0.5rem;
         }
         
-        .player-name:focus {
-            border-bottom: 2px solid rgba(255,255,255,0.3);
-            background: rgba(255,255,255,0.1);
-            border-radius: 0.5rem;
+        .player-name[contenteditable="true"] {
+            background: rgba(0,0,0,0.3);
+            border-bottom: 2px solid white;
         }
 
         .footer-controls {
             position: fixed;
-            bottom: 1rem;
+            bottom: 1.5rem;
             left: 50%;
             transform: translateX(-50%);
             z-index: 50;
@@ -176,306 +171,218 @@
         }
 
         .action-btn {
-            height: 48px;
-            width: 48px;
+            height: 54px; width: 54px;
             border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             background: linear-gradient(to bottom, #facc15, #eab308);
             color: #000;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.6);
             cursor: pointer;
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             border: 2px solid #000;
-            position: relative;
         }
-
         .action-btn.secondary {
-            background: #262626;
-            color: #facc15;
-            border-color: #404040;
-            height: 42px;
-            width: 42px;
+            background: #262626; color: #facc15; border-color: #404040;
+            height: 48px; width: 48px;
         }
-
-        .action-btn::after {
-            content: '';
-            position: absolute;
-            inset: -4px;
-            border-radius: 50%;
-            border: 4px solid #facc15;
-            opacity: 0;
-            transform: scale(0.8);
-            transition: opacity 0.2s, transform 0.2s;
-            pointer-events: none;
-        }
-
-        .action-btn.pressing::after {
-            opacity: 1;
-            transform: scale(1.1);
-            transition: transform 0.8s linear, opacity 0.1s;
-        }
-
-        .advanced-grid {
-            display: grid;
-            grid-template-columns: 1fr 1.5fr 1fr;
-            width: 100%;
-            height: 100%;
-            align-items: center;
-            gap: 1.5rem;
-        }
-
-        .clock-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
+        .action-btn:active { transform: scale(0.9); }
 
         .clock-display {
             font-family: 'Monaco', 'Consolas', monospace;
-            font-size: clamp(5.5rem, 20vh, 14rem);
+            font-size: clamp(8rem, 30vh, 25rem);
             font-weight: 900;
             line-height: 0.8;
-            transition: color 0.3s ease;
             cursor: pointer;
-            margin-bottom: 0.5rem;
+            transition: color 0.3s;
         }
 
-        .clock-green { color: #22c55e; text-shadow: 0 0 30px rgba(34, 197, 94, 0.2); }
-        .clock-yellow { color: #facc15; text-shadow: 0 0 30px rgba(250, 204, 21, 0.3); }
-        .clock-red { 
-            color: #ef4444; 
-            text-shadow: 0 0 40px rgba(239, 68, 68, 0.4); 
-            animation: pulse-clock 0.5s infinite;
-        }
-
-        .stat-column {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .stat-card {
-            background: rgba(255,255,255,0.05);
-            border-radius: 0.75rem;
-            padding: 0.4rem;
-            border: 1px solid rgba(255,255,255,0.1);
-            display: flex;
-            flex-direction: row;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            max-width: 160px;
-        }
+        .clock-green { color: #22c55e; }
+        .clock-yellow { color: #facc15; }
+        .clock-red { color: #ef4444; animation: pulse-clock 0.5s infinite; }
 
         .counter-btn {
-            width: 36px;
-            height: 36px;
-            border-radius: 0.5rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1rem;
-            font-weight: 900;
-            background: transparent;
+            width: 44px; height: 44px;
+            border-radius: 0.75rem;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; font-weight: 900;
+            background: rgba(255,255,255,0.1);
+        }
+        
+        .counter-val {
+            font-size: 3rem; font-weight: 900;
+            min-width: 1.5ch; text-align: center;
         }
 
-        .counter-val {
-            font-size: 1.5rem;
-            font-weight: 900;
-            min-width: 1.5ch;
-            text-align: center;
+        .voice-toggle-inner.active {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6; color: #3b82f6;
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
+        }
+
+        #voice-toast {
+            position: fixed; top: 2rem; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.9); border: 1px solid #3b82f6;
+            padding: 0.75rem 1.5rem; border-radius: 2rem;
+            z-index: 1000; display: none; align-items: center; gap: 0.75rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            animation: slide-in 0.3s ease-out;
         }
 
         #modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(8px);
-            z-index: 100;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            z-index: 100; display: none;
+            align-items: center; justify-content: center;
         }
-
-        #modal-overlay.active { display: flex; opacity: 1; }
+        #modal-overlay.active { display: flex; }
 
         .modal-content {
-            background: #1a1a1a;
-            border: 2px solid #333;
-            border-radius: 2rem;
-            padding: 2.5rem;
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
+            background: #1a1a1a; border: 2px solid #333;
+            border-radius: 2rem; padding: 2.5rem;
+            max-width: 400px; width: 90%; text-align: center;
         }
 
         .ctrl-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            display: flex; align-items: center; justify-content: center;
             transition: all 0.2s;
         }
-        
-        .ctrl-btn:disabled {
-            opacity: 0.2;
-            cursor: not-allowed;
-        }
+        .ctrl-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-        @keyframes pulse-clock { 
-            0% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-            100% { transform: scale(1); }
-        }
+        @keyframes pulse-clock { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+        @keyframes slide-in { from { transform: translate(-50%, -20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
     </style>
 </head>
 <body onclick="handleGlobalClick(event)">
 
+    <div id="voice-toast">
+        <i data-lucide="mic" class="w-4 h-4 text-blue-400"></i>
+        <span id="voice-text" class="text-sm font-bold uppercase tracking-wider"></span>
+    </div>
+
     <div class="main-container">
-        <div class="scores-wrapper">
+        
+        <!-- VIEW 1: SCOREBOARD -->
+        <div id="view-scores" class="view-section active">
             <!-- ROUGE Player -->
-            <div class="score-box bg-red-pool rounded-[2rem] p-4 shadow-2xl border-4 border-black/20" onclick="handleScoreBoxClick('red', event)">
-                <div class="flex flex-col items-center gap-1 w-full justify-center pointer-events-none">
+            <div class="score-box bg-red-pool" onclick="handleScoreBoxClick('red', event)">
+                <div class="flex flex-col items-center gap-2 w-full justify-center pointer-events-none">
                     <div class="player-name-container pointer-events-auto" onclick="handleNameContainerClick(event)">
-                        <span id="name-red" class="player-name" contenteditable="true" spellcheck="false" onfocus="selectAllText(this)" onblur="clearSelection()">ROUGE</span>
+                        <span id="name-red" class="player-name" spellcheck="false" onblur="disableEditing(this)">ROUGE</span>
                     </div>
                     <div id="break-red" class="cue-ball pointer-events-auto" onclick="handleCueBallClick('red', event)">
                         <div class="spot spot-1"></div><div class="spot spot-2"></div><div class="spot spot-3"></div>
                     </div>
                 </div>
                 <div class="score-text select-none pointer-events-none" id="score-red">0</div>
-                <div class="flex gap-4 w-full max-w-[280px]">
-                    <button onclick="changeScore('red', -1, event)" class="btn-active flex-1 bg-black/30 py-2.5 rounded-xl text-lg font-black flex items-center justify-center pointer-events-auto">
-                        <i data-lucide="minus" class="w-6 h-6"></i>
+                <div class="flex gap-4 w-full max-w-[320px]">
+                    <button onclick="changeScore('red', -1, event)" class="btn-active flex-1 bg-black/30 py-4 rounded-2xl text-2xl font-black flex items-center justify-center pointer-events-auto">
+                        <i data-lucide="minus" class="w-8 h-8"></i>
                     </button>
-                    <button onclick="changeScore('red', 1, event)" class="btn-active flex-[2] bg-white/20 py-2.5 rounded-xl text-lg font-black shadow-lg flex items-center justify-center pointer-events-auto">
-                        <i data-lucide="plus" class="w-8 h-8"></i>
+                    <button onclick="changeScore('red', 1, event)" class="btn-active flex-[2] bg-white/20 py-4 rounded-2xl text-2xl font-black shadow-lg flex items-center justify-center pointer-events-auto">
+                        <i data-lucide="plus" class="w-10 h-10"></i>
                     </button>
                 </div>
             </div>
 
             <!-- BLEU Player -->
-            <div class="score-box bg-blue-pool rounded-[2rem] p-4 shadow-2xl border-4 border-black/20" onclick="handleScoreBoxClick('blue', event)">
-                <div class="flex flex-col items-center gap-1 w-full justify-center pointer-events-none">
+            <div class="score-box bg-blue-pool" onclick="handleScoreBoxClick('blue', event)">
+                <div class="flex flex-col items-center gap-2 w-full justify-center pointer-events-none">
                     <div class="player-name-container pointer-events-auto" onclick="handleNameContainerClick(event)">
-                        <span id="name-blue" class="player-name" contenteditable="true" spellcheck="false" onfocus="selectAllText(this)" onblur="clearSelection()">BLEU</span>
+                        <span id="name-blue" class="player-name" spellcheck="false" onblur="disableEditing(this)">BLEU</span>
                     </div>
                     <div id="break-blue" class="cue-ball inactive pointer-events-auto" onclick="handleCueBallClick('blue', event)">
                         <div class="spot spot-1"></div><div class="spot spot-2"></div><div class="spot spot-3"></div>
                     </div>
                 </div>
                 <div class="score-text select-none pointer-events-none" id="score-blue">0</div>
-                <div class="flex gap-4 w-full max-w-[280px]">
-                    <button onclick="changeScore('blue', -1, event)" class="btn-active flex-1 bg-black/30 py-2.5 rounded-xl text-lg font-black flex items-center justify-center pointer-events-auto">
-                        <i data-lucide="minus" class="w-6 h-6"></i>
+                <div class="flex gap-4 w-full max-w-[320px]">
+                    <button onclick="changeScore('blue', -1, event)" class="btn-active flex-1 bg-black/30 py-4 rounded-2xl text-2xl font-black flex items-center justify-center pointer-events-auto">
+                        <i data-lucide="minus" class="w-8 h-8"></i>
                     </button>
-                    <button onclick="changeScore('blue', 1, event)" class="btn-active flex-[2] bg-white/20 py-2.5 rounded-xl text-lg font-black shadow-lg flex items-center justify-center pointer-events-auto">
-                        <i data-lucide="plus" class="w-8 h-8"></i>
+                    <button onclick="changeScore('blue', 1, event)" class="btn-active flex-[2] bg-white/20 py-4 rounded-2xl text-2xl font-black shadow-lg flex items-center justify-center pointer-events-auto">
+                        <i data-lucide="plus" class="w-10 h-10"></i>
                     </button>
                 </div>
             </div>
         </div>
 
-        <!-- ADVANCED PANEL -->
-        <div id="advanced-panel">
-            <div class="advanced-grid">
-                <!-- Red Stats (Left Column) -->
-                <div class="stat-column">
-                    <div class="stat-card">
-                        <button onclick="changeCounter('red', 1, -1, event)" class="counter-btn btn-active text-red-500">
-                             <i data-lucide="minus" class="w-4 h-4"></i>
-                        </button>
-                        <span id="counter-red-1" class="counter-val text-red-400">0</span>
-                        <button onclick="changeCounter('red', 1, 1, event)" class="counter-btn btn-active text-red-500">
-                             <i data-lucide="plus" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                    <div class="stat-card">
-                        <button onclick="changeCounter('red', 2, -1, event)" class="counter-btn btn-active text-red-500">
-                             <i data-lucide="minus" class="w-4 h-4"></i>
-                        </button>
-                        <span id="counter-red-2" class="counter-val text-red-400">0</span>
-                        <button onclick="changeCounter('red', 2, 1, event)" class="counter-btn btn-active text-red-500">
-                             <i data-lucide="plus" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                    <div class="stat-card">
-                        <button onclick="changeCounter('red', 3, -1, event)" class="counter-btn btn-active text-red-500">
-                             <i data-lucide="minus" class="w-4 h-4"></i>
-                        </button>
-                        <span id="counter-red-3" class="counter-val text-red-400">0</span>
-                        <button onclick="changeCounter('red', 3, 1, event)" class="counter-btn btn-active text-red-500">
-                             <i data-lucide="plus" class="w-4 h-4"></i>
-                        </button>
-                    </div>
+        <!-- VIEW 2: STATS -->
+        <div id="view-stats" class="view-section">
+            <div class="stat-column bg-red-pool">
+                <h3 class="text-red-300 font-black uppercase tracking-widest text-sm mb-4">Statistiques Rouge</h3>
+                <div class="stat-card">
+                    <button onclick="changeCounter('red', 1, -1, event)" class="counter-btn"><i data-lucide="minus"></i></button>
+                    <span id="counter-red-1" class="counter-val">0</span>
+                    <button onclick="changeCounter('red', 1, 1, event)" class="counter-btn"><i data-lucide="plus"></i></button>
                 </div>
-
-                <!-- Center Clock -->
-                <div class="clock-container">
-                    <div id="clock-timer" class="clock-display clock-green" onclick="handleTimeClick(event)">30</div>
-                    <div class="flex gap-2 w-full max-w-[220px]">
-                        <button onclick="toggleClock(event)" id="clock-toggle" class="ctrl-btn flex-[2] py-3 bg-white/10 text-white rounded-xl btn-active border border-white/10">
-                            <i id="toggle-icon" data-lucide="play" class="w-6 h-6 fill-current"></i>
-                        </button>
-                        <button id="extension-btn" onclick="addExtension(event)" class="ctrl-btn flex-1 py-3 bg-white/10 text-white rounded-xl btn-active border border-white/10">
-                            <i data-lucide="plus" class="w-6 h-6 stroke-[3]"></i>
-                        </button>
-                    </div>
+                <div class="stat-card">
+                    <button onclick="changeCounter('red', 2, -1, event)" class="counter-btn"><i data-lucide="minus"></i></button>
+                    <span id="counter-red-2" class="counter-val">0</span>
+                    <button onclick="changeCounter('red', 2, 1, event)" class="counter-btn"><i data-lucide="plus"></i></button>
                 </div>
+                <div class="stat-card">
+                    <button onclick="changeCounter('red', 3, -1, event)" class="counter-btn"><i data-lucide="minus"></i></button>
+                    <span id="counter-red-3" class="counter-val">0</span>
+                    <button onclick="changeCounter('red', 3, 1, event)" class="counter-btn"><i data-lucide="plus"></i></button>
+                </div>
+            </div>
 
-                <!-- Blue Stats (Right Column) -->
-                <div class="stat-column">
-                    <div class="stat-card">
-                        <button onclick="changeCounter('blue', 1, -1, event)" class="counter-btn btn-active text-blue-500">
-                             <i data-lucide="minus" class="w-4 h-4"></i>
-                        </button>
-                        <span id="counter-blue-1" class="counter-val text-blue-400">0</span>
-                        <button onclick="changeCounter('blue', 1, 1, event)" class="counter-btn btn-active text-blue-500">
-                             <i data-lucide="plus" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                    <div class="stat-card">
-                        <button onclick="changeCounter('blue', 2, -1, event)" class="counter-btn btn-active text-blue-500">
-                             <i data-lucide="minus" class="w-4 h-4"></i>
-                        </button>
-                        <span id="counter-blue-2" class="counter-val text-blue-400">0</span>
-                        <button onclick="changeCounter('blue', 2, 1, event)" class="counter-btn btn-active text-blue-500">
-                             <i data-lucide="plus" class="w-4 h-4"></i>
-                        </button>
-                    </div>
-                    <div class="stat-card">
-                        <button onclick="changeCounter('blue', 3, -1, event)" class="counter-btn btn-active text-blue-500">
-                             <i data-lucide="minus" class="w-4 h-4"></i>
-                        </button>
-                        <span id="counter-blue-3" class="counter-val text-blue-400">0</span>
-                        <button onclick="changeCounter('blue', 3, 1, event)" class="counter-btn btn-active text-blue-500">
-                             <i data-lucide="plus" class="w-4 h-4"></i>
-                        </button>
-                    </div>
+            <div class="stat-column bg-blue-pool">
+                <h3 class="text-blue-300 font-black uppercase tracking-widest text-sm mb-4">Statistiques Bleu</h3>
+                <div class="stat-card">
+                    <button onclick="changeCounter('blue', 1, -1, event)" class="counter-btn"><i data-lucide="minus"></i></button>
+                    <span id="counter-blue-1" class="counter-val">0</span>
+                    <button onclick="changeCounter('blue', 1, 1, event)" class="counter-btn"><i data-lucide="plus"></i></button>
+                </div>
+                <div class="stat-card">
+                    <button onclick="changeCounter('blue', 2, -1, event)" class="counter-btn"><i data-lucide="minus"></i></button>
+                    <span id="counter-blue-2" class="counter-val">0</span>
+                    <button onclick="changeCounter('blue', 2, 1, event)" class="counter-btn"><i data-lucide="plus"></i></button>
+                </div>
+                <div class="stat-card">
+                    <button onclick="changeCounter('blue', 3, -1, event)" class="counter-btn"><i data-lucide="minus"></i></button>
+                    <span id="counter-blue-3" class="counter-val">0</span>
+                    <button onclick="changeCounter('blue', 3, 1, event)" class="counter-btn"><i data-lucide="plus"></i></button>
                 </div>
             </div>
         </div>
 
+        <!-- VIEW 3: TIMER -->
+        <div id="view-timer" class="view-section">
+            <div class="flex flex-col items-center justify-center w-full h-full gap-8">
+                <div id="clock-timer" class="clock-display clock-green" onclick="handleTimeClick(event)">30</div>
+                
+                <div class="flex gap-4 w-full max-w-md px-4">
+                    <button onclick="toggleVoiceControl()" id="voice-btn-inner" class="voice-toggle-inner flex-1 py-6 rounded-3xl flex justify-center items-center transition-all border border-white/10 btn-active">
+                        <i data-lucide="mic" class="w-8 h-8"></i>
+                    </button>
+                    <button onclick="toggleClock(event)" id="clock-toggle" class="flex-[2] py-6 bg-white/10 text-white rounded-3xl border border-white/10 flex justify-center btn-active">
+                        <i id="toggle-icon" data-lucide="play" class="w-10 h-10 fill-current"></i>
+                    </button>
+                    <button id="extension-btn" onclick="addExtension(event)" class="flex-1 py-6 bg-white/10 text-white rounded-3xl border border-white/10 flex justify-center btn-active">
+                        <i data-lucide="plus" class="w-8 h-8 stroke-[3]"></i>
+                    </button>
+                </div>
+                
+                <p class="text-white/30 text-sm font-bold tracking-widest mt-4 uppercase">Appuyez sur le temps pour réinitialiser</p>
+            </div>
+        </div>
+
+        <!-- FOOTER -->
         <div class="footer-controls">
             <!-- Left: Reset -->
             <button onclick="showResetModal()" class="action-btn secondary" title="Reset Match">
-                <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                <i data-lucide="rotate-ccw" class="w-6 h-6"></i>
             </button>
 
-            <!-- Center: Advanced Mode -->
-            <button id="advanced-toggle-btn" class="action-btn" title="Advanced Controls">
-                <i data-lucide="clock" class="w-6 h-6"></i>
+            <!-- Center: Cycle View -->
+            <button id="cycle-view-btn" onclick="cycleView()" class="action-btn" title="Switch View">
+                <i id="view-icon" data-lucide="layers" class="w-8 h-8"></i>
             </button>
 
             <!-- Right: Full Screen -->
             <button onclick="toggleFullScreen()" class="action-btn secondary" title="Full Screen">
-                <i id="fs-icon" data-lucide="maximize" class="w-5 h-5"></i>
+                <i id="fs-icon" data-lucide="maximize" class="w-6 h-6"></i>
             </button>
         </div>
     </div>
@@ -493,11 +400,12 @@
     </div>
 
     <script>
+        // --- STATE ---
+        let currentView = 0; // 0: Scores, 1: Stats, 2: Timer
+        const views = ['view-scores', 'view-stats', 'view-timer'];
+        
         let scores = { red: 0, blue: 0 };
-        let counters = {
-            red: { 1: 0, 2: 0, 3: 0 },
-            blue: { 1: 0, 2: 0, 3: 0 }
-        };
+        let counters = { red: { 1: 0, 2: 0, 3: 0 }, blue: { 1: 0, 2: 0, 3: 0 } };
         let currentBreak = 'red';
         let timerSeconds = 30;
         let clockInterval = null;
@@ -505,11 +413,31 @@
         let wasManuallyPaused = false;
         let extensionUsed = false;
         let audioCtx;
+        let recognition;
+        let isVoiceActive = false;
 
-        let pressTimer;
-        const actionBtn = document.getElementById('advanced-toggle-btn');
+        // --- VIEW MANAGEMENT ---
+        function cycleView() {
+            // Hide current
+            document.getElementById(views[currentView]).classList.remove('active');
+            
+            // Move to next
+            currentView = (currentView + 1) % views.length;
+            
+            // Show next
+            document.getElementById(views[currentView]).classList.add('active');
 
-        // Handles clicking the name container
+            // Logic: Pause clock if leaving Timer view (Index 2)
+            if (currentView !== 2 && isClockRunning) {
+                stopClock();
+                updateClockButtons();
+            }
+
+            playSound(500, 700, 'sine', 0.05, 0.1);
+            lucide.createIcons();
+        }
+
+        // --- EDITING LOGIC ---
         function handleNameContainerClick(e) {
             e.stopPropagation();
             const nameEl = e.currentTarget.querySelector('.player-name');
@@ -520,16 +448,17 @@
             if (el.contentEditable === "true") return;
             el.contentEditable = "true";
             el.focus();
-            selectAllText(el);
+            setTimeout(() => {
+                const range = document.createRange();
+                range.selectNodeContents(el);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+            }, 50);
             playSound(700, 900, 'sine', 0.05, 0.1);
         }
 
         function disableEditing(el) { el.contentEditable = "false"; }
-
-        // Short press toggle for advanced mode
-        actionBtn.addEventListener('click', (e) => {
-            toggleAdvancedMode();
-        });
 
         function getAudioCtx() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -537,46 +466,31 @@
             return audioCtx;
         }
 
-        function toggleAdvancedMode() {
-            document.body.classList.toggle('advanced-mode');
-            playSound(500, 700, 'sine', 0.05, 0.1);
-            lucide.createIcons();
-        }
-
         function handleGlobalClick(e) {
-            if (!e.target.closest('.player-name-container')) {
-                document.getElementById('name-red').blur();
-                document.getElementById('name-blue').blur();
-            }
+            // Only relevant if we are in Timer view (Index 2)
+            if (currentView !== 2) return;
 
-            if (!document.body.classList.contains('advanced-mode')) return;
-
-            // Don't trigger global clock behavior if clicking specific interaction elements
             const isControl = e.target.closest('button') || 
-                              e.target.closest('.player-name-container') || 
-                              e.target.closest('.cue-ball') ||
                               e.target.closest('#modal-overlay');
             
             if (!isControl) {
-                handleTimeClick(e);
+                // handleTimeClick(e); // Optional: Click background to reset? Disabled for cleaner UX in tabs
             }
         }
 
         function handleScoreBoxClick(player, e) {
-            // In advanced mode, clicking the box background resets clock
-            if (document.body.classList.contains('advanced-mode')) {
-                handleTimeClick(e);
-            }
+            // Placeholder if needed
         }
 
+        // --- CLOCK ---
         function toggleClock(e) { 
             if (e) e.stopPropagation();
             if (isClockRunning) {
-                stopClock();
                 wasManuallyPaused = true;
+                stopClock();
             } else {
-                startClock();
                 wasManuallyPaused = false;
+                startClock();
             }
             updateClockButtons();
         }
@@ -605,11 +519,8 @@
         function updateClockButtons() {
             const icon = document.getElementById('toggle-icon');
             if (!icon) return;
-            if (isClockRunning) {
-                icon.setAttribute('data-lucide', 'pause');
-            } else {
-                icon.setAttribute('data-lucide', 'play');
-            }
+            if (isClockRunning) icon.setAttribute('data-lucide', 'pause');
+            else icon.setAttribute('data-lucide', 'play');
             lucide.createIcons();
         }
 
@@ -621,22 +532,14 @@
 
         function handleTimeClick(e) {
             if (e) e.stopPropagation();
-            
             const wasPaused = !isClockRunning && wasManuallyPaused;
-
             stopClock();
             timerSeconds = 30;
             resetExtension();
             updateClockUI();
             playSound(400, 600, 'sine', 0.05, 0.1);
-
-            if (wasPaused) {
-                wasManuallyPaused = true; 
-            } else {
-                wasManuallyPaused = false;
-                startClock();
-            }
-
+            if (wasPaused) wasManuallyPaused = true; 
+            else { wasManuallyPaused = false; startClock(); }
             updateClockButtons();
         }
 
@@ -648,9 +551,7 @@
             const btn = document.getElementById('extension-btn');
             btn.disabled = true;
             updateClockUI();
-            
             if (!isClockRunning && !wasManuallyPaused) startClock();
-            
             updateClockButtons();
             playSound(1200, 800, 'sine', 0.05, 0.2);
         }
@@ -660,33 +561,24 @@
             if (!display) return;
             display.innerText = timerSeconds;
             display.classList.remove('clock-green', 'clock-yellow', 'clock-red');
-            
-            if (timerSeconds > 15) {
-                display.classList.add('clock-green');
-            } else if (timerSeconds > 10) {
-                display.classList.add('clock-yellow');
-            } else {
-                display.classList.add('clock-red');
-            }
+            if (timerSeconds > 15) display.classList.add('clock-green');
+            else if (timerSeconds > 10) display.classList.add('clock-yellow');
+            else display.classList.add('clock-red');
         }
 
         function checkClockAudio() {
-            if (timerSeconds === 10) {
-                playSound(500, 500, 'sine', 0.1, 0.2);
-            } else if (timerSeconds <= 5 && timerSeconds > 0) {
-                playSound(880, 880, 'sine', 0.1, 0.1);
-            }
+            if (timerSeconds === 10) playSound(500, 500, 'sine', 0.1, 0.2);
+            else if (timerSeconds <= 5 && timerSeconds > 0) playSound(880, 880, 'sine', 0.1, 0.1);
         }
 
+        // --- SCORES ---
         function changeScore(player, delta, e) {
             if (e) e.stopPropagation();
             scores[player] = Math.max(0, scores[player] + delta);
             document.getElementById(`score-${player}`).innerText = scores[player];
-            
             if (delta > 0) {
                 playSound(880, 1200, 'sine', 0.05, 0.1);
                 toggleBreak(); 
-                // DO NOT automatically reset clock on score change
             } else if (delta < 0) {
                 playSound(440, 220, 'sine', 0.04, 0.12);
             }
@@ -723,15 +615,14 @@
             }
         }
 
+        // --- RESET & FULLSCREEN ---
         function showResetModal() {
             document.getElementById('modal-overlay').classList.add('active');
             playSound(400, 300, 'sine', 0.05, 0.1);
         }
-
         function closeResetModal() {
             document.getElementById('modal-overlay').classList.remove('active');
         }
-
         function confirmReset() {
             scores.red = 0; scores.blue = 0;
             document.getElementById('score-red').innerText = 0;
@@ -756,35 +647,14 @@
 
         function toggleFullScreen() {
             const doc = document.documentElement;
-            if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement) {
-                if (doc.requestFullscreen) {
-                    doc.requestFullscreen();
-                } else if (doc.mozRequestFullScreen) {
-                    doc.mozRequestFullScreen();
-                } else if (doc.webkitRequestFullscreen) {
-                    doc.webkitRequestFullscreen();
-                }
+            if (!document.fullscreenElement) {
+                if (doc.requestFullscreen) doc.requestFullscreen();
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.mozCancelFullScreen) {
-                    document.mozCancelFullScreen();
-                } else if (document.webkitExitFullscreen) {
-                    document.webkitExitFullscreen();
-                }
+                if (document.exitFullscreen) document.exitFullscreen();
             }
-            // Update icon slightly later to allow transition
-            setTimeout(() => {
-                const icon = document.getElementById('fs-icon');
-                if (document.fullscreenElement || document.webkitFullscreenElement) {
-                    icon.setAttribute('data-lucide', 'minimize');
-                } else {
-                    icon.setAttribute('data-lucide', 'maximize');
-                }
-                lucide.createIcons();
-            }, 100);
         }
 
+        // --- AUDIO & VOICE ---
         function playSound(f1, f2, type, vol, dur) {
             try {
                 const ctx = getAudioCtx();
@@ -801,6 +671,37 @@
             } catch (e) {}
         }
 
+        // Voice
+        const resetKeywords = ['next', 'reset', 'time', 'go', 'suivant', 'joué', 'temps', 'prêt', 'vas-y', 'allez', 'ok'];
+        const extensionKeywords = ['extension', 'extention', 'extansion', 'rallonge', 'prolongation', 'plus'];
+
+        function toggleVoiceControl() {
+            getAudioCtx();
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!recognition) {
+                if (!SpeechRecognition) return;
+                recognition = new SpeechRecognition();
+                recognition.lang = 'fr-FR';
+                recognition.continuous = true;
+                recognition.interimResults = false;
+                recognition.onresult = (event) => {
+                    const command = event.results[event.results.length - 1][0].transcript.toLowerCase();
+                    if (resetKeywords.some(k => command.includes(k))) handleTimeClick();
+                    if (extensionKeywords.some(k => command.includes(k)) && !extensionUsed) addExtension();
+                };
+                recognition.onend = () => { if(isVoiceActive) try { recognition.start(); } catch(e){} };
+            }
+
+            const btn = document.getElementById('voice-btn-inner');
+            isVoiceActive = !isVoiceActive;
+
+            if (isVoiceActive) {
+                try { recognition.start(); btn.classList.add('active'); playSound(800, 1000, 'sine', 0.1, 0.2); } catch(e) {}
+            } else {
+                recognition.stop(); btn.classList.remove('active'); playSound(400, 300, 'sine', 0.05, 0.2);
+            }
+        }
+
         function selectAllText(element) {
             setTimeout(() => {
                 const range = document.createRange();
@@ -810,17 +711,11 @@
                 selection.addRange(range);
             }, 50);
         }
-
-        function clearSelection() {
-            if (window.getSelection) {
-                window.getSelection().removeAllRanges();
-            }
-        }
+        function clearSelection() { if (window.getSelection) window.getSelection().removeAllRanges(); }
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && e.target.getAttribute('contenteditable')) {
-                e.preventDefault();
-                e.target.blur();
+                e.preventDefault(); e.target.blur();
             }
         });
         
@@ -828,7 +723,6 @@
             lucide.createIcons();
             updateClockUI();
             setBreak('red'); 
-            // setupLongPress(); removed since we have dedicated button
         };
     </script>
 </body>
