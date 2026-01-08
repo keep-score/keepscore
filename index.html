@@ -78,7 +78,7 @@
             gap: 1rem;
             padding: 1rem;
             border-radius: 2rem;
-            justify-content: center;
+            justify-content: flex-start; /* Align to top */
         }
 
         .stat-card {
@@ -309,7 +309,23 @@
         <!-- VIEW 2: STATS -->
         <div id="view-stats" class="view-section">
             <div class="stat-column bg-red-pool">
-                <h3 class="text-red-300 font-black uppercase tracking-widest text-sm mb-4">Statistiques Rouge</h3>
+                <!-- Red Mini Scoreboard -->
+                <div class="w-full flex flex-col items-center gap-2 mb-4 p-4 rounded-3xl bg-black/20 border-2 border-white/10">
+                    <div class="flex items-center gap-3 w-full justify-center relative">
+                        <div class="player-name-container pointer-events-auto" onclick="handleNameContainerClick(event)">
+                            <span id="name-red-stats" class="player-name text-2xl" spellcheck="false" onblur="disableEditing(this)">ROUGE</span>
+                        </div>
+                        <div id="break-red-stats" class="cue-ball w-10 h-10" onclick="handleCueBallClick('red', event)">
+                             <div class="spot spot-1"></div><div class="spot spot-2"></div><div class="spot spot-3"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 w-full justify-between mt-1">
+                        <button onclick="changeScore('red', -1, event)" class="w-14 h-14 rounded-2xl bg-red-900/60 flex items-center justify-center text-2xl font-black shadow-lg border border-white/5 active:scale-95 transition-transform"><i data-lucide="minus"></i></button>
+                        <span id="score-red-stats" class="text-[5rem] font-black tabular-nums leading-none drop-shadow-lg">0</span>
+                        <button onclick="changeScore('red', 1, event)" class="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-3xl font-black shadow-lg border border-white/10 active:scale-95 transition-transform"><i data-lucide="plus"></i></button>
+                    </div>
+                </div>
+                
                 <div class="stat-card">
                     <button onclick="changeCounter('red', 1, -1, event)" class="counter-btn"><i data-lucide="minus"></i></button>
                     <span id="counter-red-1" class="counter-val">0</span>
@@ -328,7 +344,23 @@
             </div>
 
             <div class="stat-column bg-blue-pool">
-                <h3 class="text-blue-300 font-black uppercase tracking-widest text-sm mb-4">Statistiques Bleu</h3>
+                <!-- Blue Mini Scoreboard -->
+                <div class="w-full flex flex-col items-center gap-2 mb-4 p-4 rounded-3xl bg-black/20 border-2 border-white/10">
+                    <div class="flex items-center gap-3 w-full justify-center relative">
+                        <div class="player-name-container pointer-events-auto" onclick="handleNameContainerClick(event)">
+                            <span id="name-blue-stats" class="player-name text-2xl" spellcheck="false" onblur="disableEditing(this)">BLEU</span>
+                        </div>
+                        <div id="break-blue-stats" class="cue-ball w-10 h-10 inactive" onclick="handleCueBallClick('blue', event)">
+                             <div class="spot spot-1"></div><div class="spot spot-2"></div><div class="spot spot-3"></div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 w-full justify-between mt-1">
+                        <button onclick="changeScore('blue', -1, event)" class="w-14 h-14 rounded-2xl bg-blue-900/60 flex items-center justify-center text-2xl font-black shadow-lg border border-white/5 active:scale-95 transition-transform"><i data-lucide="minus"></i></button>
+                        <span id="score-blue-stats" class="text-[5rem] font-black tabular-nums leading-none drop-shadow-lg">0</span>
+                        <button onclick="changeScore('blue', 1, event)" class="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center text-3xl font-black shadow-lg border border-white/10 active:scale-95 transition-transform"><i data-lucide="plus"></i></button>
+                    </div>
+                </div>
+
                 <div class="stat-card">
                     <button onclick="changeCounter('blue', 1, -1, event)" class="counter-btn"><i data-lucide="minus"></i></button>
                     <span id="counter-blue-1" class="counter-val">0</span>
@@ -458,7 +490,20 @@
             playSound(700, 900, 'sine', 0.05, 0.1);
         }
 
-        function disableEditing(el) { el.contentEditable = "false"; }
+        function disableEditing(el) { 
+            el.contentEditable = "false"; 
+            
+            // Synchronize Names across views
+            const id = el.id;
+            const val = el.innerText;
+            if(id.includes('red')) {
+                if(document.getElementById('name-red')) document.getElementById('name-red').innerText = val;
+                if(document.getElementById('name-red-stats')) document.getElementById('name-red-stats').innerText = val;
+            } else if (id.includes('blue')) {
+                if(document.getElementById('name-blue')) document.getElementById('name-blue').innerText = val;
+                if(document.getElementById('name-blue-stats')) document.getElementById('name-blue-stats').innerText = val;
+            }
+        }
 
         function getAudioCtx() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -575,7 +620,15 @@
         function changeScore(player, delta, e) {
             if (e) e.stopPropagation();
             scores[player] = Math.max(0, scores[player] + delta);
-            document.getElementById(`score-${player}`).innerText = scores[player];
+            
+            // Update Main Score
+            const mainScoreEl = document.getElementById(`score-${player}`);
+            if (mainScoreEl) mainScoreEl.innerText = scores[player];
+
+            // Update Stats Score (Synchronized)
+            const statsScoreEl = document.getElementById(`score-${player}-stats`);
+            if (statsScoreEl) statsScoreEl.innerText = scores[player];
+
             if (delta > 0) {
                 playSound(880, 1200, 'sine', 0.05, 0.1);
                 toggleBreak(); 
@@ -604,15 +657,21 @@
 
         function setBreak(player) {
             currentBreak = player;
-            const redIcon = document.getElementById('break-red');
-            const blueIcon = document.getElementById('break-blue');
-            if (player === 'red') {
-                redIcon.classList.remove('inactive');
-                blueIcon.classList.add('inactive');
-            } else {
-                blueIcon.classList.remove('inactive');
-                redIcon.classList.add('inactive');
-            }
+            const ids = [
+                `break-red`, `break-blue`, 
+                `break-red-stats`, `break-blue-stats`
+            ];
+            
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if(!el) return;
+                
+                if (id.includes(player)) {
+                    el.classList.remove('inactive');
+                } else {
+                    el.classList.add('inactive');
+                }
+            });
         }
 
         // --- RESET & FULLSCREEN ---
@@ -625,10 +684,19 @@
         }
         function confirmReset() {
             scores.red = 0; scores.blue = 0;
+            // Reset Main View
             document.getElementById('score-red').innerText = 0;
             document.getElementById('score-blue').innerText = 0;
-            document.getElementById('name-red').innerText = "ROUGE";
-            document.getElementById('name-blue').innerText = "BLEU";
+            // Reset Stats View (Sync)
+            if(document.getElementById('score-red-stats')) document.getElementById('score-red-stats').innerText = 0;
+            if(document.getElementById('score-blue-stats')) document.getElementById('score-blue-stats').innerText = 0;
+            
+            // Reset Names
+            if(document.getElementById('name-red')) document.getElementById('name-red').innerText = "ROUGE";
+            if(document.getElementById('name-red-stats')) document.getElementById('name-red-stats').innerText = "ROUGE";
+            if(document.getElementById('name-blue')) document.getElementById('name-blue').innerText = "BLEU";
+            if(document.getElementById('name-blue-stats')) document.getElementById('name-blue-stats').innerText = "BLEU";
+
             for (let p of ['red', 'blue']) {
                 for (let i = 1; i <= 3; i++) {
                     counters[p][i] = 0;
