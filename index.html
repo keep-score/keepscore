@@ -2,9 +2,10 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Scoreboard de Billard Anglais</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
@@ -17,7 +18,6 @@
             overflow: hidden;
             margin: 0;
             user-select: none;
-            -webkit-tap-highlight-color: transparent;
         }
 
         .main-container {
@@ -25,7 +25,7 @@
             display: flex;
             flex-direction: column;
             padding: 0.75rem;
-            padding-bottom: 5rem; 
+            padding-bottom: 6rem; /* Increased padding for larger footer area */
             gap: 0.5rem;
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         }
@@ -36,11 +36,10 @@
             gap: 0.75rem;
             flex: 1; 
             transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-            min-height: 0;
         }
 
         body.advanced-mode .scores-wrapper {
-            flex: 0.6; 
+            flex: 0.65; 
         }
 
         #advanced-panel {
@@ -57,7 +56,7 @@
         }
 
         body.advanced-mode #advanced-panel {
-            flex: 0.4; 
+            flex: 0.35; 
             height: auto;
             opacity: 1;
             pointer-events: auto;
@@ -65,12 +64,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-        }
-
-        /* Mobile adjustments for panel height */
-        @media (max-width: 768px) {
-            body.advanced-mode .scores-wrapper { flex: 0.5; }
-            body.advanced-mode #advanced-panel { flex: 0.5; }
         }
 
         .score-box {
@@ -81,6 +74,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: space-around;
+            cursor: pointer;
         }
 
         .cue-ball {
@@ -134,7 +128,7 @@
         }
 
         body.advanced-mode .score-text {
-            font-size: clamp(5.5rem, 20vh, 12rem);
+            font-size: clamp(6.5rem, 24vh, 15rem);
         }
 
         .player-name-container {
@@ -160,14 +154,8 @@
             text-transform: uppercase;
             display: block;
             user-select: text;
-            /* Center text but anchor left if it overflows */
-            margin-left: auto;
-            margin-right: auto;
-            min-width: 0;
         }
         
-        .player-name:not(:empty) { min-width: 100%; }
-
         .player-name:focus {
             border-bottom: 2px solid rgba(255,255,255,0.3);
             background: rgba(255,255,255,0.1);
@@ -180,6 +168,9 @@
             left: 50%;
             transform: translateX(-50%);
             z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 1.5rem; /* Gap between buttons */
         }
 
         .action-btn {
@@ -196,6 +187,14 @@
             transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             border: 2px solid #000;
             position: relative;
+        }
+
+        .action-btn.secondary {
+            background: #262626; /* Darker background for side buttons */
+            color: #facc15;      /* Gold icon */
+            border-color: #404040;
+            height: 42px;        /* Slightly smaller */
+            width: 42px;
         }
 
         .action-btn::after {
@@ -216,55 +215,25 @@
             transition: transform 0.8s linear, opacity 0.1s;
         }
 
-        /* --- RESPONSIVE GRID LAYOUT --- */
         .advanced-grid {
             display: grid;
+            grid-template-columns: 1fr 1.5fr 1fr;
             width: 100%;
             height: 100%;
             align-items: center;
-            gap: 1rem;
-            /* Mobile Layout: Timer Top, Stats Bottom Side-by-Side */
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: auto 1fr;
-            grid-template-areas: 
-                "timer timer"
-                "red blue";
-            padding: 0.5rem;
-            overflow-y: auto;
-        }
-
-        @media (min-width: 768px) {
-            /* Desktop Layout: Red - Timer - Blue */
-            .advanced-grid {
-                grid-template-columns: 1fr 1.5fr 1fr;
-                grid-template-rows: 1fr;
-                grid-template-areas: "red timer blue";
-                overflow-y: visible;
-            }
+            gap: 1.5rem;
         }
 
         .clock-container {
-            grid-area: timer;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
         }
-
-        .stat-column {
-            display: flex;
-            flex-direction: column;
-            gap: 0.5rem;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .stat-column.red { grid-area: red; }
-        .stat-column.blue { grid-area: blue; }
 
         .clock-display {
             font-family: 'Monaco', 'Consolas', monospace;
-            font-size: clamp(6rem, 18vh, 14rem);
+            font-size: clamp(5.5rem, 20vh, 14rem);
             font-weight: 900;
             line-height: 0.8;
             transition: color 0.3s ease;
@@ -280,33 +249,41 @@
             animation: pulse-clock 0.5s infinite;
         }
 
+        .stat-column {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            align-items: center;
+            justify-content: center;
+        }
+
         .stat-card {
             background: rgba(255,255,255,0.05);
             border-radius: 0.75rem;
-            padding: 0.3rem;
+            padding: 0.4rem;
             border: 1px solid rgba(255,255,255,0.1);
             display: flex;
             flex-direction: row;
             align-items: center;
             justify-content: space-between;
             width: 100%;
-            max-width: 150px;
+            max-width: 160px;
         }
 
         .counter-btn {
-            width: 32px;
-            height: 32px;
+            width: 36px;
+            height: 36px;
             border-radius: 0.5rem;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1rem;
+            font-size: 1.1rem;
             font-weight: 900;
-            background: rgba(255,255,255,0.08);
+            background: transparent;
         }
 
         .counter-val {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: 900;
             min-width: 1.5ch;
             text-align: center;
@@ -407,7 +384,7 @@
         <div id="advanced-panel">
             <div class="advanced-grid">
                 <!-- Red Stats (Left Column) -->
-                <div class="stat-column red">
+                <div class="stat-column">
                     <div class="stat-card">
                         <button onclick="changeCounter('red', 1, -1, event)" class="counter-btn btn-active text-red-500">
                              <i data-lucide="minus" class="w-4 h-4"></i>
@@ -438,9 +415,9 @@
                 </div>
 
                 <!-- Center Clock -->
-                <div class="clock-container" onclick="handleTimeClick(event)">
-                    <div id="clock-timer" class="clock-display clock-green">30</div>
-                    <div class="flex gap-3 w-full max-w-[220px]">
+                <div class="clock-container">
+                    <div id="clock-timer" class="clock-display clock-green" onclick="handleTimeClick(event)">30</div>
+                    <div class="flex gap-2 w-full max-w-[220px]">
                         <button onclick="toggleClock(event)" id="clock-toggle" class="ctrl-btn flex-[2] py-3 bg-white/10 text-white rounded-xl btn-active border border-white/10">
                             <i id="toggle-icon" data-lucide="play" class="w-6 h-6 fill-current"></i>
                         </button>
@@ -451,7 +428,7 @@
                 </div>
 
                 <!-- Blue Stats (Right Column) -->
-                <div class="stat-column blue">
+                <div class="stat-column">
                     <div class="stat-card">
                         <button onclick="changeCounter('blue', 1, -1, event)" class="counter-btn btn-active text-blue-500">
                              <i data-lucide="minus" class="w-4 h-4"></i>
@@ -484,16 +461,23 @@
         </div>
 
         <div class="footer-controls">
-            <button id="advanced-toggle-btn" class="action-btn">
-                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
+            <!-- Left: Reset -->
+            <button onclick="showResetModal()" class="action-btn secondary" title="Reset Match">
+                <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+            </button>
+
+            <!-- Center: Advanced Mode -->
+            <button id="advanced-toggle-btn" class="action-btn" title="Advanced Controls">
+                <i data-lucide="clock" class="w-6 h-6"></i>
+            </button>
+
+            <!-- Right: Full Screen -->
+            <button onclick="toggleFullScreen()" class="action-btn secondary" title="Full Screen">
+                <i id="fs-icon" data-lucide="maximize" class="w-5 h-5"></i>
             </button>
         </div>
     </div>
 
-    <!-- Confirmation Modal -->
     <div id="modal-overlay">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h2 class="text-xl font-black mb-1">RÉINITIALISER ?</h2>
@@ -539,29 +523,10 @@
 
         function disableEditing(el) { el.contentEditable = "false"; }
 
-        function setupLongPress() {
-            const startPress = (e) => {
-                if (e.type === 'touchstart') e.preventDefault();
-                actionBtn.classList.add('pressing');
-                pressTimer = setTimeout(() => {
-                    actionBtn.classList.remove('pressing');
-                    showResetModal();
-                }, 800);
-            };
-
-            const endPress = (e) => {
-                clearTimeout(pressTimer);
-                if (actionBtn.classList.contains('pressing')) {
-                    actionBtn.classList.remove('pressing');
-                    toggleAdvancedMode();
-                }
-            };
-
-            actionBtn.addEventListener('mousedown', startPress);
-            actionBtn.addEventListener('touchstart', startPress, {passive: false});
-            window.addEventListener('mouseup', endPress);
-            window.addEventListener('touchend', endPress);
-        }
+        // Short press toggle for advanced mode
+        actionBtn.addEventListener('click', (e) => {
+            toggleAdvancedMode();
+        });
 
         function getAudioCtx() {
             if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -573,14 +538,9 @@
             document.body.classList.toggle('advanced-mode');
             playSound(500, 700, 'sine', 0.05, 0.1);
             lucide.createIcons();
-            // Scroll reset if needed
-            if (document.body.classList.contains('advanced-mode')) {
-                setTimeout(() => window.scrollTo(0, document.body.scrollHeight), 100);
-            }
         }
 
         function handleGlobalClick(e) {
-            // Check if clicking outside editable name to blur it
             if (!e.target.closest('.player-name-container')) {
                 document.getElementById('name-red').blur();
                 document.getElementById('name-blue').blur();
@@ -600,10 +560,7 @@
         }
 
         function handleScoreBoxClick(player, e) {
-            // In advanced mode, clicking the box background resets clock
-            if (document.body.classList.contains('advanced-mode')) {
-                handleTimeClick(e);
-            }
+            if (document.body.classList.contains('advanced-mode')) handleTimeClick(e);
         }
 
         function toggleClock(e) { 
@@ -667,10 +624,7 @@
             updateClockUI();
             playSound(400, 600, 'sine', 0.05, 0.1);
 
-            // Logic: If it was paused, reset and STAY paused.
-            // If it was running OR it had timed out, start fresh.
             if (wasPaused) {
-                // Stay stopped, update UI
                 wasManuallyPaused = true; 
             } else {
                 wasManuallyPaused = false;
@@ -726,7 +680,7 @@
             if (delta > 0) {
                 playSound(880, 1200, 'sine', 0.05, 0.1);
                 toggleBreak(); 
-                // DO NOT automatically reset clock on score change
+                handleTimeClick(); 
             } else if (delta < 0) {
                 playSound(440, 220, 'sine', 0.04, 0.12);
             }
@@ -794,6 +748,37 @@
             playSound(200, 600, 'sine', 0.1, 0.3);
         }
 
+        function toggleFullScreen() {
+            const doc = document.documentElement;
+            if (!document.fullscreenElement && !document.mozFullScreenElement && !document.webkitFullscreenElement) {
+                if (doc.requestFullscreen) {
+                    doc.requestFullscreen();
+                } else if (doc.mozRequestFullScreen) {
+                    doc.mozRequestFullScreen();
+                } else if (doc.webkitRequestFullscreen) {
+                    doc.webkitRequestFullscreen();
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+            // Update icon slightly later to allow transition
+            setTimeout(() => {
+                const icon = document.getElementById('fs-icon');
+                if (document.fullscreenElement || document.webkitFullscreenElement) {
+                    icon.setAttribute('data-lucide', 'minimize');
+                } else {
+                    icon.setAttribute('data-lucide', 'maximize');
+                }
+                lucide.createIcons();
+            }, 100);
+        }
+
         function playSound(f1, f2, type, vol, dur) {
             try {
                 const ctx = getAudioCtx();
@@ -837,7 +822,6 @@
             lucide.createIcons();
             updateClockUI();
             setBreak('red'); 
-            setupLongPress();
         };
     </script>
 </body>
