@@ -49,8 +49,22 @@
 
         /* VIEW 1: SCOREBOARD */
         #view-scores.active {
-            grid-template-columns: 1fr 1fr;
             gap: 0.75rem;
+            /* Mobile First: Stacked Layout 50/50 Split */
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr 1fr; /* Force 50% height each */
+            height: 100%;
+            overflow: hidden; /* No scroll needed */
+        }
+
+        /* Tablet/Desktop: Side by Side */
+        @media (min-width: 768px) {
+            #view-scores.active {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: 100%;
+                overflow-y: hidden;
+                padding-bottom: 0;
+            }
         }
 
         .score-box {
@@ -64,12 +78,26 @@
             border-radius: 2rem;
             box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             border: 4px solid rgba(0,0,0,0.2);
+            padding: 0.5rem 0;
         }
 
         /* VIEW 2: STATS */
         #view-stats.active {
-            grid-template-columns: 1fr 1fr;
             gap: 0.75rem;
+            /* Mobile First: Stacked Layout with Scroll */
+            grid-template-columns: 1fr;
+            overflow-y: auto;
+            align-content: start;
+            padding-bottom: 1rem;
+        }
+
+        /* Tablet/Desktop: Side by Side */
+        @media (min-width: 768px) {
+            #view-stats.active {
+                grid-template-columns: 1fr 1fr;
+                overflow-y: hidden;
+                padding-bottom: 0;
+            }
         }
 
         .stat-column {
@@ -137,7 +165,8 @@
         .bg-blue-pool { background: linear-gradient(135deg, #2563eb, #1e40af); }
 
         .score-text {
-            font-size: clamp(8rem, 40vh, 35rem); 
+            /* Adjusted clamp to fit within 50% screen height */
+            font-size: clamp(6rem, 25vh, 20rem); 
             font-weight: 900;
             line-height: 0.75;
             text-shadow: 0 10px 20px rgba(0,0,0,0.4);
