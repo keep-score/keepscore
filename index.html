@@ -128,6 +128,41 @@
             border: 2px solid #333;
         }
 
+        /* Timer Graphic Styles */
+        .timer-graphic-container {
+            position: relative;
+            width: clamp(280px, 55vw, 600px);
+            height: clamp(280px, 55vw, 600px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .timer-svg {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            transform: rotate(-90deg);
+            pointer-events: none;
+        }
+
+        .timer-track {
+            stroke: rgba(255,255,255,0.05);
+            fill: none;
+            stroke-width: 4;
+        }
+
+        .timer-progress-ring {
+            fill: none;
+            stroke-width: 4;
+            stroke-linecap: round;
+            stroke-dasharray: 283; /* 2 * PI * 45 */
+            stroke-dashoffset: 0;
+            /* Using linear 1s ensures the ring drains exactly in sync with the 1s interval */
+            transition: stroke-dashoffset 1s linear, stroke 0.3s;
+        }
+
         /* VIEW 4: DASHBOARD (ALL-IN-ONE) */
         #view-dashboard.active {
             flex-direction: column;
@@ -304,16 +339,33 @@
 
         .clock-display {
             font-family: 'Monaco', 'Consolas', monospace;
-            font-size: clamp(6rem, 20vh, 25rem);
             font-weight: 900;
             line-height: 0.8;
             cursor: pointer;
             transition: color 0.3s;
         }
 
-        .clock-green { color: #22c55e; }
-        .clock-yellow { color: #facc15; }
-        .clock-red { color: #ef4444; animation: pulse-clock 0.5s infinite; }
+        /* Specific size for the Main Timer View */
+        /* Reduced size to prevent overlap with SVG ring */
+        .clock-main {
+            font-size: clamp(5rem, 20vw, 12rem); /* Reduced from 6rem, 25vw, 15rem */
+        }
+        
+        @media (min-width: 768px) {
+            .clock-main {
+                font-size: 15vw; /* Reduced from 20vw */
+            }
+        }
+        
+        @media (min-width: 1024px) {
+            .clock-main {
+                font-size: 18rem; /* Reduced from 25rem */
+            }
+        }
+
+        .clock-green { color: #22c55e; stroke: #22c55e; }
+        .clock-yellow { color: #facc15; stroke: #facc15; }
+        .clock-red { color: #ef4444; stroke: #ef4444; animation: pulse-clock 0.5s infinite; }
 
         .counter-btn {
             width: 44px; height: 44px;
@@ -511,7 +563,18 @@
         <!-- VIEW 3: TIMER -->
         <div id="view-timer" class="view-section">
             <div class="flex flex-col items-center justify-center w-full h-full gap-8">
-                <div id="clock-timer" class="clock-display clock-green" onclick="handleTimeClick(event)">30</div>
+                
+                <!-- Animated Timer Graphic -->
+                <div class="timer-graphic-container" onclick="handleTimeClick(event)">
+                    <svg class="timer-svg" viewBox="0 0 100 100">
+                        <!-- Background Track -->
+                        <circle cx="50" cy="50" r="45" class="timer-track" />
+                        <!-- Moving Progress Ring -->
+                        <circle id="timer-ring" cx="50" cy="50" r="45" class="timer-progress-ring clock-green" />
+                    </svg>
+                    <!-- Time Display (Large) -->
+                    <div id="clock-timer" class="clock-display clock-main clock-green absolute z-10">30</div>
+                </div>
                 
                 <div class="flex gap-4 w-full max-w-md px-4">
                     <button onclick="toggleVoiceControl()" id="voice-btn-inner" class="voice-toggle-inner flex-1 py-6 rounded-3xl flex justify-center items-center transition-all border border-white/10 btn-active">
@@ -690,6 +753,7 @@
         let isClockRunning = false;
         let wasManuallyPaused = false;
         let extensionUsed = false;
+        let totalTimerDuration = 30; // New state for animation
         let audioCtx;
         let recognition;
         let isVoiceActive = false;
@@ -841,6 +905,7 @@
             const wasPaused = !isClockRunning && wasManuallyPaused;
             stopClock();
             timerSeconds = 30;
+            totalTimerDuration = 30; // Reset graphic max
             resetExtension();
             updateClockUI();
             playSound(400, 600, 'sine', 0.05, 0.1);
@@ -854,6 +919,7 @@
             if (extensionUsed) return;
             extensionUsed = true;
             timerSeconds += 15;
+            totalTimerDuration = 45; // Update graphic max scale
             
             const btn = document.getElementById('extension-btn');
             if(btn) btn.disabled = true;
@@ -868,19 +934,49 @@
         }
 
         function updateClockUI() {
+            // Text Displays
             const displays = [
                 document.getElementById('clock-timer'),
                 document.getElementById('clock-dashboard')
             ];
 
+            // Graphic Ring
+            const ring = document.getElementById('timer-ring');
+            const ringCircumference = 283; // 2 * pi * 45
+
+            let colorClass = 'clock-green';
+            let strokeColor = '#22c55e'; // Green default
+
+            if (timerSeconds <= 10 && timerSeconds > 5) {
+                colorClass = 'clock-yellow';
+                strokeColor = '#facc15';
+            } else if (timerSeconds <= 5) {
+                colorClass = 'clock-red';
+                strokeColor = '#ef4444';
+            }
+
+            // Update Texts
             displays.forEach(display => {
                 if (!display) return;
                 display.innerText = timerSeconds;
                 display.classList.remove('clock-green', 'clock-yellow', 'clock-red');
-                if (timerSeconds > 15) display.classList.add('clock-green');
-                else if (timerSeconds > 10) display.classList.add('clock-yellow');
-                else display.classList.add('clock-red');
+                display.classList.add(colorClass);
             });
+
+            // Update SVG Ring
+            // We set target to timerSeconds - 1 to sync visual completion with countdown arrival
+            // e.g. If time is 30, target 29. Ring drains 30->29 over 1s.
+            if (ring) {
+                let targetTime = timerSeconds;
+                if (isClockRunning && timerSeconds > 0) {
+                    targetTime = timerSeconds - 1;
+                }
+                const progress = Math.max(0, targetTime / totalTimerDuration);
+                const offset = ringCircumference - (progress * ringCircumference);
+                
+                ring.style.strokeDashoffset = offset;
+                ring.style.stroke = strokeColor;
+            }
         }
 
         function checkClockAudio() {
@@ -999,6 +1095,7 @@
             }
             stopClock();
             timerSeconds = 30;
+            totalTimerDuration = 30; // Reset graphic scaling
             resetExtension();
             updateClockUI();
             updateClockButtons();
