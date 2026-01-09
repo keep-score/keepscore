@@ -178,6 +178,8 @@
             justify-content: space-between;
             align-items: center;
             border: 2px solid #333;
+            position: relative;
+            overflow: hidden; 
         }
 
         .dashboard-players-container {
@@ -185,8 +187,8 @@
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
-            overflow-y: auto; /* Allow scrolling for stats */
-            padding-bottom: 1rem;
+            overflow-y: auto; 
+            padding-bottom: 0.5rem;
         }
         
         @media (min-width: 768px) {
@@ -206,7 +208,34 @@
             flex-direction: column;
             align-items: center;
             gap: 0.5rem;
-            min-height: 350px; /* Ensure space for stats */
+            min-height: 250px; 
+        }
+
+        /* Match Clock Section */
+        .match-clock-container {
+            flex: 0 0 auto;
+            background: #1a1a1a;
+            border-radius: 1.5rem;
+            padding: 0.75rem 1rem;
+            border: 2px solid #333;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .match-clock-display {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #ffffff;
+            cursor: pointer;
+            letter-spacing: -1px;
+            padding: 0 1rem;
+            border-radius: 0.5rem;
+        }
+        .match-clock-display:focus {
+            background: rgba(255,255,255,0.1);
+            outline: none;
         }
         
         .dash-stat-row {
@@ -348,21 +377,32 @@
         /* Specific size for the Main Timer View */
         /* Reduced size to prevent overlap with SVG ring */
         .clock-main {
-            font-size: clamp(5rem, 20vw, 12rem); /* Reduced from 6rem, 25vw, 15rem */
+            font-size: clamp(5rem, 20vw, 12rem); 
         }
         
         @media (min-width: 768px) {
             .clock-main {
-                font-size: 15vw; /* Reduced from 20vw */
+                font-size: 15vw; 
             }
         }
         
         @media (min-width: 1024px) {
             .clock-main {
-                font-size: 18rem; /* Reduced from 25rem */
+                font-size: 18rem; 
             }
         }
 
+        /* Dashboard Clock Size - Increased for Tablet/Desktop */
+        .clock-dashboard-text {
+            font-size: clamp(4rem, 12vh, 6rem);
+        }
+        @media (min-width: 768px) {
+            .clock-dashboard-text {
+                font-size: clamp(6rem, 15vh, 10rem);
+            }
+        }
+
+        /* REMOVED background-color from these classes to fix the bug */
         .clock-green { color: #22c55e; stroke: #22c55e; }
         .clock-yellow { color: #facc15; stroke: #facc15; }
         .clock-red { color: #ef4444; stroke: #ef4444; animation: pulse-clock 0.5s infinite; }
@@ -409,17 +449,18 @@
             animation: slide-in 0.3s ease-out;
         }
 
-        #modal-overlay {
+        /* Modal Base */
+        .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
             z-index: 100; display: none;
             align-items: center; justify-content: center;
         }
-        #modal-overlay.active { display: flex; }
+        .modal-overlay.active { display: flex; }
 
         .modal-content {
             background: #1a1a1a; border: 2px solid #333;
-            border-radius: 2rem; padding: 2.5rem;
+            border-radius: 2rem; padding: 2rem;
             max-width: 400px; width: 90%; text-align: center;
         }
 
@@ -577,7 +618,7 @@
                 </div>
                 
                 <div class="flex gap-4 w-full max-w-md px-4">
-                    <button onclick="toggleVoiceControl()" id="voice-btn-inner" class="voice-toggle-inner flex-1 py-6 rounded-3xl flex justify-center items-center transition-all border border-white/10 btn-active">
+                    <button onclick="triggerVoiceModal()" id="voice-btn-inner" class="voice-toggle-inner flex-1 py-6 rounded-3xl flex justify-center items-center transition-all border border-white/10 btn-active">
                         <i data-lucide="mic" class="w-8 h-8"></i>
                     </button>
                     <button onclick="toggleClock(event)" id="clock-toggle" class="flex-[2] py-6 bg-white/10 text-white rounded-3xl border border-white/10 flex justify-center btn-active">
@@ -588,7 +629,6 @@
                     </button>
                 </div>
                 
-                <p class="text-white/30 text-sm font-bold tracking-widest mt-4 uppercase">Appuyez sur le temps pour réinitialiser</p>
             </div>
         </div>
 
@@ -596,20 +636,21 @@
         <div id="view-dashboard" class="view-section">
             <!-- Timer Header -->
             <div class="dashboard-timer-section">
-                <!-- Controls Left -->
-                <div class="flex gap-2">
+                <!-- Spacer Left (to balance layout) -->
+                <div class="flex-1 relative z-10"></div>
+
+                <!-- Timer Display (Centered & Larger) -->
+                <div id="clock-dashboard" class="clock-display clock-dashboard-text font-black clock-green relative z-10" onclick="handleTimeClick(event)">30</div>
+                
+                <!-- Controls Right (Grouped) -->
+                <div class="flex-1 flex justify-end gap-2 relative z-10">
                     <button onclick="toggleClock(event)" class="dash-btn bg-white/10 hover:bg-white/20">
                         <i id="dash-clock-icon" data-lucide="play" class="fill-current"></i>
                     </button>
                     <button onclick="addExtension(event)" id="dash-ext-btn" class="dash-btn bg-white/10 hover:bg-white/20">
                         <i data-lucide="plus"></i>
                     </button>
-                </div>
-                <!-- Timer Display -->
-                <div id="clock-dashboard" class="clock-display text-5xl font-black clock-green" onclick="handleTimeClick(event)">30</div>
-                <!-- Controls Right -->
-                <div class="flex gap-2">
-                    <button onclick="toggleVoiceControl()" id="dash-voice-btn" class="dash-btn bg-white/10 hover:bg-white/20 voice-toggle-inner">
+                    <button onclick="triggerVoiceModal()" id="dash-voice-btn" class="dash-btn bg-white/10 hover:bg-white/20 voice-toggle-inner">
                         <i data-lucide="mic"></i>
                     </button>
                 </div>
@@ -707,6 +748,17 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Match Clock Section -->
+            <div class="match-clock-container">
+                <button onclick="resetMatchClock()" class="dash-btn bg-white/10 hover:bg-white/20 text-red-400">
+                    <i data-lucide="rotate-ccw"></i>
+                </button>
+                <div id="match-clock-display" class="match-clock-display" contenteditable="true" onblur="handleMatchClockEdit(this)" onkeydown="handleMatchClockKey(event)">00:00</div>
+                <button onclick="toggleMatchClock()" class="dash-btn bg-white/10 hover:bg-white/20 text-green-400">
+                    <i id="match-clock-icon" data-lucide="play" class="fill-current"></i>
+                </button>
+            </div>
         </div>
 
         <!-- FOOTER -->
@@ -728,14 +780,63 @@
         </div>
     </div>
 
-    <!-- Confirmation Modal -->
-    <div id="modal-overlay">
+    <!-- Reset Confirmation Modal with Checkboxes -->
+    <div id="modal-reset-overlay" class="modal-overlay">
         <div class="modal-content" onclick="event.stopPropagation()">
-            <h2 class="text-xl font-black mb-1">RÉINITIALISER ?</h2>
-            <p class="text-white/60 mb-6 text-xs">Les noms, scores et statistiques seront effacés.</p>
+            <h2 class="text-xl font-black mb-4">RÉINITIALISER ?</h2>
+            
+            <div class="flex flex-col gap-3 text-left w-full mb-6">
+                <label class="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition">
+                    <input type="checkbox" id="chk-scores" checked class="w-5 h-5 accent-red-600 rounded">
+                    <span class="font-bold text-sm uppercase tracking-wide">Scores & Timer</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition">
+                    <input type="checkbox" id="chk-stats" checked class="w-5 h-5 accent-red-600 rounded">
+                    <span class="font-bold text-sm uppercase tracking-wide">Statistiques</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/10 cursor-pointer hover:bg-white/10 transition">
+                    <input type="checkbox" id="chk-names" checked class="w-5 h-5 accent-red-600 rounded">
+                    <span class="font-bold text-sm uppercase tracking-wide">Noms des joueurs</span>
+                </label>
+            </div>
+
             <div class="flex gap-4">
                 <button onclick="closeResetModal()" class="flex-1 py-3 bg-white/10 rounded-xl font-bold uppercase tracking-widest text-[10px] btn-active">Annuler</button>
                 <button onclick="confirmReset()" class="flex-1 py-3 bg-red-600 rounded-xl font-bold uppercase tracking-widest text-[10px] btn-active shadow-lg">Confirmer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voice Confirmation Modal -->
+    <div id="modal-voice-overlay" class="modal-overlay">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2 class="text-xl font-black mb-4 flex items-center justify-center gap-2">
+                <i data-lucide="mic" class="w-6 h-6 text-blue-400"></i> CONTRÔLE VOCAL
+            </h2>
+            
+            <div class="text-left mb-6 bg-white/5 p-4 rounded-xl border border-white/10">
+                <p class="text-[10px] text-gray-400 uppercase font-bold mb-3 tracking-widest">Commandes disponibles</p>
+                <ul class="space-y-3 text-sm font-mono text-white/90">
+                    <li class="flex justify-between items-center border-b border-white/5 pb-2">
+                        <span class="font-bold">RESET, ZERO</span> 
+                        <span class="text-blue-400 text-xs">→ Reset 30s</span>
+                    </li>
+                    <li class="flex justify-between items-center border-b border-white/5 pb-2">
+                        <span class="font-bold">EXTENSION, PLUS</span> 
+                        <span class="text-blue-400 text-xs">→ +15s</span>
+                    </li>
+                    <li class="flex justify-between items-center">
+                        <span class="font-bold">SUIVANT, GO</span> 
+                        <span class="text-blue-400 text-xs">→ Reset</span>
+                    </li>
+                </ul>
+            </div>
+            
+            <p class="text-xs text-white/50 mb-6 px-4">Autorisez l'accès au microphone après confirmation.</p>
+
+            <div class="flex gap-4">
+                <button onclick="closeVoiceModal()" class="flex-1 py-3 bg-white/10 rounded-xl font-bold uppercase tracking-widest text-[10px] btn-active">Annuler</button>
+                <button onclick="confirmVoiceStart()" class="flex-1 py-3 bg-blue-600 rounded-xl font-bold uppercase tracking-widest text-[10px] btn-active shadow-lg">Activer</button>
             </div>
         </div>
     </div>
@@ -757,6 +858,12 @@
         let audioCtx;
         let recognition;
         let isVoiceActive = false;
+
+        // Match Clock State
+        let matchSeconds = 0;
+        let matchInterval = null;
+        let isMatchRunning = false;
+        let matchMode = 'up'; // 'up' or 'down'
 
         // --- VIEW MANAGEMENT ---
         function cycleView() {
@@ -828,10 +935,12 @@
             if (currentView !== 2 && currentView !== 3) return;
 
             const isControl = e.target.closest('button') || 
-                              e.target.closest('#modal-overlay');
+                              e.target.closest('#modal-reset-overlay') ||
+                              e.target.closest('#modal-voice-overlay') ||
+                              e.target.closest('.match-clock-display'); // exclude match clock edit
             
             if (!isControl) {
-                // handleTimeClick(e); // Optional: Click background to reset? Disabled for cleaner UX in tabs
+                // handleTimeClick(e); 
             }
         }
 
@@ -854,12 +963,17 @@
         
         function startClock() {
             if (isClockRunning) return;
+            if (timerSeconds <= 0) return; // Prevent starting if at 0
+
             isClockRunning = true;
             if (clockInterval) clearInterval(clockInterval);
             clockInterval = setInterval(() => {
-                timerSeconds--;
-                updateClockUI();
-                checkClockAudio();
+                if (timerSeconds > 0) {
+                    timerSeconds--;
+                    updateClockUI();
+                    checkClockAudio();
+                }
+                
                 if (timerSeconds <= 0) { 
                     stopClock(); 
                     updateClockButtons();
@@ -963,17 +1077,16 @@
                 display.classList.add(colorClass);
             });
 
+            // Calculate Progress (Look ahead for smoother end)
+            let targetTime = timerSeconds;
+            if (isClockRunning && timerSeconds > 0) {
+                targetTime = timerSeconds - 1;
+            }
+            const progress = Math.max(0, targetTime / totalTimerDuration);
+
             // Update SVG Ring
-            // We set target to timerSeconds - 1 to sync visual completion with countdown arrival
-            // e.g. If time is 30, target 29. Ring drains 30->29 over 1s.
             if (ring) {
-                let targetTime = timerSeconds;
-                if (isClockRunning && timerSeconds > 0) {
-                    targetTime = timerSeconds - 1;
-                }
-                const progress = Math.max(0, targetTime / totalTimerDuration);
                 const offset = ringCircumference - (progress * ringCircumference);
-                
                 ring.style.strokeDashoffset = offset;
                 ring.style.stroke = strokeColor;
             }
@@ -982,6 +1095,90 @@
         function checkClockAudio() {
             if (timerSeconds === 10) playSound(500, 500, 'sine', 0.1, 0.2);
             else if (timerSeconds <= 5 && timerSeconds > 0) playSound(880, 880, 'sine', 0.1, 0.1);
+        }
+
+        // --- MATCH CLOCK LOGIC ---
+        function formatMatchTime(totalSeconds) {
+            const m = Math.floor(Math.abs(totalSeconds) / 60);
+            const s = Math.abs(totalSeconds) % 60;
+            return `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function updateMatchClockDisplay() {
+            const display = document.getElementById('match-clock-display');
+            if (display) display.innerText = formatMatchTime(matchSeconds);
+        }
+
+        function toggleMatchClock() {
+            const icon = document.getElementById('match-clock-icon');
+            if (isMatchRunning) {
+                // Stop
+                clearInterval(matchInterval);
+                isMatchRunning = false;
+                if(icon) icon.setAttribute('data-lucide', 'play');
+            } else {
+                // Start
+                // Determine mode if 0
+                if (matchSeconds === 0) matchMode = 'up';
+                
+                isMatchRunning = true;
+                if(icon) icon.setAttribute('data-lucide', 'pause');
+                
+                matchInterval = setInterval(() => {
+                    if (matchMode === 'up') {
+                        matchSeconds++;
+                    } else {
+                        matchSeconds--;
+                        if (matchSeconds <= 0) {
+                            matchSeconds = 0;
+                            toggleMatchClock(); // Stop at 0
+                            playSound(440, 440, 'square', 0.5, 1.0); // Alarm
+                        }
+                    }
+                    updateMatchClockDisplay();
+                }, 1000);
+            }
+            lucide.createIcons();
+        }
+
+        function resetMatchClock() {
+            clearInterval(matchInterval);
+            isMatchRunning = false;
+            matchSeconds = 0;
+            matchMode = 'up';
+            updateMatchClockDisplay();
+            const icon = document.getElementById('match-clock-icon');
+            if(icon) icon.setAttribute('data-lucide', 'play');
+            lucide.createIcons();
+        }
+
+        function handleMatchClockKey(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                e.target.blur();
+            }
+        }
+
+        function handleMatchClockEdit(el) {
+            const text = el.innerText;
+            // Parse MM:SS or simple seconds
+            if (text.includes(':')) {
+                const parts = text.split(':');
+                const m = parseInt(parts[0]) || 0;
+                const s = parseInt(parts[1]) || 0;
+                matchSeconds = m * 60 + s;
+            } else {
+                matchSeconds = parseInt(text) || 0;
+            }
+            
+            // Logic: If user sets a time > 0 manually, they usually want a countdown
+            if (matchSeconds > 0) {
+                matchMode = 'down';
+            } else {
+                matchMode = 'up';
+            }
+            
+            updateMatchClockDisplay();
         }
 
         // --- SCORES ---
@@ -1056,50 +1253,68 @@
 
         // --- RESET & FULLSCREEN ---
         function showResetModal() {
-            document.getElementById('modal-overlay').classList.add('active');
+            document.getElementById('modal-reset-overlay').classList.add('active');
             playSound(400, 300, 'sine', 0.05, 0.1);
         }
         function closeResetModal() {
-            document.getElementById('modal-overlay').classList.remove('active');
+            document.getElementById('modal-reset-overlay').classList.remove('active');
         }
         function confirmReset() {
-            scores.red = 0; scores.blue = 0;
-            // Reset Main View
-            document.getElementById('score-red').innerText = 0;
-            document.getElementById('score-blue').innerText = 0;
-            // Reset Stats View (Sync)
-            if(document.getElementById('score-red-stats')) document.getElementById('score-red-stats').innerText = 0;
-            if(document.getElementById('score-blue-stats')) document.getElementById('score-blue-stats').innerText = 0;
-            // Reset Dashboard View (Sync)
-            if(document.getElementById('score-red-dashboard')) document.getElementById('score-red-dashboard').innerText = 0;
-            if(document.getElementById('score-blue-dashboard')) document.getElementById('score-blue-dashboard').innerText = 0;
-            
-            // Reset Names
-            if(document.getElementById('name-red')) document.getElementById('name-red').innerText = "ROUGE";
-            if(document.getElementById('name-red-stats')) document.getElementById('name-red-stats').innerText = "ROUGE";
-            if(document.getElementById('name-red-dashboard')) document.getElementById('name-red-dashboard').innerText = "ROUGE";
-            
-            if(document.getElementById('name-blue')) document.getElementById('name-blue').innerText = "BLEU";
-            if(document.getElementById('name-blue-stats')) document.getElementById('name-blue-stats').innerText = "BLEU";
-            if(document.getElementById('name-blue-dashboard')) document.getElementById('name-blue-dashboard').innerText = "BLEU";
+            const resetNames = document.getElementById('chk-names').checked;
+            const resetScores = document.getElementById('chk-scores').checked;
+            const resetStats = document.getElementById('chk-stats').checked;
 
-            for (let p of ['red', 'blue']) {
-                for (let i = 1; i <= 3; i++) {
-                    counters[p][i] = 0;
-                    const mainEl = document.getElementById(`counter-${p}-${i}`);
-                    if(mainEl) mainEl.innerText = 0;
-                    
-                    const dashEl = document.getElementById(`counter-${p}-${i}-dashboard`);
-                    if(dashEl) dashEl.innerText = 0;
+            if (resetScores) {
+                scores.red = 0; scores.blue = 0;
+                // Reset Scores View
+                document.getElementById('score-red').innerText = 0;
+                document.getElementById('score-blue').innerText = 0;
+                // Reset Stats View (Sync)
+                if(document.getElementById('score-red-stats')) document.getElementById('score-red-stats').innerText = 0;
+                if(document.getElementById('score-blue-stats')) document.getElementById('score-blue-stats').innerText = 0;
+                // Reset Dashboard View (Sync)
+                if(document.getElementById('score-red-dashboard')) document.getElementById('score-red-dashboard').innerText = 0;
+                if(document.getElementById('score-blue-dashboard')) document.getElementById('score-blue-dashboard').innerText = 0;
+                
+                // Reset Timer & Break
+                stopClock();
+                timerSeconds = 30;
+                totalTimerDuration = 30;
+                resetExtension();
+                updateClockUI();
+                updateClockButtons();
+                setBreak('red');
+            }
+
+            if (resetNames) {
+                if(document.getElementById('name-red')) document.getElementById('name-red').innerText = "ROUGE";
+                if(document.getElementById('name-red-stats')) document.getElementById('name-red-stats').innerText = "ROUGE";
+                if(document.getElementById('name-red-dashboard')) document.getElementById('name-red-dashboard').innerText = "ROUGE";
+                
+                if(document.getElementById('name-blue')) document.getElementById('name-blue').innerText = "BLEU";
+                if(document.getElementById('name-blue-stats')) document.getElementById('name-blue-stats').innerText = "BLEU";
+                if(document.getElementById('name-blue-dashboard')) document.getElementById('name-blue-dashboard').innerText = "BLEU";
+            }
+
+            if (resetStats) {
+                for (let p of ['red', 'blue']) {
+                    for (let i = 1; i <= 3; i++) {
+                        counters[p][i] = 0;
+                        const mainEl = document.getElementById(`counter-${p}-${i}`);
+                        if(mainEl) mainEl.innerText = 0;
+                        
+                        const dashEl = document.getElementById(`counter-${p}-${i}-dashboard`);
+                        if(dashEl) dashEl.innerText = 0;
+                    }
                 }
             }
-            stopClock();
-            timerSeconds = 30;
-            totalTimerDuration = 30; // Reset graphic scaling
-            resetExtension();
-            updateClockUI();
-            updateClockButtons();
-            setBreak('red');
+
+            // Always reset match clock if scores are reset? Or always on reset button?
+            // Usually match clock resets with scores.
+            if (resetScores) {
+                resetMatchClock();
+            }
+
             closeResetModal();
             playSound(200, 600, 'sine', 0.1, 0.3);
         }
@@ -1133,6 +1348,23 @@
         // Voice
         const resetKeywords = ['next', 'reset', 'time', 'go', 'suivant', 'joué', 'temps', 'prêt', 'vas-y', 'allez', 'ok'];
         const extensionKeywords = ['extension', 'extention', 'extansion', 'rallonge', 'prolongation', 'plus'];
+
+        function triggerVoiceModal() {
+            if (isVoiceActive) {
+                toggleVoiceControl(); // Turn off immediately if already active
+            } else {
+                document.getElementById('modal-voice-overlay').classList.add('active');
+            }
+        }
+
+        function closeVoiceModal() {
+            document.getElementById('modal-voice-overlay').classList.remove('active');
+        }
+
+        function confirmVoiceStart() {
+            closeVoiceModal();
+            toggleVoiceControl();
+        }
 
         function toggleVoiceControl() {
             getAudioCtx();
