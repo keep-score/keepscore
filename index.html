@@ -1369,36 +1369,72 @@
         function toggleVoiceControl() {
             getAudioCtx();
             const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            
             if (!recognition) {
-                if (!SpeechRecognition) return;
+                if (!SpeechRecognition) {
+                    alert("Votre navigateur ne supporte pas la reconnaissance vocale.");
+                    return;
+                }
+                
                 recognition = new SpeechRecognition();
                 recognition.lang = 'fr-FR';
-                recognition.continuous = true;
+                // CRITICAL FIX FOR IPAD/IOS: Disable continuous mode to prevent crashes
+                recognition.continuous = false; 
                 recognition.interimResults = false;
+                
                 recognition.onresult = (event) => {
                     const command = event.results[event.results.length - 1][0].transcript.toLowerCase();
                     if (resetKeywords.some(k => command.includes(k))) handleTimeClick();
                     if (extensionKeywords.some(k => command.includes(k)) && !extensionUsed) addExtension();
                 };
-                recognition.onend = () => { if(isVoiceActive) try { recognition.start(); } catch(e){} };
+
+                recognition.onerror = (event) => {
+                    console.error("Voice error:", event.error);
+                    // Prevent infinite restart loops on permission errors
+                    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+                        isVoiceActive = false;
+                        updateVoiceUI(false);
+                    }
+                };
+
+                recognition.onend = () => { 
+                    // Safely restart if mode is still active
+                    if(isVoiceActive) {
+                        try { 
+                            recognition.start(); 
+                        } catch(e) {
+                            console.log("Restart prevented or overlap");
+                        } 
+                    }
+                };
             }
 
-            const btn = document.getElementById('voice-btn-inner');
-            const dashBtn = document.getElementById('dash-voice-btn');
             isVoiceActive = !isVoiceActive;
+            updateVoiceUI(isVoiceActive);
 
             if (isVoiceActive) {
                 try { 
                     recognition.start(); 
-                    if(btn) btn.classList.add('active'); 
-                    if(dashBtn) dashBtn.classList.add('active');
                     playSound(800, 1000, 'sine', 0.1, 0.2); 
-                } catch(e) {}
+                } catch(e) {
+                    console.error(e);
+                }
             } else {
                 recognition.stop(); 
+                playSound(400, 300, 'sine', 0.05, 0.2);
+            }
+        }
+
+        function updateVoiceUI(active) {
+            const btn = document.getElementById('voice-btn-inner');
+            const dashBtn = document.getElementById('dash-voice-btn');
+            
+            if (active) {
+                if(btn) btn.classList.add('active'); 
+                if(dashBtn) dashBtn.classList.add('active');
+            } else {
                 if(btn) btn.classList.remove('active'); 
                 if(dashBtn) dashBtn.classList.remove('active');
-                playSound(400, 300, 'sine', 0.05, 0.2);
             }
         }
 
