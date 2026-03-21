@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Contrôleur Video Scoreboard</title>
+  <style>
+    :root {
+      --bg: #0b0b0b;
+      --panel: #171717;
+      --panel-2: #202020;
+      --text: #f4f4f4;
+      --muted: #b8b8b8;
+      --accent: #ffffff;
+      --danger: #b3261e;
+      --danger-hover: #8f1f19;
+      --btn: #2a2a2a;
+      --btn-hover: #3a3a3a;
+      --green: #1f6f3f;
+      --green-hover: #185832;
+      --border: #3d3d3d;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 900px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 2rem;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+
+    .hidden { display: none !important; }
+
+    .setup {
+      display: grid;
+      gap: 16px;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+    }
+
+    label {
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 1rem;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .primary {
+      background: var(--green);
+      color: white;
+    }
+    .primary:hover { background: var(--green-hover); }
+
+    .secondary {
+      background: var(--btn);
+      color: white;
+    }
+    .secondary:hover { background: var(--btn-hover); }
+
+    .danger {
+      background: var(--danger);
+      color: white;
+    }
+    .danger:hover { background: var(--danger-hover); }
+
+    .scoreboard-wrap {
+      display: grid;
+      gap: 20px;
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .player-card {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 18px;
+      display: grid;
+      grid-template-rows: auto auto auto auto;
+      gap: 12px;
+      min-height: 340px;
+    }
+
+    .player-name {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      min-height: 2.2em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      word-break: break-word;
+    }
+
+    .score-btn {
+      width: 100%;
+      min-height: 62px;
+      font-size: 2rem;
+      background: var(--btn);
+      color: white;
+    }
+
+    .score-btn:hover { background: var(--btn-hover); }
+
+    .score-display {
+      background: #0f0f0f;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      font-size: 5rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 120px;
+    }
+
+    .separator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 4rem;
+      font-weight: bold;
+      color: var(--muted);
+      padding: 0 4px;
+    }
+
+    .preview-box {
+      margin-top: 8px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #0f0f0f;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      min-height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      word-break: break-word;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 6px;
+    }
+
+    .status {
+      margin-top: 10px;
+      text-align: center;
+      color: var(--muted);
+      min-height: 1.2em;
+    }
+
+    .thing-box {
+      margin-top: 18px;
+      background: #101010;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      text-align: center;
+    }
+
+    @media (max-width: 760px) {
+      .scoreboard {
+        grid-template-columns: 1fr;
+      }
+
+      .separator {
+        font-size: 2.5rem;
+      }
+
+      .player-card {
+        min-height: 0;
+      }
+
+      .score-display {
+        font-size: 4rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div id="setupScreen">
+      <h1>Contrôleur Video Scoreboard</h1>
+      <div class="subtitle">Entrez les noms des joueurs pour démarrer le score à 0 - 0.</div>
+
+      <div class="setup">
+        <div class="field">
+          <label for="player1Input">Joueur 1</label>
+          <input id="player1Input" type="text" maxlength="30" placeholder="Nom du joueur 1" />
+        </div>
+
+        <div class="field">
+          <label for="player2Input">Joueur 2</label>
+          <input id="player2Input" type="text" maxlength="30" placeholder="Nom du joueur 2" />
+        </div>
+
+        <button id="startBtn" class="primary">Démarrer le score</button>
+        <div class="status" id="setupStatus"></div>
+      </div>
+
+      <div class="thing-box">
+        Thing dweet actuel : <strong id="thingNameLabel">cbc1</strong>
+      </div>
+    </div>
+
+    <div id="scoreboardScreen" class="hidden scoreboard-wrap">
+      <h1>Contrôleur Video Scoreboard</h1>
+
+      <div class="scoreboard">
+        <div class="player-card">
+          <div class="player-name" id="player1Name">Joueur 1</div>
+          <button class="score-btn secondary" id="p1Plus">+</button>
+          <div class="score-display" id="score1Display">0</div>
+          <button class="score-btn secondary" id="p1Minus">−</button>
+        </div>
+
+        <div class="separator">-</div>
+
+        <div class="player-card">
+          <div class="player-name" id="player2Name">Joueur 2</div>
+          <button class="score-btn secondary" id="p2Plus">+</button>
+          <div class="score-display" id="score2Display">0</div>
+          <button class="score-btn secondary" id="p2Minus">−</button>
+        </div>
+      </div>
+
+      <div class="preview-box" id="previewBox"></div>
+
+      <div class="actions">
+        <button class="secondary" id="moveLeftBtn">← Déplacer à gauche</button>
+        <button class="secondary" id="moveRightBtn">Déplacer à droite →</button>
+        <button class="danger" id="resetBtn">Réinitialiser</button>
+      </div>
+
+      <div class="status" id="scoreStatus"></div>
+
+      <div class="thing-box">
+        Thing dweet actuel : <strong id="thingNameLabel2">cbc1</strong>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const path = window.location.pathname.split("/").filter(Boolean);
+    const DWEET_THING = path[0] || "cbc1";
+    const RECT_LEFT = { rect0: 4000, rect2: 5400 };
+    const RECT_RIGHT = { rect0: 4200, rect2: 5600 };
+
+    const state = {
+      player1: "",
+      player2: "",
+      score1: 0,
+      score2: 0,
+      rect0: RECT_LEFT.rect0,
+      rect2: RECT_LEFT.rect2,
+      visible: 1,
+    };
+
+    const setupScreen = document.getElementById("setupScreen");
+    const scoreboardScreen = document.getElementById("scoreboardScreen");
+    const player1Input = document.getElementById("player1Input");
+    const player2Input = document.getElementById("player2Input");
+    const startBtn = document.getElementById("startBtn");
+    const setupStatus = document.getElementById("setupStatus");
+    const scoreStatus = document.getElementById("scoreStatus");
+    const player1Name = document.getElementById("player1Name");
+    const player2Name = document.getElementById("player2Name");
+    const score1Display = document.getElementById("score1Display");
+    const score2Display = document.getElementById("score2Display");
+    const previewBox = document.getElementById("previewBox");
+
+    document.getElementById("thingNameLabel").textContent = DWEET_THING;
+    document.getElementById("thingNameLabel2").textContent = DWEET_THING;
+
+    function buildDisplayString() {
+      return `${state.player1} ${state.score1} - ${state.score2} ${state.player2}`;
+    }
+
+    function renderScoreboard() {
+      player1Name.textContent = state.player1;
+      player2Name.textContent = state.player2;
+      score1Display.textContent = state.score1;
+      score2Display.textContent = state.score2;
+      previewBox.textContent = buildDisplayString();
+    }
+
+    async function sendState(statusElement) {
+      const params = new URLSearchParams({
+        display: buildDisplayString(),
+        rect0: String(state.rect0),
+        rect2: String(state.rect2),
+        visible: String(state.visible),
+        ts: String(Date.now())
+      });
+
+      const url = `https://dweet.cc/dweet/for/${encodeURIComponent(DWEET_THING)}?${params.toString()}`;
+
+      statusElement.textContent = "Envoi en cours...";
+
+      const response = await fetch(url, { method: "GET", cache: "no-store" });
+      const raw = await response.text();
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      try {
+        JSON.parse(raw);
+      } catch (err) {
+        console.warn("Réponse non JSON ou vide:", raw);
+      }
+
+      statusElement.textContent = "Commande envoyée.";
+    }
+
+    async function startScoreboard() {
+      const p1 = player1Input.value.trim() || "Joueur 1";
+      const p2 = player2Input.value.trim() || "Joueur 2";
+
+      state.player1 = p1;
+      state.player2 = p2;
+      state.score1 = 0;
+      state.score2 = 0;
+      state.rect0 = RECT_LEFT.rect0;
+      state.rect2 = RECT_LEFT.rect2;
+      state.visible = 1;
+
+      renderScoreboard();
+
+      try {
+        await sendState(setupStatus);
+        setupStatus.textContent = "Score démarré.";
+        setupScreen.classList.add("hidden");
+        scoreboardScreen.classList.remove("hidden");
+      } catch (error) {
+        console.error(error);
+        setupStatus.textContent = "Erreur lors de l'envoi à dweet.";
+      }
+    }
+
+    async function updateAndSend(mutator) {
+      mutator();
+      renderScoreboard();
+
+      try {
+        await sendState(scoreStatus);
+      } catch (error) {
+        console.error(error);
+        scoreStatus.textContent = "Erreur lors de l'envoi à dweet.";
+      }
+    }
+
+    startBtn.addEventListener("click", startScoreboard);
+
+    player2Input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") startScoreboard();
+    });
+
+    player1Input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") player2Input.focus();
+    });
+
+    document.getElementById("p1Plus").addEventListener("click", () => updateAndSend(() => { state.score1 += 1; }));
+    document.getElementById("p1Minus").addEventListener("click", () => updateAndSend(() => { state.score1 = Math.max(0, state.score1 - 1); }));
+    document.getElementById("p2Plus").addEventListener("click", () => updateAndSend(() => { state.score2 += 1; }));
+    document.getElementById("p2Minus").addEventListener("click", () => updateAndSend(() => { state.score2 = Math.max(0, state.score2 - 1); }));
+
+    document.getElementById("moveLeftBtn").addEventListener("click", () => updateAndSend(() => {
+      state.rect0 = RECT_LEFT.rect0;
+      state.rect2 = RECT_LEFT.rect2;
+    }));
+
+    document.getElementById("moveRightBtn").addEventListener("click", () => updateAndSend(() => {
+      state.rect0 = RECT_RIGHT.rect0;
+      state.rect2 = RECT_RIGHT.rect2;
+    }));
+
+    document.getElementById("resetBtn").addEventListener("click", async () => {
+      if (!confirm("Réinitialiser le score et revenir à l'écran de départ ?")) {
+        return;
+      }
+
+      const previous = { ...state };
+
+      state.player1 = "Joueur 1";
+      state.player2 = "Joueur 2";
+      state.score1 = 0;
+      state.score2 = 0;
+      state.rect0 = RECT_LEFT.rect0;
+      state.rect2 = RECT_LEFT.rect2;
+      state.visible = 1;
+      renderScoreboard();
+
+      try {
+        await sendState(scoreStatus);
+
+        state.visible = 0;
+        await sendState(scoreStatus);
+
+        player1Input.value = "";
+        player2Input.value = "";
+        setupStatus.textContent = "";
+        scoreStatus.textContent = "";
+        setupScreen.classList.remove("hidden");
+        scoreboardScreen.classList.add("hidden");
+      } catch (error) {
+        console.error(error);
+        Object.assign(state, previous);
+        renderScoreboard();
+        scoreStatus.textContent = "Erreur lors de la réinitialisation.";
+      }
+    });
+  </script>
+</body>
+</html>
