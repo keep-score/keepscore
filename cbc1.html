@@ -147,8 +147,23 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 6px;
       word-break: break-word;
       line-height: 1.1;
+      cursor: pointer;
+    }
+
+    .cueball {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: white;
+      display: inline-block;
+      box-shadow: 0 0 6px rgba(255,255,255,0.8);
+    }
+
+    .cueball.hidden {
+      visibility: hidden;
     }
 
     .score-btn {
@@ -341,9 +356,7 @@
         <div class="status" id="setupStatus"></div>
       </div>
 
-      <div class="thing-box">
-        Thing dweet actuel : <strong id="thingNameLabel">cbc1</strong>
-      </div>
+      
     </div>
 
     <div id="scoreboardScreen" class="hidden scoreboard-wrap">
@@ -351,7 +364,10 @@
 
       <div class="scoreboard">
         <div class="player-card">
-          <div class="player-name" id="player1Name">Joueur 1</div>
+          <div class="player-name" id="player1Name">
+            <span id="cue1" class="cueball"></span>
+            <span id="player1NameText">Joueur 1</span>
+          </div>
           <button class="score-btn secondary" id="p1Plus">+</button>
           <div class="score-display" id="score1Display">0</div>
           <button class="score-btn secondary" id="p1Minus">−</button>
@@ -360,7 +376,10 @@
         <div class="separator">-</div>
 
         <div class="player-card">
-          <div class="player-name" id="player2Name">Joueur 2</div>
+          <div class="player-name" id="player2Name">
+            <span id="cue2" class="cueball hidden"></span>
+            <span id="player2NameText">Joueur 2</span>
+          </div>
           <button class="score-btn secondary" id="p2Plus">+</button>
           <div class="score-display" id="score2Display">0</div>
           <button class="score-btn secondary" id="p2Minus">−</button>
@@ -377,9 +396,7 @@
 
       <div class="status" id="scoreStatus"></div>
 
-      <div class="thing-box">
-        Thing dweet actuel : <strong id="thingNameLabel2">cbc1</strong>
-      </div>
+      
     </div>
   </div>
 
@@ -412,6 +429,21 @@
     const score2Display = document.getElementById("score2Display");
     const previewBox = document.getElementById("previewBox");
 
+    const cue1 = document.getElementById("cue1");
+    const cue2 = document.getElementById("cue2");
+
+    let currentBreaker = 1;
+
+    function updateCue() {
+      if (currentBreaker === 1) {
+        cue1.classList.remove("hidden");
+        cue2.classList.add("hidden");
+      } else {
+        cue1.classList.add("hidden");
+        cue2.classList.remove("hidden");
+      }
+    }
+
     document.getElementById("thingNameLabel").textContent = DWEET_THING;
     document.getElementById("thingNameLabel2").textContent = DWEET_THING;
 
@@ -420,8 +452,9 @@
     }
 
     function renderScoreboard() {
-      player1Name.textContent = state.player1;
-      player2Name.textContent = state.player2;
+      updateCue();
+      document.getElementById("player1NameText").textContent = state.player1;
+      document.getElementById("player2NameText").textContent = state.player2;
       score1Display.textContent = state.score1;
       score2Display.textContent = state.score2;
       previewBox.textContent = buildDisplayString();
@@ -503,9 +536,19 @@
       if (e.key === "Enter") player2Input.focus();
     });
 
-    document.getElementById("p1Plus").addEventListener("click", () => updateAndSend(() => { state.score1 += 1; }));
+    document.getElementById("p1Plus").addEventListener("click", () => updateAndSend(() => { state.score1 += 1; currentBreaker = 2; }));
+    document.getElementById("player1Name").addEventListener("click", () => {
+      currentBreaker = currentBreaker === 1 ? 2 : 1;
+      updateCue();
+    });
+
+    document.getElementById("player2Name").addEventListener("click", () => {
+      currentBreaker = currentBreaker === 2 ? 1 : 2;
+      updateCue();
+    });
+
     document.getElementById("p1Minus").addEventListener("click", () => updateAndSend(() => { state.score1 = Math.max(0, state.score1 - 1); }));
-    document.getElementById("p2Plus").addEventListener("click", () => updateAndSend(() => { state.score2 += 1; }));
+    document.getElementById("p2Plus").addEventListener("click", () => updateAndSend(() => { state.score2 += 1; currentBreaker = 1; }));
     document.getElementById("p2Minus").addEventListener("click", () => updateAndSend(() => { state.score2 = Math.max(0, state.score2 - 1); }));
 
     document.getElementById("moveLeftBtn").addEventListener("click", () => updateAndSend(() => {
