@@ -154,12 +154,28 @@
     }
 
     .cueball {
-      width: 14px;
-      height: 14px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
       background: white;
       display: inline-block;
+      position: relative;
+      flex: 0 0 16px;
       box-shadow: 0 0 6px rgba(255,255,255,0.8);
+    }
+
+    .cueball::before {
+      content: "";
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #d72626;
+      top: 2px;
+      left: 6px;
+      box-shadow:
+        -4px 7px 0 #d72626,
+        4px 7px 0 #d72626;
     }
 
     .cueball.hidden {
@@ -339,7 +355,7 @@
   <div class="app">
     <div id="setupScreen">
       <h1>Contrôleur Video Scoreboard</h1>
-      <div class="subtitle">Entrez les noms des joueurs pour démarrer le score à 0 - 0.</div>
+      <div class="subtitle">Entrez les noms des joueurs.</div>
 
       <div class="setup">
         <div class="field">
@@ -365,8 +381,8 @@
       <div class="scoreboard">
         <div class="player-card">
           <div class="player-name" id="player1Name">
-            <span id="cue1" class="cueball"></span>
             <span id="player1NameText">Joueur 1</span>
+            <span id="cue1" class="cueball"></span>
           </div>
           <button class="score-btn secondary" id="p1Plus">+</button>
           <div class="score-display" id="score1Display">0</div>
@@ -377,8 +393,8 @@
 
         <div class="player-card">
           <div class="player-name" id="player2Name">
-            <span id="cue2" class="cueball hidden"></span>
             <span id="player2NameText">Joueur 2</span>
+            <span id="cue2" class="cueball hidden"></span>
           </div>
           <button class="score-btn secondary" id="p2Plus">+</button>
           <div class="score-display" id="score2Display">0</div>
@@ -403,16 +419,18 @@
   <script>
     const path = window.location.pathname.split("/").filter(Boolean);
     const DWEET_THING = path[0] || "cbc1";
-    const RECT_LEFT = { rect0: 4000, rect2: 5400 };
-    const RECT_RIGHT = { rect0: 4200, rect2: 5600 };
+    const MIN_RECT = { rect0: 3000, rect2: 4400 };
+    const MAX_RECT = { rect0: 6000, rect2: 7400 };
+    const RECT_STEP = 200;
+    const DEFAULT_RECT = { rect0: 4000, rect2: 5400 };
 
     const state = {
       player1: "",
       player2: "",
       score1: 0,
       score2: 0,
-      rect0: RECT_LEFT.rect0,
-      rect2: RECT_LEFT.rect2,
+      rect0: DEFAULT_RECT.rect0,
+      rect2: DEFAULT_RECT.rect2,
       visible: 1,
     };
 
@@ -494,8 +512,8 @@
       state.player2 = p2;
       state.score1 = 0;
       state.score2 = 0;
-      state.rect0 = RECT_LEFT.rect0;
-      state.rect2 = RECT_LEFT.rect2;
+      state.rect0 = DEFAULT_RECT.rect0;
+      state.rect2 = DEFAULT_RECT.rect2;
       state.visible = 1;
       currentBreaker = 1;
 
@@ -535,18 +553,18 @@
     });
 
     player1Name.addEventListener("click", () => {
-      currentBreaker = 1;
+      currentBreaker = currentBreaker === 1 ? 2 : 1;
       updateCue();
     });
 
     player2Name.addEventListener("click", () => {
-      currentBreaker = 2;
+      currentBreaker = currentBreaker === 1 ? 2 : 1;
       updateCue();
     });
 
     document.getElementById("p1Plus").addEventListener("click", () => updateAndSend(() => {
       state.score1 += 1;
-      currentBreaker = 2;
+      currentBreaker = currentBreaker === 1 ? 2 : 1;
     }));
 
     document.getElementById("p1Minus").addEventListener("click", () => updateAndSend(() => {
@@ -555,7 +573,7 @@
 
     document.getElementById("p2Plus").addEventListener("click", () => updateAndSend(() => {
       state.score2 += 1;
-      currentBreaker = 1;
+      currentBreaker = currentBreaker === 1 ? 2 : 1;
     }));
 
     document.getElementById("p2Minus").addEventListener("click", () => updateAndSend(() => {
@@ -563,13 +581,13 @@
     }));
 
     document.getElementById("moveLeftBtn").addEventListener("click", () => updateAndSend(() => {
-      state.rect0 = RECT_LEFT.rect0;
-      state.rect2 = RECT_LEFT.rect2;
+      state.rect0 = Math.max(MIN_RECT.rect0, state.rect0 - RECT_STEP);
+      state.rect2 = Math.max(MIN_RECT.rect2, state.rect2 - RECT_STEP);
     }));
 
     document.getElementById("moveRightBtn").addEventListener("click", () => updateAndSend(() => {
-      state.rect0 = RECT_RIGHT.rect0;
-      state.rect2 = RECT_RIGHT.rect2;
+      state.rect0 = Math.min(MAX_RECT.rect0, state.rect0 + RECT_STEP);
+      state.rect2 = Math.min(MAX_RECT.rect2, state.rect2 + RECT_STEP);
     }));
 
     document.getElementById("resetBtn").addEventListener("click", async () => {
@@ -584,8 +602,8 @@
       state.player2 = "Joueur 2";
       state.score1 = 0;
       state.score2 = 0;
-      state.rect0 = RECT_LEFT.rect0;
-      state.rect2 = RECT_LEFT.rect2;
+      state.rect0 = DEFAULT_RECT.rect0;
+      state.rect2 = DEFAULT_RECT.rect2;
       state.visible = 1;
       currentBreaker = 1;
       renderScoreboard();
