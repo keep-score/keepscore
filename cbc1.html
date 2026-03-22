@@ -416,6 +416,7 @@
       rect0: DEFAULT_RECT.rect0,
       rect2: DEFAULT_RECT.rect2,
       visible: 1,
+      breaker: 1,
     };
 
     let currentBreaker = 1;
@@ -440,6 +441,9 @@
     const cue2 = document.getElementById("cue2");
 
     function updateCue() {
+      currentBreaker = currentBreaker === 2 ? 2 : 1;
+      state.breaker = currentBreaker;
+
       if (currentBreaker === 1) {
         cue1.classList.remove("hidden");
         cue2.classList.add("hidden");
@@ -484,6 +488,7 @@
         rect0: latest.rect0 ?? "",
         rect2: latest.rect2 ?? "",
         visible: latest.visible ?? "",
+        breaker: latest.breaker ?? "",
         created: latest.created ?? ""
       });
     }
@@ -524,6 +529,7 @@
         state.rect0 = DEFAULT_RECT.rect0;
         state.rect2 = DEFAULT_RECT.rect2;
         state.visible = 1;
+        state.breaker = 1;
         currentBreaker = 1;
 
         renderScoreboard();
@@ -542,6 +548,9 @@
       state.rect0 = Number(latest.rect0) || DEFAULT_RECT.rect0;
       state.rect2 = Number(latest.rect2) || DEFAULT_RECT.rect2;
       state.visible = latestVisible ? 1 : 0;
+
+      currentBreaker = Number(latest.breaker) === 2 ? 2 : 1;
+      state.breaker = currentBreaker;
 
       renderScoreboard();
       setupScreen.classList.add("hidden");
@@ -597,11 +606,14 @@
     }
 
     async function sendState(statusElement) {
+      state.breaker = currentBreaker;
+
       const params = new URLSearchParams({
         display: buildDisplayString(),
         rect0: String(state.rect0),
         rect2: String(state.rect2),
         visible: String(state.visible),
+        breaker: String(state.breaker),
         ts: String(Date.now())
       });
 
@@ -628,6 +640,7 @@
         rect0: state.rect0,
         rect2: state.rect2,
         visible: state.visible,
+        breaker: state.breaker,
         created: ""
       });
     }
@@ -643,6 +656,7 @@
       state.rect0 = DEFAULT_RECT.rect0;
       state.rect2 = DEFAULT_RECT.rect2;
       state.visible = 1;
+      state.breaker = 1;
       currentBreaker = 1;
 
       renderScoreboard();
@@ -680,19 +694,20 @@
       if (e.key === "Enter") startScoreboard();
     });
 
-    player1Name.addEventListener("click", () => {
+    player1Name.addEventListener("click", () => updateAndSend(() => {
       currentBreaker = currentBreaker === 1 ? 2 : 1;
-      updateCue();
-    });
+      state.breaker = currentBreaker;
+    }));
 
-    player2Name.addEventListener("click", () => {
+    player2Name.addEventListener("click", () => updateAndSend(() => {
       currentBreaker = currentBreaker === 1 ? 2 : 1;
-      updateCue();
-    });
+      state.breaker = currentBreaker;
+    }));
 
     document.getElementById("p1Plus").addEventListener("click", () => updateAndSend(() => {
       state.score1 += 1;
       currentBreaker = currentBreaker === 1 ? 2 : 1;
+      state.breaker = currentBreaker;
     }));
 
     document.getElementById("p1Minus").addEventListener("click", () => updateAndSend(() => {
@@ -702,6 +717,7 @@
     document.getElementById("p2Plus").addEventListener("click", () => updateAndSend(() => {
       state.score2 += 1;
       currentBreaker = currentBreaker === 1 ? 2 : 1;
+      state.breaker = currentBreaker;
     }));
 
     document.getElementById("p2Minus").addEventListener("click", () => updateAndSend(() => {
@@ -733,12 +749,15 @@
       state.rect0 = DEFAULT_RECT.rect0;
       state.rect2 = DEFAULT_RECT.rect2;
       state.visible = 1;
+      state.breaker = 1;
       currentBreaker = 1;
       renderScoreboard();
 
       try {
         await sendState(scoreStatus);
         state.visible = 0;
+        state.breaker = 1;
+        currentBreaker = 1;
         renderScoreboard();
         await sendState(scoreStatus);
 
