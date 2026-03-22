@@ -336,19 +336,6 @@
         font-size: 0.82rem;
       }
     }
-
-      .separator {
-        font-size: 2.5rem;
-      }
-
-      .player-card {
-        min-height: 0;
-      }
-
-      .score-display {
-        font-size: 4rem;
-      }
-    }
   </style>
 </head>
 <body>
@@ -371,8 +358,6 @@
         <button id="startBtn" class="primary">Démarrer le score</button>
         <div class="status" id="setupStatus"></div>
       </div>
-
-      
     </div>
 
     <div id="scoreboardScreen" class="hidden scoreboard-wrap">
@@ -411,8 +396,6 @@
       </div>
 
       <div class="status" id="scoreStatus"></div>
-
-      
     </div>
   </div>
 
@@ -423,6 +406,7 @@
     const MAX_RECT = { rect0: 6000, rect2: 7400 };
     const RECT_STEP = 200;
     const DEFAULT_RECT = { rect0: 4000, rect2: 5400 };
+    const DEFAULT_DISPLAY = "Joueur 1 0 - 0 Joueur 2";
 
     const state = {
       player1: "",
@@ -474,6 +458,84 @@
       score2Display.textContent = state.score2;
       previewBox.textContent = state.visible ? buildDisplayString() : "";
       updateCue();
+    }
+
+    function parseDisplayString(display) {
+      const match = String(display).match(/^(.*?)\s+(\d+)\s*-\s*(\d+)\s+(.*?)$/);
+      if (!match) return null;
+
+      return {
+        player1: match[1].trim(),
+        score1: Number(match[2]),
+        score2: Number(match[3]),
+        player2: match[4].trim(),
+      };
+    }
+
+    function isDefaultMatchState(display, visible) {
+      return !visible || String(display).trim() === DEFAULT_DISPLAY;
+    }
+
+    async function fetchLatestState() {
+      const url = `https://dweet.cc/get/latest/dweet/for/${encodeURIComponent(DWEET_THING)}?ts=${Date.now()}`;
+      const response = await fetch(url, { method: "GET", cache: "no-store" });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      const latest = data?.with?.[0]?.content;
+
+      if (!latest) return null;
+
+      return latest;
+    }
+
+    async function restoreExistingMatchIfAny() {
+      setupStatus.textContent = "Vérification du match en cours...";
+
+      try {
+        const latest = await fetchLatestState();
+
+        if (!latest) {
+          setupStatus.textContent = "";
+          return;
+        }
+
+        const latestDisplay = typeof latest.display === "string" ? latest.display.trim() : "";
+        const latestVisible = Number(latest.visible ?? 1);
+
+        if (isDefaultMatchState(latestDisplay, latestVisible)) {
+          setupStatus.textContent = "";
+          return;
+        }
+
+        const parsed = parseDisplayString(latestDisplay);
+        if (!parsed) {
+          setupStatus.textContent = "";
+          return;
+        }
+
+        state.player1 = parsed.player1 || "Joueur 1";
+        state.player2 = parsed.player2 || "Joueur 2";
+        state.score1 = Number.isFinite(parsed.score1) ? parsed.score1 : 0;
+        state.score2 = Number.isFinite(parsed.score2) ? parsed.score2 : 0;
+        state.rect0 = Number(latest.rect0) || DEFAULT_RECT.rect0;
+        state.rect2 = Number(latest.rect2) || DEFAULT_RECT.rect2;
+        state.visible = latestVisible ? 1 : 0;
+        currentBreaker = 1;
+
+        renderScoreboard();
+
+        setupScreen.classList.add("hidden");
+        scoreboardScreen.classList.remove("hidden");
+        scoreStatus.textContent = "Match en cours chargé.";
+        setupStatus.textContent = "";
+      } catch (error) {
+        console.error(error);
+        setupStatus.textContent = "";
+      }
     }
 
     async function sendState(statusElement) {
@@ -628,6 +690,8 @@
         scoreStatus.textContent = "Erreur lors de la réinitialisation.";
       }
     });
+
+    restoreExistingMatchIfAny();
   </script>
 </body>
 </html>
