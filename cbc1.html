@@ -19,6 +19,9 @@
       --green: #1f6f3f;
       --green-hover: #185832;
       --border: #3d3d3d;
+      --ok: #2ecc71;
+      --warn: #f39c12;
+      --err: #e74c3c;
     }
 
     * { box-sizing: border-box; }
@@ -242,19 +245,51 @@
     .status {
       margin-top: 10px;
       text-align: center;
+      min-height: 1.6em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
       color: var(--muted);
-      min-height: 1.2em;
+      font-weight: bold;
     }
 
-    .thing-box {
-      margin-top: 18px;
-      background: #101010;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px 14px;
+    .status-light {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      display: inline-block;
+      background: var(--muted);
+      box-shadow: 0 0 8px currentColor;
       color: var(--muted);
-      font-size: 0.95rem;
-      text-align: center;
+      flex: 0 0 10px;
+    }
+
+    .status.ok {
+      color: var(--ok);
+    }
+
+    .status.ok .status-light {
+      background: var(--ok);
+      color: var(--ok);
+    }
+
+    .status.warn {
+      color: var(--warn);
+    }
+
+    .status.warn .status-light {
+      background: var(--warn);
+      color: var(--warn);
+    }
+
+    .status.err {
+      color: var(--err);
+    }
+
+    .status.err .status-light {
+      background: var(--err);
+      color: var(--err);
     }
 
     @media (max-width: 760px) {
@@ -329,12 +364,6 @@
         padding: 12px 10px;
         font-size: 0.92rem;
       }
-
-      .thing-box {
-        margin-top: 10px;
-        padding: 10px;
-        font-size: 0.82rem;
-      }
     }
   </style>
 </head>
@@ -356,7 +385,7 @@
         </div>
 
         <button id="startBtn" class="primary">Démarrer le score</button>
-        <div class="status" id="setupStatus"></div>
+        <div class="status ok" id="setupStatus"><span class="status-light"></span><span class="status-text">Prêt</span></div>
       </div>
     </div>
 
@@ -395,7 +424,7 @@
         <button class="danger" id="resetBtn">Réinitialiser</button>
       </div>
 
-      <div class="status" id="scoreStatus"></div>
+      <div class="status ok" id="scoreStatus"><span class="status-light"></span><span class="status-text">Prêt</span></div>
     </div>
   </div>
 
@@ -439,6 +468,11 @@
     const previewBox = document.getElementById("previewBox");
     const cue1 = document.getElementById("cue1");
     const cue2 = document.getElementById("cue2");
+
+    function setStatus(el, type, text) {
+      el.className = `status ${type}`;
+      el.innerHTML = `<span class="status-light"></span><span class="status-text">${text}</span>`;
+    }
 
     function updateCue() {
       currentBreaker = currentBreaker === 2 ? 2 : 1;
@@ -519,8 +553,6 @@
       if (isDefaultMatchState(latestDisplay, latestVisible)) {
         player1Input.value = "";
         player2Input.value = "";
-        setupStatus.textContent = "";
-        scoreStatus.textContent = "";
 
         state.player1 = "";
         state.player2 = "";
@@ -535,6 +567,7 @@
         renderScoreboard();
         setupScreen.classList.remove("hidden");
         scoreboardScreen.classList.add("hidden");
+        setStatus(setupStatus, "ok", "Prêt");
         return;
       }
 
@@ -555,29 +588,31 @@
       renderScoreboard();
       setupScreen.classList.add("hidden");
       scoreboardScreen.classList.remove("hidden");
+      setStatus(scoreStatus, "ok", "Prêt");
     }
 
     async function restoreExistingMatchIfAny() {
-      setupStatus.textContent = "Vérification du match en cours...";
+      setStatus(setupStatus, "warn", "Vérification...");
 
       try {
         const latest = await fetchLatestState();
 
         if (!latest) {
-          setupStatus.textContent = "";
+          setStatus(setupStatus, "ok", "Prêt");
           return;
         }
 
         lastSeenRemoteKey = makeRemoteKey(latest);
         applyRemoteState(latest);
-        setupStatus.textContent = "";
 
-        if (!scoreboardScreen.classList.contains("hidden")) {
-          scoreStatus.textContent = "Match en cours chargé.";
+        if (scoreboardScreen.classList.contains("hidden")) {
+          setStatus(setupStatus, "ok", "Prêt");
+        } else {
+          setStatus(scoreStatus, "ok", "Prêt");
         }
       } catch (error) {
         console.error(error);
-        setupStatus.textContent = "";
+        setStatus(setupStatus, "err", "Erreur de connexion");
       }
     }
 
@@ -596,10 +631,17 @@
         applyRemoteState(latest);
 
         if (!scoreboardScreen.classList.contains("hidden")) {
-          scoreStatus.textContent = "Mise à jour reçue.";
+          setStatus(scoreStatus, "ok", "Prêt");
+        } else {
+          setStatus(setupStatus, "ok", "Prêt");
         }
       } catch (error) {
         console.error("Polling error:", error);
+        if (!scoreboardScreen.classList.contains("hidden")) {
+          setStatus(scoreStatus, "err", "Erreur de synchronisation");
+        } else {
+          setStatus(setupStatus, "err", "Erreur de synchronisation");
+        }
       } finally {
         isPolling = false;
       }
@@ -618,7 +660,7 @@
       });
 
       const url = `https://dweet.cc/dweet/for/${encodeURIComponent(DWEET_THING)}?${params.toString()}`;
-      statusElement.textContent = "Envoi en cours...";
+      setStatus(statusElement, "warn", "Synchronisation...");
 
       const response = await fetch(url, { method: "GET", cache: "no-store" });
       const raw = await response.text();
@@ -633,7 +675,7 @@
         console.warn("Réponse non JSON ou vide:", raw);
       }
 
-      statusElement.textContent = "Commande envoyée.";
+      setStatus(statusElement, "ok", "Prêt");
 
       lastSeenRemoteKey = JSON.stringify({
         display: buildDisplayString(),
@@ -663,12 +705,12 @@
 
       try {
         await sendState(setupStatus);
-        setupStatus.textContent = "Score démarré.";
         setupScreen.classList.add("hidden");
         scoreboardScreen.classList.remove("hidden");
+        setStatus(scoreStatus, "ok", "Prêt");
       } catch (error) {
         console.error(error);
-        setupStatus.textContent = "Erreur lors de l'envoi à dweet.";
+        setStatus(setupStatus, "err", "Erreur d'envoi");
       }
     }
 
@@ -680,7 +722,7 @@
         await sendState(scoreStatus);
       } catch (error) {
         console.error(error);
-        scoreStatus.textContent = "Erreur lors de l'envoi à dweet.";
+        setStatus(scoreStatus, "err", "Erreur d'envoi");
       }
     }
 
@@ -763,16 +805,15 @@
 
         player1Input.value = "";
         player2Input.value = "";
-        setupStatus.textContent = "";
-        scoreStatus.textContent = "";
         setupScreen.classList.remove("hidden");
         scoreboardScreen.classList.add("hidden");
+        setStatus(setupStatus, "ok", "Prêt");
       } catch (error) {
         console.error(error);
         Object.assign(state, previous);
         currentBreaker = previousBreaker;
         renderScoreboard();
-        scoreStatus.textContent = "Erreur lors de la réinitialisation.";
+        setStatus(scoreStatus, "err", "Erreur de réinitialisation");
       }
     });
 
