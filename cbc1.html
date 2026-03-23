@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="fr">
+<!DOCTYPE html>
+<html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -17,418 +18,400 @@
       --green: #1f6f3f;
       --green-hover: #185832;
       --border: #3d3d3d;
-    }* { box-sizing: border-box; }
+    }
 
-body {
-  margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
+    * { box-sizing: border-box; }
 
-.app {
-  width: 100%;
-  max-width: 900px;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 18px;
-  padding: 24px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-}
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
 
-h1 {
-  margin: 0 0 8px;
-  font-size: 2rem;
-  text-align: center;
-}
+    .app {
+      width: 100%;
+      max-width: 900px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+    }
 
-.subtitle {
-  text-align: center;
-  color: var(--muted);
-  margin-bottom: 24px;
-}
+    h1 {
+      margin: 0 0 8px;
+      font-size: 2rem;
+      text-align: center;
+    }
 
-.hidden { display: none !important; }
+    .subtitle {
+      text-align: center;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
 
-.setup {
-  display: grid;
-  gap: 16px;
-  max-width: 520px;
-  margin: 0 auto;
-}
+    .hidden { display: none !important; }
 
-.field {
-  display: grid;
-  gap: 8px;
-}
+    .setup {
+      display: grid;
+      gap: 16px;
+      max-width: 520px;
+      margin: 0 auto;
+    }
 
-label {
-  font-weight: bold;
-}
+    .field {
+      display: grid;
+      gap: 8px;
+    }
 
-input {
-  width: 100%;
-  padding: 14px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: var(--panel-2);
-  color: var(--text);
-  font-size: 1rem;
-}
+    label { font-weight: bold; }
 
-button {
-  border: none;
-  border-radius: 12px;
-  padding: 14px 18px;
-  font-size: 1rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: 0.15s ease;
-}
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: var(--panel-2);
+      color: var(--text);
+      font-size: 1rem;
+    }
 
-button:hover { transform: translateY(-1px); }
-button:active { transform: translateY(0); }
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 14px 18px;
+      font-size: 1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.15s ease;
+    }
 
-.primary {
-  background: var(--green);
-  color: white;
-}
-.primary:hover { background: var(--green-hover); }
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
 
-.secondary {
-  background: var(--btn);
-  color: white;
-}
-.secondary:hover { background: var(--btn-hover); }
+    .primary { background: var(--green); color: white; }
+    .primary:hover { background: var(--green-hover); }
+    .secondary { background: var(--btn); color: white; }
+    .secondary:hover { background: var(--btn-hover); }
+    .danger { background: var(--danger); color: white; }
+    .danger:hover { background: var(--danger-hover); }
 
-.danger {
-  background: var(--danger);
-  color: white;
-}
-.danger:hover { background: var(--danger-hover); }
+    .scoreboard-wrap { display: grid; gap: 20px; }
 
-.scoreboard-wrap {
-  display: grid;
-  gap: 20px;
-}
+    .scoreboard {
+      display: grid;
+      grid-template-columns: 1fr 34px 1fr;
+      gap: 10px;
+      align-items: stretch;
+    }
 
-.scoreboard {
-  display: grid;
-  grid-template-columns: 1fr 34px 1fr;
-  gap: 10px;
-  align-items: stretch;
-}
+    .player-card {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 10px;
+      display: grid;
+      grid-template-rows: auto auto auto auto;
+      gap: 8px;
+      min-height: 0;
+    }
 
-.player-card {
-  background: var(--panel-2);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 10px;
-  display: grid;
-  grid-template-rows: auto auto auto auto;
-  gap: 8px;
-  min-height: 0;
-}
+    .player-name {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: bold;
+      min-height: 2.2em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      word-break: break-word;
+      line-height: 1.1;
+      cursor: pointer;
+    }
 
-.player-name {
-  text-align: center;
-  font-size: 1.1rem;
-  font-weight: bold;
-  min-height: 2.2em;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  word-break: break-word;
-  line-height: 1.1;
-  cursor: pointer;
-}
+    .cueball {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: white;
+      display: inline-block;
+      position: relative;
+      flex: 0 0 16px;
+      box-shadow: 0 0 6px rgba(255,255,255,0.8);
+    }
 
-.cueball {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: white;
-  display: inline-block;
-  position: relative;
-  flex: 0 0 16px;
-  box-shadow: 0 0 6px rgba(255,255,255,0.8);
-}
+    .cueball::before {
+      content: "";
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #d72626;
+      top: 2px;
+      left: 6px;
+      box-shadow: -4px 7px 0 #d72626, 4px 7px 0 #d72626;
+    }
 
-.cueball::before {
-  content: "";
-  position: absolute;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #d72626;
-  top: 2px;
-  left: 6px;
-  box-shadow:
-    -4px 7px 0 #d72626,
-    4px 7px 0 #d72626;
-}
+    .cueball.hidden { visibility: hidden; }
 
-.cueball.hidden {
-  visibility: hidden;
-}
+    .score-btn {
+      width: 100%;
+      min-height: 48px;
+      font-size: 1.6rem;
+      background: var(--btn);
+      color: white;
+      padding: 8px 10px;
+    }
 
-.score-btn {
-  width: 100%;
-  min-height: 48px;
-  font-size: 1.6rem;
-  background: var(--btn);
-  color: white;
-  padding: 8px 10px;
-}
+    .score-btn:hover { background: var(--btn-hover); }
 
-.score-btn:hover { background: var(--btn-hover); }
+    .score-display {
+      background: #0f0f0f;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      font-size: 3.1rem;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 82px;
+    }
 
-.score-display {
-  background: #0f0f0f;
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  font-size: 3.1rem;
-  font-weight: bold;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 82px;
-}
+    .separator {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      font-weight: bold;
+      color: var(--muted);
+    }
 
-.separator {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 2.2rem;
-  font-weight: bold;
-  color: var(--muted);
-  padding: 0;
-}
+    .preview-box {
+      margin-top: 8px;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      background: #0f0f0f;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+      min-height: 82px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      word-break: break-word;
+    }
 
-.preview-box {
-  margin-top: 8px;
-  padding: 18px;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  background: #0f0f0f;
-  text-align: center;
-  font-size: 1.5rem;
-  font-weight: bold;
-  min-height: 82px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  word-break: break-word;
-}
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-top: 6px;
+    }
 
-.actions {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  justify-content: center;
-  margin-top: 6px;
-}
+    .status {
+      margin-top: 10px;
+      text-align: center;
+      color: var(--muted);
+      min-height: 1.2em;
+    }
 
-.status {
-  margin-top: 10px;
-  text-align: center;
-  color: var(--muted);
-  min-height: 1.2em;
-}
+    .live-status {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 6px;
+      font-weight: bold;
+      color: var(--text);
+    }
 
-.live-status {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 6px;
-  font-weight: bold;
-  color: var(--text);
-}
+    .live-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #666;
+      box-shadow: 0 0 6px rgba(255,255,255,0.15);
+      flex: 0 0 10px;
+    }
 
-.live-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #666;
-  box-shadow: 0 0 6px rgba(255,255,255,0.15);
-  flex: 0 0 10px;
-}
+    .live-dot.ready {
+      background: #32d74b;
+      box-shadow: 0 0 8px rgba(50,215,75,0.7);
+    }
 
-.live-dot.ready {
-  background: #32d74b;
-  box-shadow: 0 0 8px rgba(50,215,75,0.7);
-}
+    .live-dot.waiting {
+      background: #ff9f0a;
+      box-shadow: 0 0 8px rgba(255,159,10,0.6);
+    }
 
-.live-dot.waiting {
-  background: #ff9f0a;
-  box-shadow: 0 0 8px rgba(255,159,10,0.6);
-}
+    .live-dot.error {
+      background: #ff453a;
+      box-shadow: 0 0 8px rgba(255,69,58,0.6);
+    }
 
-.live-dot.error {
-  background: #ff453a;
-  box-shadow: 0 0 8px rgba(255,69,58,0.6);
-}
+    @media (max-width: 760px) {
+      body {
+        padding: 10px;
+        align-items: flex-start;
+      }
 
-@media (max-width: 760px) {
-  body {
-    padding: 10px;
-    align-items: flex-start;
-  }
+      .app {
+        padding: 14px;
+        border-radius: 14px;
+      }
 
-  .app {
-    padding: 14px;
-    border-radius: 14px;
-  }
+      h1 {
+        font-size: 1.45rem;
+        margin-bottom: 4px;
+      }
 
-  h1 {
-    font-size: 1.45rem;
-    margin-bottom: 4px;
-  }
+      .subtitle {
+        margin-bottom: 14px;
+        font-size: 0.95rem;
+      }
 
-  .subtitle {
-    margin-bottom: 14px;
-    font-size: 0.95rem;
-  }
+      .scoreboard-wrap { gap: 12px; }
 
-  .scoreboard-wrap {
-    gap: 12px;
-  }
+      .scoreboard {
+        grid-template-columns: 1fr 22px 1fr;
+        gap: 8px;
+      }
 
-  .scoreboard {
-    grid-template-columns: 1fr 22px 1fr;
-    gap: 8px;
-  }
+      .player-card {
+        padding: 8px;
+        gap: 6px;
+      }
 
-  .player-card {
-    padding: 8px;
-    gap: 6px;
-  }
+      .player-name {
+        font-size: 0.95rem;
+        min-height: 2.1em;
+      }
 
-  .player-name {
-    font-size: 0.95rem;
-    min-height: 2.1em;
-  }
+      .score-btn {
+        min-height: 42px;
+        font-size: 1.35rem;
+        padding: 6px 8px;
+      }
 
-  .score-btn {
-    min-height: 42px;
-    font-size: 1.35rem;
-    padding: 6px 8px;
-  }
+      .score-display {
+        font-size: 2.3rem;
+        min-height: 66px;
+      }
 
-  .score-display {
-    font-size: 2.3rem;
-    min-height: 66px;
-  }
+      .separator { font-size: 1.5rem; }
 
-  .separator {
-    font-size: 1.5rem;
-  }
+      .preview-box {
+        margin-top: 0;
+        padding: 12px;
+        min-height: 58px;
+        font-size: 1rem;
+      }
 
-  .preview-box {
-    margin-top: 0;
-    padding: 12px;
-    min-height: 58px;
-    font-size: 1rem;
-  }
+      .actions {
+        gap: 8px;
+        margin-top: 0;
+      }
 
-  .actions {
-    gap: 8px;
-    margin-top: 0;
-  }
-
-  .actions button {
-    flex: 1 1 calc(50% - 8px);
-    padding: 12px 10px;
-    font-size: 0.92rem;
-  }
-}
-
+      .actions button {
+        flex: 1 1 calc(50% - 8px);
+        padding: 12px 10px;
+        font-size: 0.92rem;
+      }
+    }
   </style>
 </head>
 <body>
   <div class="app">
     <div id="loginScreen">
       <h1>Contrôleur Video Scoreboard</h1>
-      <div class="subtitle">Entrez le code d'accès.</div><div class="setup">
-    <div class="field">
-      <label for="pinInput">Code</label>
-      <input id="pinInput" type="password" inputmode="numeric" maxlength="12" placeholder="Code d'accès" />
-    </div>
+      <div class="subtitle">Entrez le code d'accès.</div>
 
-    <button id="loginBtn" class="primary">Valider</button>
-    <div class="status" id="loginStatus"></div>
-  </div>
-</div>
-
-<div id="mainApp" class="hidden">
-  <div id="setupScreen">
-    <h1>Contrôleur Video Scoreboard</h1>
-    <div class="subtitle">Entrez les noms des joueurs.</div>
-
-    <div class="setup">
-      <div class="field">
-        <label for="player1Input">Joueur 1</label>
-        <input id="player1Input" type="text" maxlength="30" placeholder="Nom du joueur 1" />
-      </div>
-
-      <div class="field">
-        <label for="player2Input">Joueur 2</label>
-        <input id="player2Input" type="text" maxlength="30" placeholder="Nom du joueur 2" />
-      </div>
-
-      <button id="startBtn" class="primary">Démarrer le score</button>
-      <div class="status" id="setupStatus"></div>
-    </div>
-  </div>
-
-  <div id="scoreboardScreen" class="hidden scoreboard-wrap">
-    <h1>Contrôleur Video Scoreboard</h1>
-
-    <div class="scoreboard">
-      <div class="player-card">
-        <div class="player-name" id="player1Name">
-          <span id="player1NameText">Joueur 1</span>
-          <span id="cue1" class="cueball"></span>
+      <div class="setup">
+        <div class="field">
+          <label for="pinInput">Code</label>
+          <input id="pinInput" type="password" inputmode="numeric" maxlength="12" placeholder="Code d'accès" />
         </div>
-        <button class="score-btn secondary" id="p1Plus">+</button>
-        <div class="score-display" id="score1Display">0</div>
-        <button class="score-btn secondary" id="p1Minus">−</button>
+
+        <button id="loginBtn" class="primary">Valider</button>
+        <div class="status" id="loginStatus"></div>
       </div>
+    </div>
 
-      <div class="separator">-</div>
+    <div id="mainApp" class="hidden">
+      <div id="setupScreen">
+        <h1>Contrôleur Video Scoreboard</h1>
+        <div class="subtitle">Entrez les noms des joueurs.</div>
 
-      <div class="player-card">
-        <div class="player-name" id="player2Name">
-          <span id="player2NameText">Joueur 2</span>
-          <span id="cue2" class="cueball hidden"></span>
+        <div class="setup">
+          <div class="field">
+            <label for="player1Input">Joueur 1</label>
+            <input id="player1Input" type="text" maxlength="30" placeholder="Nom du joueur 1" />
+          </div>
+
+          <div class="field">
+            <label for="player2Input">Joueur 2</label>
+            <input id="player2Input" type="text" maxlength="30" placeholder="Nom du joueur 2" />
+          </div>
+
+          <button id="startBtn" class="primary">Démarrer le score</button>
+          <div class="status" id="setupStatus"></div>
         </div>
-        <button class="score-btn secondary" id="p2Plus">+</button>
-        <div class="score-display" id="score2Display">0</div>
-        <button class="score-btn secondary" id="p2Minus">−</button>
+      </div>
+
+      <div id="scoreboardScreen" class="hidden scoreboard-wrap">
+        <h1>Contrôleur Video Scoreboard</h1>
+
+        <div class="scoreboard">
+          <div class="player-card">
+            <div class="player-name" id="player1Name">
+              <span id="player1NameText">Joueur 1</span>
+              <span id="cue1" class="cueball"></span>
+            </div>
+            <button class="score-btn secondary" id="p1Plus">+</button>
+            <div class="score-display" id="score1Display">0</div>
+            <button class="score-btn secondary" id="p1Minus">−</button>
+          </div>
+
+          <div class="separator">-</div>
+
+          <div class="player-card">
+            <div class="player-name" id="player2Name">
+              <span id="player2NameText">Joueur 2</span>
+              <span id="cue2" class="cueball hidden"></span>
+            </div>
+            <button class="score-btn secondary" id="p2Plus">+</button>
+            <div class="score-display" id="score2Display">0</div>
+            <button class="score-btn secondary" id="p2Minus">−</button>
+          </div>
+        </div>
+
+        <div class="preview-box" id="previewBox"></div>
+
+        <div class="actions">
+          <button class="secondary" id="moveLeftBtn">← Déplacer à gauche</button>
+          <button class="secondary" id="moveRightBtn">Déplacer à droite →</button>
+          <button class="danger" id="resetBtn">Réinitialiser</button>
+        </div>
+
+        <div class="live-status">
+          <span id="liveDot" class="live-dot waiting"></span>
+          <span id="liveStatusText">Connexion...</span>
+        </div>
+        <div class="status" id="scoreStatus"></div>
       </div>
     </div>
-
-    <div class="preview-box" id="previewBox"></div>
-
-    <div class="actions">
-      <button class="secondary" id="moveLeftBtn">← Déplacer à gauche</button>
-      <button class="secondary" id="moveRightBtn">Déplacer à droite →</button>
-      <button class="danger" id="resetBtn">Réinitialiser</button>
-    </div>
-
-    <div class="live-status"><span id="liveDot" class="live-dot waiting"></span><span id="liveStatusText">Connexion...</span></div>
-    <div class="status" id="scoreStatus"></div>
   </div>
-</div>
 
-  </div>  <script>
+  <script>
     const path = window.location.pathname.split("/").filter(Boolean);
     const DWEET_THING = path[0] || "cbc1";
     const MIN_RECT = { rect0: 3000, rect2: 4400 };
@@ -449,6 +432,7 @@ button:active { transform: translateY(0); }
     };
 
     let currentBreaker = 1;
+    let livePollTimer = null;
 
     const loginScreen = document.getElementById("loginScreen");
     const mainApp = document.getElementById("mainApp");
@@ -486,7 +470,6 @@ button:active { transform: translateY(0); }
       for (let i = 0; i < source.length; i += 1) {
         hash = (hash * 31 + source.charCodeAt(i)) % 1000000;
       }
-
       return String(hash).padStart(6, "0");
     }
 
@@ -499,31 +482,18 @@ button:active { transform: translateY(0); }
       return saved === getTodayPin() || saved === ADMIN_PIN;
     }
 
-    function grantAccess(pin) {
-      localStorage.setItem(getSessionKey(), pin);
-      loginScreen.classList.add("hidden");
-      mainApp.classList.remove("hidden");
-      pinInput.value = "";
-      loginStatus.textContent = "";
-    }
-
-    function tryLogin() {
-      const entered = pinInput.value.trim();
-      const todayPin = getTodayPin();
-
-      if (entered === todayPin || entered === ADMIN_PIN) {
-        grantAccess(entered);
-      } else {
-        loginStatus.textContent = "Code incorrect.";
-      }
-    }
-
     function prefillPinFromUrl() {
       const params = new URLSearchParams(window.location.search);
       const prefill = params.get("pin");
       if (prefill) {
         pinInput.value = prefill;
       }
+    }
+
+    function setLiveStatus(mode, text) {
+      liveDot.classList.remove("ready", "waiting", "error");
+      if (mode) liveDot.classList.add(mode);
+      liveStatusText.textContent = text;
     }
 
     function updateCue() {
@@ -536,25 +506,92 @@ button:active { transform: translateY(0); }
       }
     }
 
-    function setLiveStatus(mode, text) {
-      liveDot.classList.remove("ready", "waiting", "error");
-      if (mode) liveDot.classList.add(mode);
-      liveStatusText.textContent = text;
+    function buildDisplayString() {
+      return `${state.player1} ${state.score1} - ${state.score2} ${state.player2}`;
+    }
+
+    function renderScoreboard() {
+      player1NameText.textContent = state.player1;
+      player2NameText.textContent = state.player2;
+      score1Display.textContent = state.score1;
+      score2Display.textContent = state.score2;
+      previewBox.textContent = state.visible ? buildDisplayString() : "";
+      updateCue();
+    }
+
+    async function fetchLatestDweet() {
+      const response = await fetch(`https://dweet.cc/get/latest/dweet/for/${encodeURIComponent(DWEET_THING)}?t=${Date.now()}`, {
+        method: "GET",
+        cache: "no-store"
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data && data.with && data.with.length ? data.with[0].content : null;
+    }
+
+    function restoreFromContent(latest) {
+      if (!latest) {
+        setupScreen.classList.remove("hidden");
+        scoreboardScreen.classList.add("hidden");
+        return;
+      }
+
+      const latestVisible = String(latest.visible ?? "1").trim();
+      const latestDisplay = String(latest.display || "").trim();
+
+      const rect0 = parseInt(latest.rect0 ?? DEFAULT_RECT.rect0, 10);
+      const rect2 = parseInt(latest.rect2 ?? DEFAULT_RECT.rect2, 10);
+      state.rect0 = Number.isFinite(rect0) ? rect0 : DEFAULT_RECT.rect0;
+      state.rect2 = Number.isFinite(rect2) ? rect2 : DEFAULT_RECT.rect2;
+
+      if (latestVisible === "0" || !latestDisplay) {
+        state.player1 = "";
+        state.player2 = "";
+        state.score1 = 0;
+        state.score2 = 0;
+        state.visible = 0;
+        currentBreaker = 1;
+        renderScoreboard();
+        setupScreen.classList.remove("hidden");
+        scoreboardScreen.classList.add("hidden");
+        return;
+      }
+
+      const match = latestDisplay.match(/^(.*)\s+(\d+)\s+-\s+(\d+)\s+(.*)$/);
+      if (match) {
+        state.player1 = match[1].trim() || "Joueur 1";
+        state.score1 = parseInt(match[2], 10) || 0;
+        state.score2 = parseInt(match[3], 10) || 0;
+        state.player2 = match[4].trim() || "Joueur 2";
+        state.visible = 1;
+        currentBreaker = 1;
+        renderScoreboard();
+        setupScreen.classList.add("hidden");
+        scoreboardScreen.classList.remove("hidden");
+      } else {
+        setupScreen.classList.remove("hidden");
+        scoreboardScreen.classList.add("hidden");
+      }
+    }
+
+    async function restoreFromLatestDweet() {
+      try {
+        const latest = await fetchLatestDweet();
+        restoreFromContent(latest);
+      } catch (error) {
+        console.error(error);
+        setupScreen.classList.remove("hidden");
+        scoreboardScreen.classList.add("hidden");
+      }
     }
 
     async function checkLatestDweet() {
       try {
-        const response = await fetch(`https://dweet.cc/get/latest/dweet/for/${encodeURIComponent(DWEET_THING)}?t=${Date.now()}`, {
-          method: "GET",
-          cache: "no-store"
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const data = await response.json();
-        const latest = data && data.with && data.with.length ? data.with[0].content : null;
+        const latest = await fetchLatestDweet();
 
         if (!latest) {
           setLiveStatus("waiting", "En attente...");
@@ -578,21 +615,9 @@ button:active { transform: translateY(0); }
     }
 
     function startLivePolling() {
+      if (livePollTimer) return;
       checkLatestDweet();
-      window.setInterval(checkLatestDweet, 1000);
-    }
-
-    function buildDisplayString() {
-      return `${state.player1} ${state.score1} - ${state.score2} ${state.player2}`;
-    }
-
-    function renderScoreboard() {
-      player1NameText.textContent = state.player1;
-      player2NameText.textContent = state.player2;
-      score1Display.textContent = state.score1;
-      score2Display.textContent = state.score2;
-      previewBox.textContent = state.visible ? buildDisplayString() : "";
-      updateCue();
+      livePollTimer = window.setInterval(checkLatestDweet, 1000);
     }
 
     async function sendState(statusElement) {
@@ -622,6 +647,26 @@ button:active { transform: translateY(0); }
 
       statusElement.textContent = "Commande envoyée.";
       setLiveStatus("waiting", "Synchronisation...");
+    }
+
+    async function grantAccess(pin) {
+      localStorage.setItem(getSessionKey(), pin);
+      loginScreen.classList.add("hidden");
+      mainApp.classList.remove("hidden");
+      pinInput.value = "";
+      loginStatus.textContent = "";
+      await restoreFromLatestDweet();
+    }
+
+    async function tryLogin() {
+      const entered = pinInput.value.trim();
+      const todayPin = getTodayPin();
+
+      if (entered === todayPin || entered === ADMIN_PIN) {
+        await grantAccess(entered);
+      } else {
+        loginStatus.textContent = "Code incorrect.";
+      }
     }
 
     async function startScoreboard() {
@@ -662,7 +707,7 @@ button:active { transform: translateY(0); }
       }
     }
 
-    loginBtn.addEventListener("click", tryLogin);
+    loginBtn.addEventListener("click", () => { tryLogin(); });
 
     pinInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") tryLogin();
@@ -756,15 +801,16 @@ button:active { transform: translateY(0); }
     });
 
     prefillPinFromUrl();
-
     startLivePolling();
 
     if (isAuthorised()) {
       loginScreen.classList.add("hidden");
       mainApp.classList.remove("hidden");
+      restoreFromLatestDweet();
     } else {
       loginScreen.classList.remove("hidden");
       mainApp.classList.add("hidden");
     }
-  </script></body>
+  </script>
+</body>
 </html>
