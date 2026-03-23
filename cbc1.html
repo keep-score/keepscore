@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="fr">
+<!DOCTYPE html><html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,7 +10,6 @@
       --panel-2: #202020;
       --text: #f4f4f4;
       --muted: #b8b8b8;
-      --accent: #ffffff;
       --danger: #b3261e;
       --danger-hover: #8f1f19;
       --btn: #2a2a2a;
@@ -19,423 +17,391 @@
       --green: #1f6f3f;
       --green-hover: #185832;
       --border: #3d3d3d;
-      --ok: #2ecc71;
-      --warn: #f39c12;
-      --err: #e74c3c;
-    }
+    }* { box-sizing: border-box; }
 
-    * { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
 
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-    }
+.app {
+  width: 100%;
+  max-width: 900px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 24px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
 
-    .app {
-      width: 100%;
-      max-width: 900px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
-    }
+h1 {
+  margin: 0 0 8px;
+  font-size: 2rem;
+  text-align: center;
+}
 
-    h1 {
-      margin: 0 0 8px;
-      font-size: 2rem;
-      text-align: center;
-    }
+.subtitle {
+  text-align: center;
+  color: var(--muted);
+  margin-bottom: 24px;
+}
 
-    .subtitle {
-      text-align: center;
-      color: var(--muted);
-      margin-bottom: 24px;
-    }
+.hidden { display: none !important; }
 
-    .hidden { display: none !important; }
+.setup {
+  display: grid;
+  gap: 16px;
+  max-width: 520px;
+  margin: 0 auto;
+}
 
-    .setup {
-      display: grid;
-      gap: 16px;
-      max-width: 520px;
-      margin: 0 auto;
-    }
+.field {
+  display: grid;
+  gap: 8px;
+}
 
-    .field {
-      display: grid;
-      gap: 8px;
-    }
+label {
+  font-weight: bold;
+}
 
-    label {
-      font-weight: bold;
-    }
+input {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 1rem;
+}
 
-    input {
-      width: 100%;
-      padding: 14px 16px;
-      border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--panel-2);
-      color: var(--text);
-      font-size: 1rem;
-    }
+button {
+  border: none;
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
 
-    button {
-      border: none;
-      border-radius: 12px;
-      padding: 14px 18px;
-      font-size: 1rem;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.15s ease;
-    }
+button:hover { transform: translateY(-1px); }
+button:active { transform: translateY(0); }
 
-    button:hover { transform: translateY(-1px); }
-    button:active { transform: translateY(0); }
+.primary {
+  background: var(--green);
+  color: white;
+}
+.primary:hover { background: var(--green-hover); }
 
-    .primary {
-      background: var(--green);
-      color: white;
-    }
-    .primary:hover { background: var(--green-hover); }
+.secondary {
+  background: var(--btn);
+  color: white;
+}
+.secondary:hover { background: var(--btn-hover); }
 
-    .secondary {
-      background: var(--btn);
-      color: white;
-    }
-    .secondary:hover { background: var(--btn-hover); }
+.danger {
+  background: var(--danger);
+  color: white;
+}
+.danger:hover { background: var(--danger-hover); }
 
-    .danger {
-      background: var(--danger);
-      color: white;
-    }
-    .danger:hover { background: var(--danger-hover); }
+.scoreboard-wrap {
+  display: grid;
+  gap: 20px;
+}
 
-    .scoreboard-wrap {
-      display: grid;
-      gap: 20px;
-    }
+.scoreboard {
+  display: grid;
+  grid-template-columns: 1fr 34px 1fr;
+  gap: 10px;
+  align-items: stretch;
+}
 
-    .scoreboard {
-      display: grid;
-      grid-template-columns: 1fr 34px 1fr;
-      gap: 10px;
-      align-items: stretch;
-    }
+.player-card {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 10px;
+  display: grid;
+  grid-template-rows: auto auto auto auto;
+  gap: 8px;
+  min-height: 0;
+}
 
-    .player-card {
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 10px;
-      display: grid;
-      grid-template-rows: auto auto auto auto;
-      gap: 8px;
-      min-height: 0;
-    }
+.player-name {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: bold;
+  min-height: 2.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  word-break: break-word;
+  line-height: 1.1;
+  cursor: pointer;
+}
 
-    .player-name {
-      text-align: center;
-      font-size: 1.1rem;
-      font-weight: bold;
-      min-height: 2.2em;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      word-break: break-word;
-      line-height: 1.1;
-      cursor: pointer;
-    }
+.cueball {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  display: inline-block;
+  position: relative;
+  flex: 0 0 16px;
+  box-shadow: 0 0 6px rgba(255,255,255,0.8);
+}
 
-    .cueball {
-      width: 16px;
-      height: 16px;
-      border-radius: 50%;
-      background: white;
-      display: inline-block;
-      position: relative;
-      flex: 0 0 16px;
-      box-shadow: 0 0 6px rgba(255,255,255,0.8);
-    }
+.cueball::before {
+  content: "";
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #d72626;
+  top: 2px;
+  left: 6px;
+  box-shadow:
+    -4px 7px 0 #d72626,
+    4px 7px 0 #d72626;
+}
 
-    .cueball::before {
-      content: "";
-      position: absolute;
-      width: 4px;
-      height: 4px;
-      border-radius: 50%;
-      background: #d72626;
-      top: 2px;
-      left: 6px;
-      box-shadow:
-        -4px 7px 0 #d72626,
-        4px 7px 0 #d72626;
-    }
+.cueball.hidden {
+  visibility: hidden;
+}
 
-    .cueball.hidden {
-      visibility: hidden;
-    }
+.score-btn {
+  width: 100%;
+  min-height: 48px;
+  font-size: 1.6rem;
+  background: var(--btn);
+  color: white;
+  padding: 8px 10px;
+}
 
-    .score-btn {
-      width: 100%;
-      min-height: 48px;
-      font-size: 1.6rem;
-      background: var(--btn);
-      color: white;
-      padding: 8px 10px;
-    }
+.score-btn:hover { background: var(--btn-hover); }
 
-    .score-btn:hover { background: var(--btn-hover); }
+.score-display {
+  background: #0f0f0f;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  font-size: 3.1rem;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 82px;
+}
 
-    .score-display {
-      background: #0f0f0f;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      font-size: 3.1rem;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 82px;
-    }
+.separator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.2rem;
+  font-weight: bold;
+  color: var(--muted);
+  padding: 0;
+}
 
-    .separator {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.2rem;
-      font-weight: bold;
-      color: var(--muted);
-      padding: 0;
-    }
+.preview-box {
+  margin-top: 8px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: #0f0f0f;
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: bold;
+  min-height: 82px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  word-break: break-word;
+}
 
-    .preview-box {
-      margin-top: 8px;
-      padding: 18px;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      background: #0f0f0f;
-      text-align: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-      min-height: 82px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      word-break: break-word;
-    }
+.actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 6px;
+}
 
-    .actions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 6px;
-    }
+.status {
+  margin-top: 10px;
+  text-align: center;
+  color: var(--muted);
+  min-height: 1.2em;
+}
 
-    .status {
-      margin-top: 10px;
-      text-align: center;
-      min-height: 1.6em;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      color: var(--muted);
-      font-weight: bold;
-    }
+@media (max-width: 760px) {
+  body {
+    padding: 10px;
+    align-items: flex-start;
+  }
 
-    .status-light {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      display: inline-block;
-      background: var(--muted);
-      box-shadow: 0 0 8px currentColor;
-      color: var(--muted);
-      flex: 0 0 10px;
-    }
+  .app {
+    padding: 14px;
+    border-radius: 14px;
+  }
 
-    .status.ok {
-      color: var(--ok);
-    }
+  h1 {
+    font-size: 1.45rem;
+    margin-bottom: 4px;
+  }
 
-    .status.ok .status-light {
-      background: var(--ok);
-      color: var(--ok);
-    }
+  .subtitle {
+    margin-bottom: 14px;
+    font-size: 0.95rem;
+  }
 
-    .status.warn {
-      color: var(--warn);
-    }
+  .scoreboard-wrap {
+    gap: 12px;
+  }
 
-    .status.warn .status-light {
-      background: var(--warn);
-      color: var(--warn);
-    }
+  .scoreboard {
+    grid-template-columns: 1fr 22px 1fr;
+    gap: 8px;
+  }
 
-    .status.err {
-      color: var(--err);
-    }
+  .player-card {
+    padding: 8px;
+    gap: 6px;
+  }
 
-    .status.err .status-light {
-      background: var(--err);
-      color: var(--err);
-    }
+  .player-name {
+    font-size: 0.95rem;
+    min-height: 2.1em;
+  }
 
-    @media (max-width: 760px) {
-      body {
-        padding: 10px;
-        align-items: flex-start;
-      }
+  .score-btn {
+    min-height: 42px;
+    font-size: 1.35rem;
+    padding: 6px 8px;
+  }
 
-      .app {
-        padding: 14px;
-        border-radius: 14px;
-      }
+  .score-display {
+    font-size: 2.3rem;
+    min-height: 66px;
+  }
 
-      h1 {
-        font-size: 1.45rem;
-        margin-bottom: 4px;
-      }
+  .separator {
+    font-size: 1.5rem;
+  }
 
-      .subtitle {
-        margin-bottom: 14px;
-        font-size: 0.95rem;
-      }
+  .preview-box {
+    margin-top: 0;
+    padding: 12px;
+    min-height: 58px;
+    font-size: 1rem;
+  }
 
-      .scoreboard-wrap {
-        gap: 12px;
-      }
+  .actions {
+    gap: 8px;
+    margin-top: 0;
+  }
 
-      .scoreboard {
-        grid-template-columns: 1fr 22px 1fr;
-        gap: 8px;
-      }
+  .actions button {
+    flex: 1 1 calc(50% - 8px);
+    padding: 12px 10px;
+    font-size: 0.92rem;
+  }
+}
 
-      .player-card {
-        padding: 8px;
-        gap: 6px;
-      }
-
-      .player-name {
-        font-size: 0.95rem;
-        min-height: 2.1em;
-      }
-
-      .score-btn {
-        min-height: 42px;
-        font-size: 1.35rem;
-        padding: 6px 8px;
-      }
-
-      .score-display {
-        font-size: 2.3rem;
-        min-height: 66px;
-      }
-
-      .separator {
-        font-size: 1.5rem;
-      }
-
-      .preview-box {
-        margin-top: 0;
-        padding: 12px;
-        min-height: 58px;
-        font-size: 1rem;
-      }
-
-      .actions {
-        gap: 8px;
-        margin-top: 0;
-      }
-
-      .actions button {
-        flex: 1 1 calc(50% - 8px);
-        padding: 12px 10px;
-        font-size: 0.92rem;
-      }
-    }
   </style>
 </head>
 <body>
   <div class="app">
-    <div id="setupScreen">
+    <div id="loginScreen">
       <h1>Contrôleur Video Scoreboard</h1>
-      <div class="subtitle">Entrez les noms des joueurs.</div>
-
-      <div class="setup">
-        <div class="field">
-          <label for="player1Input">Joueur 1</label>
-          <input id="player1Input" type="text" maxlength="30" placeholder="Nom du joueur 1" />
-        </div>
-
-        <div class="field">
-          <label for="player2Input">Joueur 2</label>
-          <input id="player2Input" type="text" maxlength="30" placeholder="Nom du joueur 2" />
-        </div>
-
-        <button id="startBtn" class="primary">Démarrer le score</button>
-        <div class="status ok" id="setupStatus"><span class="status-light"></span><span class="status-text">Prêt</span></div>
-      </div>
+      <div class="subtitle">Entrez le code d'accès.</div><div class="setup">
+    <div class="field">
+      <label for="pinInput">Code</label>
+      <input id="pinInput" type="password" inputmode="numeric" maxlength="12" placeholder="Code d'accès" />
     </div>
 
-    <div id="scoreboardScreen" class="hidden scoreboard-wrap">
-      <h1>Contrôleur Video Scoreboard</h1>
+    <button id="loginBtn" class="primary">Valider</button>
+    <div class="status" id="loginStatus"></div>
+  </div>
+</div>
 
-      <div class="scoreboard">
-        <div class="player-card">
-          <div class="player-name" id="player1Name">
-            <span id="player1NameText">Joueur 1</span>
-            <span id="cue1" class="cueball"></span>
-          </div>
-          <button class="score-btn secondary" id="p1Plus">+</button>
-          <div class="score-display" id="score1Display">0</div>
-          <button class="score-btn secondary" id="p1Minus">−</button>
-        </div>
+<div id="mainApp" class="hidden">
+  <div id="setupScreen">
+    <h1>Contrôleur Video Scoreboard</h1>
+    <div class="subtitle">Entrez les noms des joueurs.</div>
 
-        <div class="separator">-</div>
-
-        <div class="player-card">
-          <div class="player-name" id="player2Name">
-            <span id="player2NameText">Joueur 2</span>
-            <span id="cue2" class="cueball hidden"></span>
-          </div>
-          <button class="score-btn secondary" id="p2Plus">+</button>
-          <div class="score-display" id="score2Display">0</div>
-          <button class="score-btn secondary" id="p2Minus">−</button>
-        </div>
+    <div class="setup">
+      <div class="field">
+        <label for="player1Input">Joueur 1</label>
+        <input id="player1Input" type="text" maxlength="30" placeholder="Nom du joueur 1" />
       </div>
 
-      <div class="preview-box" id="previewBox"></div>
-
-      <div class="actions">
-        <button class="secondary" id="moveLeftBtn">← Déplacer à gauche</button>
-        <button class="secondary" id="moveRightBtn">Déplacer à droite →</button>
-        <button class="danger" id="resetBtn">Réinitialiser</button>
+      <div class="field">
+        <label for="player2Input">Joueur 2</label>
+        <input id="player2Input" type="text" maxlength="30" placeholder="Nom du joueur 2" />
       </div>
 
-      <div class="status ok" id="scoreStatus"><span class="status-light"></span><span class="status-text">Prêt</span></div>
+      <button id="startBtn" class="primary">Démarrer le score</button>
+      <div class="status" id="setupStatus"></div>
     </div>
   </div>
 
-  <script>
+  <div id="scoreboardScreen" class="hidden scoreboard-wrap">
+    <h1>Contrôleur Video Scoreboard</h1>
+
+    <div class="scoreboard">
+      <div class="player-card">
+        <div class="player-name" id="player1Name">
+          <span id="player1NameText">Joueur 1</span>
+          <span id="cue1" class="cueball"></span>
+        </div>
+        <button class="score-btn secondary" id="p1Plus">+</button>
+        <div class="score-display" id="score1Display">0</div>
+        <button class="score-btn secondary" id="p1Minus">−</button>
+      </div>
+
+      <div class="separator">-</div>
+
+      <div class="player-card">
+        <div class="player-name" id="player2Name">
+          <span id="player2NameText">Joueur 2</span>
+          <span id="cue2" class="cueball hidden"></span>
+        </div>
+        <button class="score-btn secondary" id="p2Plus">+</button>
+        <div class="score-display" id="score2Display">0</div>
+        <button class="score-btn secondary" id="p2Minus">−</button>
+      </div>
+    </div>
+
+    <div class="preview-box" id="previewBox"></div>
+
+    <div class="actions">
+      <button class="secondary" id="moveLeftBtn">← Déplacer à gauche</button>
+      <button class="secondary" id="moveRightBtn">Déplacer à droite →</button>
+      <button class="danger" id="resetBtn">Réinitialiser</button>
+    </div>
+
+    <div class="status" id="scoreStatus"></div>
+  </div>
+</div>
+
+  </div>  <script>
     const path = window.location.pathname.split("/").filter(Boolean);
     const DWEET_THING = path[0] || "cbc1";
     const MIN_RECT = { rect0: 3000, rect2: 4400 };
     const MAX_RECT = { rect0: 6000, rect2: 7400 };
     const RECT_STEP = 200;
     const DEFAULT_RECT = { rect0: 4000, rect2: 5400 };
-    const DEFAULT_DISPLAY = "Joueur 1 0 - 0 Joueur 2";
+    const ADMIN_PIN = "2481";
+    const PIN_SECRET = "cbc-club-secret";
 
     const state = {
       player1: "",
@@ -445,12 +411,15 @@
       rect0: DEFAULT_RECT.rect0,
       rect2: DEFAULT_RECT.rect2,
       visible: 1,
-      breaker: 1,
     };
 
     let currentBreaker = 1;
-    let lastSeenRemoteKey = "";
-    let isPolling = false;
+
+    const loginScreen = document.getElementById("loginScreen");
+    const mainApp = document.getElementById("mainApp");
+    const pinInput = document.getElementById("pinInput");
+    const loginBtn = document.getElementById("loginBtn");
+    const loginStatus = document.getElementById("loginStatus");
 
     const setupScreen = document.getElementById("setupScreen");
     const scoreboardScreen = document.getElementById("scoreboardScreen");
@@ -469,15 +438,58 @@
     const cue1 = document.getElementById("cue1");
     const cue2 = document.getElementById("cue2");
 
-    function setStatus(el, type, text) {
-      el.className = `status ${type}`;
-      el.innerHTML = `<span class="status-light"></span><span class="status-text">${text}</span>`;
+    function getTodayPin() {
+      const now = new Date();
+      const yyyy = now.getFullYear();
+      const mm = String(now.getMonth() + 1).padStart(2, "0");
+      const dd = String(now.getDate()).padStart(2, "0");
+      const source = `${PIN_SECRET}-${yyyy}${mm}${dd}-${DWEET_THING}`;
+
+      let hash = 0;
+      for (let i = 0; i < source.length; i += 1) {
+        hash = (hash * 31 + source.charCodeAt(i)) % 1000000;
+      }
+
+      return String(hash).padStart(6, "0");
+    }
+
+    function getSessionKey() {
+      return `score-auth-${DWEET_THING}`;
+    }
+
+    function isAuthorised() {
+      const saved = localStorage.getItem(getSessionKey());
+      return saved === getTodayPin() || saved === ADMIN_PIN;
+    }
+
+    function grantAccess(pin) {
+      localStorage.setItem(getSessionKey(), pin);
+      loginScreen.classList.add("hidden");
+      mainApp.classList.remove("hidden");
+      pinInput.value = "";
+      loginStatus.textContent = "";
+    }
+
+    function tryLogin() {
+      const entered = pinInput.value.trim();
+      const todayPin = getTodayPin();
+
+      if (entered === todayPin || entered === ADMIN_PIN) {
+        grantAccess(entered);
+      } else {
+        loginStatus.textContent = "Code incorrect.";
+      }
+    }
+
+    function prefillPinFromUrl() {
+      const params = new URLSearchParams(window.location.search);
+      const prefill = params.get("pin");
+      if (prefill) {
+        pinInput.value = prefill;
+      }
     }
 
     function updateCue() {
-      currentBreaker = currentBreaker === 2 ? 2 : 1;
-      state.breaker = currentBreaker;
-
       if (currentBreaker === 1) {
         cue1.classList.remove("hidden");
         cue2.classList.add("hidden");
@@ -500,167 +512,17 @@
       updateCue();
     }
 
-    function parseDisplayString(display) {
-      const match = String(display).match(/^(.*?)\s+(\d+)\s*-\s*(\d+)\s+(.*?)$/);
-      if (!match) return null;
-
-      return {
-        player1: match[1].trim(),
-        score1: Number(match[2]),
-        score2: Number(match[3]),
-        player2: match[4].trim(),
-      };
-    }
-
-    function isDefaultMatchState(display, visible) {
-      return !visible || String(display).trim() === DEFAULT_DISPLAY;
-    }
-
-    function makeRemoteKey(latest) {
-      return JSON.stringify({
-        display: latest.display ?? "",
-        rect0: latest.rect0 ?? "",
-        rect2: latest.rect2 ?? "",
-        visible: latest.visible ?? "",
-        breaker: latest.breaker ?? "",
-        created: latest.created ?? ""
-      });
-    }
-
-    async function fetchLatestState() {
-      const url = `https://dweet.cc/get/latest/dweet/for/${encodeURIComponent(DWEET_THING)}?ts=${Date.now()}`;
-      const response = await fetch(url, { method: "GET", cache: "no-store" });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      const data = await response.json();
-      const latest = data?.with?.[0];
-
-      if (!latest?.content) return null;
-
-      return {
-        ...latest.content,
-        created: latest.created || ""
-      };
-    }
-
-    function applyRemoteState(latest) {
-      const latestDisplay = typeof latest.display === "string" ? latest.display.trim() : "";
-      const latestVisible = Number(latest.visible ?? 1);
-
-      if (isDefaultMatchState(latestDisplay, latestVisible)) {
-        player1Input.value = "";
-        player2Input.value = "";
-
-        state.player1 = "";
-        state.player2 = "";
-        state.score1 = 0;
-        state.score2 = 0;
-        state.rect0 = DEFAULT_RECT.rect0;
-        state.rect2 = DEFAULT_RECT.rect2;
-        state.visible = 1;
-        state.breaker = 1;
-        currentBreaker = 1;
-
-        renderScoreboard();
-        setupScreen.classList.remove("hidden");
-        scoreboardScreen.classList.add("hidden");
-        setStatus(setupStatus, "ok", "Prêt");
-        return;
-      }
-
-      const parsed = parseDisplayString(latestDisplay);
-      if (!parsed) return;
-
-      state.player1 = parsed.player1 || "Joueur 1";
-      state.player2 = parsed.player2 || "Joueur 2";
-      state.score1 = Number.isFinite(parsed.score1) ? parsed.score1 : 0;
-      state.score2 = Number.isFinite(parsed.score2) ? parsed.score2 : 0;
-      state.rect0 = Number(latest.rect0) || DEFAULT_RECT.rect0;
-      state.rect2 = Number(latest.rect2) || DEFAULT_RECT.rect2;
-      state.visible = latestVisible ? 1 : 0;
-
-      currentBreaker = Number(latest.breaker) === 2 ? 2 : 1;
-      state.breaker = currentBreaker;
-
-      renderScoreboard();
-      setupScreen.classList.add("hidden");
-      scoreboardScreen.classList.remove("hidden");
-      setStatus(scoreStatus, "ok", "Prêt");
-    }
-
-    async function restoreExistingMatchIfAny() {
-      setStatus(setupStatus, "warn", "Vérification...");
-
-      try {
-        const latest = await fetchLatestState();
-
-        if (!latest) {
-          setStatus(setupStatus, "ok", "Prêt");
-          return;
-        }
-
-        lastSeenRemoteKey = makeRemoteKey(latest);
-        applyRemoteState(latest);
-
-        if (scoreboardScreen.classList.contains("hidden")) {
-          setStatus(setupStatus, "ok", "Prêt");
-        } else {
-          setStatus(scoreStatus, "ok", "Prêt");
-        }
-      } catch (error) {
-        console.error(error);
-        setStatus(setupStatus, "err", "Erreur de connexion");
-      }
-    }
-
-    async function pollForRemoteChanges() {
-      if (isPolling) return;
-      isPolling = true;
-
-      try {
-        const latest = await fetchLatestState();
-        if (!latest) return;
-
-        const remoteKey = makeRemoteKey(latest);
-        if (remoteKey === lastSeenRemoteKey) return;
-
-        lastSeenRemoteKey = remoteKey;
-        applyRemoteState(latest);
-
-        if (!scoreboardScreen.classList.contains("hidden")) {
-          setStatus(scoreStatus, "ok", "Prêt");
-        } else {
-          setStatus(setupStatus, "ok", "Prêt");
-        }
-      } catch (error) {
-        console.error("Polling error:", error);
-        if (!scoreboardScreen.classList.contains("hidden")) {
-          setStatus(scoreStatus, "err", "Erreur de synchronisation");
-        } else {
-          setStatus(setupStatus, "err", "Erreur de synchronisation");
-        }
-      } finally {
-        isPolling = false;
-      }
-    }
-
     async function sendState(statusElement) {
-      state.breaker = currentBreaker;
-
       const params = new URLSearchParams({
         display: buildDisplayString(),
         rect0: String(state.rect0),
         rect2: String(state.rect2),
         visible: String(state.visible),
-        breaker: String(state.breaker),
         ts: String(Date.now())
       });
 
       const url = `https://dweet.cc/dweet/for/${encodeURIComponent(DWEET_THING)}?${params.toString()}`;
-      setStatus(statusElement, "warn", "Synchronisation...");
+      statusElement.textContent = "Envoi en cours...";
 
       const response = await fetch(url, { method: "GET", cache: "no-store" });
       const raw = await response.text();
@@ -675,16 +537,7 @@
         console.warn("Réponse non JSON ou vide:", raw);
       }
 
-      setStatus(statusElement, "ok", "Prêt");
-
-      lastSeenRemoteKey = JSON.stringify({
-        display: buildDisplayString(),
-        rect0: state.rect0,
-        rect2: state.rect2,
-        visible: state.visible,
-        breaker: state.breaker,
-        created: ""
-      });
+      statusElement.textContent = "Commande envoyée.";
     }
 
     async function startScoreboard() {
@@ -698,19 +551,18 @@
       state.rect0 = DEFAULT_RECT.rect0;
       state.rect2 = DEFAULT_RECT.rect2;
       state.visible = 1;
-      state.breaker = 1;
       currentBreaker = 1;
 
       renderScoreboard();
 
       try {
         await sendState(setupStatus);
+        setupStatus.textContent = "Score démarré.";
         setupScreen.classList.add("hidden");
         scoreboardScreen.classList.remove("hidden");
-        setStatus(scoreStatus, "ok", "Prêt");
       } catch (error) {
         console.error(error);
-        setStatus(setupStatus, "err", "Erreur d'envoi");
+        setupStatus.textContent = "Erreur lors de l'envoi à dweet.";
       }
     }
 
@@ -722,9 +574,15 @@
         await sendState(scoreStatus);
       } catch (error) {
         console.error(error);
-        setStatus(scoreStatus, "err", "Erreur d'envoi");
+        scoreStatus.textContent = "Erreur lors de l'envoi à dweet.";
       }
     }
+
+    loginBtn.addEventListener("click", tryLogin);
+
+    pinInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") tryLogin();
+    });
 
     startBtn.addEventListener("click", startScoreboard);
 
@@ -736,20 +594,19 @@
       if (e.key === "Enter") startScoreboard();
     });
 
-    player1Name.addEventListener("click", () => updateAndSend(() => {
+    player1Name.addEventListener("click", () => {
       currentBreaker = currentBreaker === 1 ? 2 : 1;
-      state.breaker = currentBreaker;
-    }));
+      updateCue();
+    });
 
-    player2Name.addEventListener("click", () => updateAndSend(() => {
+    player2Name.addEventListener("click", () => {
       currentBreaker = currentBreaker === 1 ? 2 : 1;
-      state.breaker = currentBreaker;
-    }));
+      updateCue();
+    });
 
     document.getElementById("p1Plus").addEventListener("click", () => updateAndSend(() => {
       state.score1 += 1;
       currentBreaker = currentBreaker === 1 ? 2 : 1;
-      state.breaker = currentBreaker;
     }));
 
     document.getElementById("p1Minus").addEventListener("click", () => updateAndSend(() => {
@@ -759,7 +616,6 @@
     document.getElementById("p2Plus").addEventListener("click", () => updateAndSend(() => {
       state.score2 += 1;
       currentBreaker = currentBreaker === 1 ? 2 : 1;
-      state.breaker = currentBreaker;
     }));
 
     document.getElementById("p2Minus").addEventListener("click", () => updateAndSend(() => {
@@ -791,34 +647,38 @@
       state.rect0 = DEFAULT_RECT.rect0;
       state.rect2 = DEFAULT_RECT.rect2;
       state.visible = 1;
-      state.breaker = 1;
       currentBreaker = 1;
       renderScoreboard();
 
       try {
         await sendState(scoreStatus);
         state.visible = 0;
-        state.breaker = 1;
-        currentBreaker = 1;
         renderScoreboard();
         await sendState(scoreStatus);
 
         player1Input.value = "";
         player2Input.value = "";
+        setupStatus.textContent = "";
+        scoreStatus.textContent = "";
         setupScreen.classList.remove("hidden");
         scoreboardScreen.classList.add("hidden");
-        setStatus(setupStatus, "ok", "Prêt");
       } catch (error) {
         console.error(error);
         Object.assign(state, previous);
         currentBreaker = previousBreaker;
         renderScoreboard();
-        setStatus(scoreStatus, "err", "Erreur de réinitialisation");
+        scoreStatus.textContent = "Erreur lors de la réinitialisation.";
       }
     });
 
-    restoreExistingMatchIfAny();
-    setInterval(pollForRemoteChanges, 1000);
-  </script>
-</body>
+    prefillPinFromUrl();
+
+    if (isAuthorised()) {
+      loginScreen.classList.add("hidden");
+      mainApp.classList.remove("hidden");
+    } else {
+      loginScreen.classList.remove("hidden");
+      mainApp.classList.add("hidden");
+    }
+  </script></body>
 </html>
