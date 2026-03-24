@@ -170,18 +170,27 @@
       display: inline-block;
     }
 
-    .cueball::before {
-      content: "";
+    .cueball .dot {
       position: absolute;
       width: 16%;
       height: 16%;
       border-radius: 50%;
       background: #cf1f1f;
-      top: 18%;
+    }
+
+    .cueball .dot-top {
+      top: 16%;
       left: 42%;
-      box-shadow:
-        -26% 46% 0 #cf1f1f,
-         26% 46% 0 #cf1f1f;
+    }
+
+    .cueball .dot-left {
+      top: 56%;
+      left: 24%;
+    }
+
+    .cueball .dot-right {
+      top: 56%;
+      right: 24%;
     }
 
     .cueball.hidden {
@@ -368,7 +377,13 @@
         <div class="player-panel player-red">
           <div class="player-name" id="player1Name">
             <span class="player-name-text" id="player1NameText">JOUEUR 1</span>
-            <span class="cue-slot"><span id="cue1" class="cueball hidden"></span></span>
+            <span class="cue-slot">
+              <span id="cue1" class="cueball hidden">
+                <span class="dot dot-top"></span>
+                <span class="dot dot-left"></span>
+                <span class="dot dot-right"></span>
+              </span>
+            </span>
           </div>
           <div class="score-big" id="score1Display">0</div>
           <div class="score-controls">
@@ -380,7 +395,13 @@
         <div class="player-panel player-blue">
           <div class="player-name" id="player2Name">
             <span class="player-name-text" id="player2NameText">JOUEUR 2</span>
-            <span class="cue-slot"><span id="cue2" class="cueball hidden"></span></span>
+            <span class="cue-slot">
+              <span id="cue2" class="cueball hidden">
+                <span class="dot dot-top"></span>
+                <span class="dot dot-left"></span>
+                <span class="dot dot-right"></span>
+              </span>
+            </span>
           </div>
           <div class="score-big" id="score2Display">0</div>
           <div class="score-controls">
@@ -433,6 +454,8 @@
 
     let currentBreaker = 1;
     let livePollTimer = null;
+    let ignoreRemoteUntil = 0;
+    let sendTimer = null;
 
     const setupScreen = document.getElementById("setupScreen");
     const scoreboardScreen = document.getElementById("scoreboardScreen");
@@ -569,12 +592,14 @@
         const currentVisible = String(state.visible);
         const currentBreakerString = String(currentBreaker);
 
-        if (
-          latestDisplay !== currentDisplay ||
-          latestVisible !== currentVisible ||
-          latestBreaker !== currentBreakerString
-        ) {
-          applyLatestDweetState(latest);
+        if (Date.now() >= ignoreRemoteUntil) {
+          if (
+            latestDisplay !== currentDisplay ||
+            latestVisible !== currentVisible ||
+            latestBreaker !== currentBreakerString
+          ) {
+            applyLatestDweetState(latest);
+          }
         }
 
         const refreshedDisplay = buildDisplayString();
@@ -658,16 +683,22 @@
       }
     }
 
-    async function updateAndSend(mutator) {
+    function updateAndSend(mutator) {
       mutator();
       renderScoreboard();
 
-      try {
-        await sendState(scoreStatus);
-      } catch (error) {
-        console.error(error);
-        scoreStatus.textContent = "Erreur de communication.";
-      }
+      ignoreRemoteUntil = Date.now() + 1200;
+
+      if (sendTimer) clearTimeout(sendTimer);
+
+      sendTimer = setTimeout(async () => {
+        try {
+          await sendState(scoreStatus);
+        } catch (error) {
+          console.error(error);
+          scoreStatus.textContent = "Erreur de communication.";
+        }
+      }, 120);
     }
 
     async function toggleFullscreen() {
@@ -747,10 +778,7 @@
       renderScoreboard();
 
       try {
-        // First send visible 0 - 0, no names
         await sendState(scoreStatus);
-
-        // Then hide it, still with no names
         state.visible = 0;
         renderScoreboard();
         await sendState(scoreStatus);
