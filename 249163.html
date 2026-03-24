@@ -7,11 +7,8 @@
   <style>
     :root {
       --bg: #050505;
-      --panel: #101010;
       --text: #f5f5f5;
       --muted: #c8c8c8;
-      --danger: #b3261e;
-      --danger-hover: #8f1f19;
       --red-main: #d71920;
       --red-dark: #a40f15;
       --blue-main: #2563eb;
@@ -20,9 +17,13 @@
       --inner: inset 0 0 0 2px rgba(255,255,255,0.06);
       --ctrl-dark: rgba(0,0,0,0.26);
       --ctrl-light: rgba(255,255,255,0.18);
-      --sys-btn: #1d1d1d;
-      --sys-btn-hover: #2a2a2a;
+      --sys-btn: #2a2a2a;
+      --sys-btn-hover: #3a3a3a;
       --yellow: #facc15;
+      --danger: #b3261e;
+      --danger-hover: #8f1f19;
+      --green: #1f6f3f;
+      --green-hover: #185832;
     }
 
     * { box-sizing: border-box; }
@@ -102,7 +103,7 @@
     button:active { transform: translateY(0); }
 
     .primary {
-      background: #1f6f3f;
+      background: var(--green);
       color: white;
     }
 
@@ -132,44 +133,60 @@
     }
 
     .player-name {
-      text-align: center;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      justify-content: center;
+      column-gap: 10px;
+      min-height: 56px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .player-name-text {
+      text-align: right;
       font-size: clamp(1.3rem, 3vw, 3rem);
       font-weight: 900;
       text-transform: uppercase;
       line-height: 1.05;
-      min-height: 1.2em;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      cursor: pointer;
-      user-select: none;
       word-break: break-word;
     }
 
+    .cue-slot {
+      width: clamp(20px, 2.4vw, 32px);
+      height: clamp(20px, 2.4vw, 32px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: 0 0 auto;
+    }
+
     .cueball {
-      width: clamp(18px, 2.4vw, 30px);
-      height: clamp(18px, 2.4vw, 30px);
+      width: 100%;
+      height: 100%;
       border-radius: 50%;
       background: white;
       position: relative;
       box-shadow: 0 4px 12px rgba(0,0,0,0.35);
-      flex: 0 0 auto;
+      display: inline-block;
+    }
+
+    .cueball::before,
+    .cueball::after {
+      content: "";
+      position: absolute;
+      width: 16%;
+      height: 16%;
+      border-radius: 50%;
+      background: #cf1f1f;
     }
 
     .cueball::before {
-      content: "";
-      position: absolute;
-      width: clamp(4px, 0.5vw, 6px);
-      height: clamp(4px, 0.5vw, 6px);
-      border-radius: 50%;
-      background: #cf1f1f;
       top: 18%;
-      left: 39%;
+      left: 42%;
       box-shadow:
-        calc(clamp(4px, 1vw, 8px) * -1) calc(clamp(6px, 1.2vw, 11px)) 0 #cf1f1f,
-        calc(clamp(4px, 1vw, 8px)) calc(clamp(6px, 1.2vw, 11px)) 0 #cf1f1f;
+        -28% 40% 0 #cf1f1f,
+         28% 40% 0 #cf1f1f;
     }
 
     .cueball.hidden {
@@ -240,11 +257,6 @@
       background: var(--sys-btn-hover);
     }
 
-    .subtle-label {
-      color: #9a9a9a;
-      font-size: 0.85rem;
-    }
-
     .center-tools {
       display: flex;
       align-items: center;
@@ -256,21 +268,15 @@
       min-width: 62px;
       min-height: 62px;
       border-radius: 999px;
-      background: #2a2a2a;
-      color: white;
+      background: var(--sys-btn);
+      color: var(--yellow);
       box-shadow: 0 8px 18px rgba(0,0,0,0.28), inset 0 0 0 2px rgba(255,255,255,0.05);
-      font-size: 1.4rem;
+      font-size: 1.45rem;
       padding: 0;
     }
 
-    .tool-btn.fullscreen-btn {
-      background: var(--yellow);
-      color: #111;
-      font-size: 1.55rem;
-    }
-
-    .tool-btn.reset-btn {
-      color: var(--yellow);
+    .tool-btn:hover {
+      background: var(--sys-btn-hover);
     }
 
     .live-status {
@@ -314,18 +320,12 @@
       margin-top: 4px;
     }
 
-    /* Portrait */
     @media (orientation: portrait) {
       .players {
         grid-template-columns: 1fr;
       }
-
-      .system-bar {
-        margin-top: 6px;
-      }
     }
 
-    /* Landscape */
     @media (orientation: landscape) {
       body {
         padding: 8px;
@@ -345,10 +345,6 @@
 
       .score-big {
         font-size: clamp(6rem, 14vw, 11rem);
-      }
-
-      .system-bar {
-        margin-top: 2px;
       }
 
       .subtitle {
@@ -386,8 +382,8 @@
       <div class="players">
         <div class="player-panel player-red">
           <div class="player-name" id="player1Name">
-            <span id="player1NameText">ROUGE</span>
-            <span id="cue1" class="cueball"></span>
+            <span class="player-name-text" id="player1NameText">ROUGE</span>
+            <span class="cue-slot"><span id="cue1" class="cueball"></span></span>
           </div>
           <div class="score-big" id="score1Display">0</div>
           <div class="score-controls">
@@ -398,8 +394,8 @@
 
         <div class="player-panel player-blue">
           <div class="player-name" id="player2Name">
-            <span id="player2NameText">BLEU</span>
-            <span id="cue2" class="cueball hidden"></span>
+            <span class="player-name-text" id="player2NameText">BLEU</span>
+            <span class="cue-slot"><span id="cue2" class="cueball hidden"></span></span>
           </div>
           <div class="score-big" id="score2Display">0</div>
           <div class="score-controls">
@@ -415,8 +411,8 @@
         </div>
 
         <div class="center-tools">
-          <button class="tool-btn reset-btn" id="resetBtn" aria-label="Réinitialiser">↻</button>
-          <button class="tool-btn fullscreen-btn" id="fullscreenBtn" aria-label="Plein écran">⛶</button>
+          <button class="tool-btn" id="resetBtn" aria-label="Réinitialiser">↻</button>
+          <button class="tool-btn" id="fullscreenBtn" aria-label="Plein écran">⛶</button>
         </div>
 
         <div class="subtle-right">
