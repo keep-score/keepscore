@@ -2,67 +2,73 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Cluses Billard Club – Table 1</title>
   <style>
     :root {
-      --bg: #0b0b0b;
-      --panel: #171717;
-      --panel-2: #202020;
-      --text: #f4f4f4;
-      --muted: #b8b8b8;
+      --bg: #050505;
+      --panel: #101010;
+      --text: #f5f5f5;
+      --muted: #c8c8c8;
       --danger: #b3261e;
       --danger-hover: #8f1f19;
-      --btn: #2a2a2a;
-      --btn-hover: #3a3a3a;
-      --green: #1f6f3f;
-      --green-hover: #185832;
-      --border: #3d3d3d;
+      --red-main: #d71920;
+      --red-dark: #a40f15;
+      --blue-main: #2563eb;
+      --blue-dark: #1d4ed8;
+      --shadow: 0 12px 24px rgba(0,0,0,0.35);
+      --inner: inset 0 0 0 2px rgba(255,255,255,0.06);
+      --ctrl-dark: rgba(0,0,0,0.26);
+      --ctrl-light: rgba(255,255,255,0.18);
+      --sys-btn: #1d1d1d;
+      --sys-btn-hover: #2a2a2a;
+      --yellow: #facc15;
     }
 
     * { box-sizing: border-box; }
 
-    body {
+    html, body {
       margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
+      min-height: 100%;
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    body {
+      padding: 10px;
     }
 
     .app {
       width: 100%;
-      max-width: 900px;
-      background: var(--panel);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 24px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+      max-width: 1300px;
+      margin: 0 auto;
     }
 
     h1 {
-      margin: 0 0 8px;
-      font-size: 2rem;
+      margin: 0 0 6px;
+      font-size: clamp(1.2rem, 2vw, 1.9rem);
       text-align: center;
     }
 
     .subtitle {
       text-align: center;
       color: var(--muted);
-      margin-bottom: 24px;
+      margin-bottom: 12px;
+      font-size: clamp(0.85rem, 1.3vw, 1rem);
     }
 
     .hidden { display: none !important; }
 
     .setup {
       display: grid;
-      gap: 16px;
-      max-width: 520px;
+      gap: 14px;
+      max-width: 540px;
       margin: 0 auto;
+      background: #111;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 18px;
     }
 
     .field {
@@ -70,23 +76,21 @@
       gap: 8px;
     }
 
-    label {
-      font-weight: bold;
-    }
+    label { font-weight: bold; }
 
     input {
       width: 100%;
       padding: 14px 16px;
       border-radius: 12px;
-      border: 1px solid var(--border);
-      background: var(--panel-2);
+      border: 1px solid rgba(255,255,255,0.1);
+      background: #1b1b1b;
       color: var(--text);
       font-size: 1rem;
     }
 
     button {
       border: none;
-      border-radius: 12px;
+      border-radius: 16px;
       padding: 14px 18px;
       font-size: 1rem;
       font-weight: bold;
@@ -98,148 +102,175 @@
     button:active { transform: translateY(0); }
 
     .primary {
-      background: var(--green);
+      background: #1f6f3f;
       color: white;
     }
-    .primary:hover { background: var(--green-hover); }
-
-    .secondary {
-      background: var(--btn);
-      color: white;
-    }
-    .secondary:hover { background: var(--btn-hover); }
-
-    .danger {
-      background: var(--danger);
-      color: white;
-    }
-    .danger:hover { background: var(--danger-hover); }
 
     .scoreboard-wrap {
       display: grid;
-      gap: 20px;
+      gap: 12px;
     }
 
-    .scoreboard {
+    .players {
       display: grid;
-      grid-template-columns: 1fr 34px 1fr;
-      gap: 10px;
-      align-items: stretch;
+      gap: 12px;
     }
 
-    .player-card {
-      background: var(--panel-2);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 10px;
-      display: grid;
-      grid-template-rows: auto auto auto auto;
-      gap: 8px;
+    .player-panel {
+      border-radius: 30px;
+      padding: 16px 14px 14px;
+      box-shadow: var(--inner), var(--shadow);
       min-height: 0;
+    }
+
+    .player-red {
+      background: linear-gradient(180deg, var(--red-main), var(--red-dark));
+    }
+
+    .player-blue {
+      background: linear-gradient(180deg, var(--blue-main), var(--blue-dark));
     }
 
     .player-name {
       text-align: center;
-      font-size: 1.1rem;
-      font-weight: bold;
-      min-height: 2.2em;
+      font-size: clamp(1.3rem, 3vw, 3rem);
+      font-weight: 900;
+      text-transform: uppercase;
+      line-height: 1.05;
+      min-height: 1.2em;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 6px;
-      word-break: break-word;
-      line-height: 1.1;
+      gap: 8px;
       cursor: pointer;
+      user-select: none;
+      word-break: break-word;
     }
 
     .cueball {
-      width: 16px;
-      height: 16px;
+      width: clamp(18px, 2.4vw, 30px);
+      height: clamp(18px, 2.4vw, 30px);
       border-radius: 50%;
       background: white;
-      display: inline-block;
       position: relative;
-      flex: 0 0 16px;
-      box-shadow: 0 0 6px rgba(255,255,255,0.8);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.35);
+      flex: 0 0 auto;
     }
 
     .cueball::before {
       content: "";
       position: absolute;
-      width: 4px;
-      height: 4px;
+      width: clamp(4px, 0.5vw, 6px);
+      height: clamp(4px, 0.5vw, 6px);
       border-radius: 50%;
-      background: #d72626;
-      top: 2px;
-      left: 6px;
-      box-shadow: -4px 7px 0 #d72626, 4px 7px 0 #d72626;
+      background: #cf1f1f;
+      top: 18%;
+      left: 39%;
+      box-shadow:
+        calc(clamp(4px, 1vw, 8px) * -1) calc(clamp(6px, 1.2vw, 11px)) 0 #cf1f1f,
+        calc(clamp(4px, 1vw, 8px)) calc(clamp(6px, 1.2vw, 11px)) 0 #cf1f1f;
     }
 
     .cueball.hidden {
       visibility: hidden;
     }
 
-    .score-btn {
-      width: 100%;
-      min-height: 48px;
-      font-size: 1.6rem;
-      background: var(--btn);
-      color: white;
-      padding: 8px 10px;
-    }
-
-    .score-btn:hover { background: var(--btn-hover); }
-
-    .score-display {
-      background: #0f0f0f;
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      font-size: 3.1rem;
-      font-weight: bold;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 82px;
-    }
-
-    .separator {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.2rem;
-      font-weight: bold;
-      color: var(--muted);
-    }
-
-    .preview-box {
-      margin-top: 8px;
-      padding: 18px;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      background: #0f0f0f;
+    .score-big {
       text-align: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-      min-height: 82px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      word-break: break-word;
+      font-size: clamp(5rem, 18vw, 12rem);
+      line-height: 0.95;
+      font-weight: 900;
+      margin: 8px 0 10px;
+      text-shadow: 0 8px 18px rgba(0,0,0,0.28);
     }
 
-    .actions {
-      display: flex;
+    .score-controls {
+      display: grid;
+      grid-template-columns: 0.72fr 1.48fr;
       gap: 12px;
-      flex-wrap: wrap;
-      justify-content: center;
-      margin-top: 6px;
+      margin-top: 4px;
     }
 
-    .status {
-      margin-top: 10px;
-      text-align: center;
-      color: var(--muted);
-      min-height: 1.2em;
+    .minus-btn,
+    .plus-btn {
+      min-height: clamp(76px, 11vw, 120px);
+      font-size: clamp(2.5rem, 7vw, 4.5rem);
+      border-radius: 24px;
+      color: white;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+    }
+
+    .minus-btn {
+      background: var(--ctrl-dark);
+    }
+
+    .plus-btn {
+      background: var(--ctrl-light);
+    }
+
+    .system-bar {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .subtle-left,
+    .subtle-right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .subtle-btn {
+      min-width: 56px;
+      min-height: 56px;
+      border-radius: 999px;
+      background: var(--sys-btn);
+      color: var(--yellow);
+      box-shadow: 0 8px 18px rgba(0,0,0,0.28), inset 0 0 0 2px rgba(255,255,255,0.05);
+      font-size: 1.5rem;
+      padding: 0;
+    }
+
+    .subtle-btn:hover {
+      background: var(--sys-btn-hover);
+    }
+
+    .subtle-label {
+      color: #9a9a9a;
+      font-size: 0.85rem;
+    }
+
+    .center-tools {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+
+    .tool-btn {
+      min-width: 62px;
+      min-height: 62px;
+      border-radius: 999px;
+      background: #2a2a2a;
+      color: white;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.28), inset 0 0 0 2px rgba(255,255,255,0.05);
+      font-size: 1.4rem;
+      padding: 0;
+    }
+
+    .tool-btn.fullscreen-btn {
+      background: var(--yellow);
+      color: #111;
+      font-size: 1.55rem;
+    }
+
+    .tool-btn.reset-btn {
+      color: var(--yellow);
     }
 
     .live-status {
@@ -247,9 +278,8 @@
       align-items: center;
       justify-content: center;
       gap: 8px;
-      margin-top: 6px;
+      margin-top: 4px;
       font-weight: bold;
-      color: var(--text);
     }
 
     .live-dot {
@@ -276,77 +306,53 @@
       box-shadow: 0 0 8px rgba(255,69,58,0.6);
     }
 
-    @media (max-width: 760px) {
+    .status {
+      text-align: center;
+      color: var(--muted);
+      min-height: 1.2em;
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+
+    /* Portrait */
+    @media (orientation: portrait) {
+      .players {
+        grid-template-columns: 1fr;
+      }
+
+      .system-bar {
+        margin-top: 6px;
+      }
+    }
+
+    /* Landscape */
+    @media (orientation: landscape) {
       body {
-        padding: 10px;
-        align-items: flex-start;
+        padding: 8px;
       }
 
-      .app {
-        padding: 14px;
-        border-radius: 14px;
+      .players {
+        grid-template-columns: 1fr 1fr;
+        align-items: stretch;
       }
 
-      h1 {
-        font-size: 1.45rem;
-        margin-bottom: 4px;
+      .player-panel {
+        min-height: min(72vh, 680px);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+
+      .score-big {
+        font-size: clamp(6rem, 14vw, 11rem);
+      }
+
+      .system-bar {
+        margin-top: 2px;
       }
 
       .subtitle {
-        margin-bottom: 14px;
-        font-size: 0.95rem;
-      }
-
-      .scoreboard-wrap {
-        gap: 12px;
-      }
-
-      .scoreboard {
-        grid-template-columns: 1fr 22px 1fr;
-        gap: 8px;
-      }
-
-      .player-card {
-        padding: 8px;
-        gap: 6px;
-      }
-
-      .player-name {
-        font-size: 0.95rem;
-        min-height: 2.1em;
-      }
-
-      .score-btn {
-        min-height: 42px;
-        font-size: 1.35rem;
-        padding: 6px 8px;
-      }
-
-      .score-display {
-        font-size: 2.3rem;
-        min-height: 66px;
-      }
-
-      .separator {
-        font-size: 1.5rem;
-      }
-
-      .preview-box {
-        margin-top: 0;
-        padding: 12px;
-        min-height: 58px;
-        font-size: 1rem;
-      }
-
-      .actions {
-        gap: 8px;
-        margin-top: 0;
-      }
-
-      .actions button {
-        flex: 1 1 calc(50% - 8px);
-        padding: 12px 10px;
-        font-size: 0.92rem;
+        margin-bottom: 10px;
       }
     }
   </style>
@@ -359,13 +365,13 @@
 
       <div class="setup">
         <div class="field">
-          <label for="player1Input">Joueur 1</label>
-          <input id="player1Input" type="text" maxlength="30" placeholder="Nom du joueur 1" />
+          <label for="player1Input">Joueur rouge</label>
+          <input id="player1Input" type="text" maxlength="30" placeholder="Nom du joueur rouge" />
         </div>
 
         <div class="field">
-          <label for="player2Input">Joueur 2</label>
-          <input id="player2Input" type="text" maxlength="30" placeholder="Nom du joueur 2" />
+          <label for="player2Input">Joueur bleu</label>
+          <input id="player2Input" type="text" maxlength="30" placeholder="Nom du joueur bleu" />
         </div>
 
         <button id="startBtn" class="primary">Démarrer le score</button>
@@ -377,36 +383,45 @@
       <h1>Cluses Billard Club</h1>
       <div class="subtitle">Table 1 – Gestion du score en direct</div>
 
-      <div class="scoreboard">
-        <div class="player-card">
+      <div class="players">
+        <div class="player-panel player-red">
           <div class="player-name" id="player1Name">
-            <span id="player1NameText"></span>
+            <span id="player1NameText">ROUGE</span>
             <span id="cue1" class="cueball"></span>
           </div>
-          <button class="score-btn secondary" id="p1Plus">+</button>
-          <div class="score-display" id="score1Display">0</div>
-          <button class="score-btn secondary" id="p1Minus">−</button>
+          <div class="score-big" id="score1Display">0</div>
+          <div class="score-controls">
+            <button class="minus-btn" id="p1Minus">−</button>
+            <button class="plus-btn" id="p1Plus">+</button>
+          </div>
         </div>
 
-        <div class="separator">-</div>
-
-        <div class="player-card">
+        <div class="player-panel player-blue">
           <div class="player-name" id="player2Name">
-            <span id="player2NameText"></span>
+            <span id="player2NameText">BLEU</span>
             <span id="cue2" class="cueball hidden"></span>
           </div>
-          <button class="score-btn secondary" id="p2Plus">+</button>
-          <div class="score-display" id="score2Display">0</div>
-          <button class="score-btn secondary" id="p2Minus">−</button>
+          <div class="score-big" id="score2Display">0</div>
+          <div class="score-controls">
+            <button class="minus-btn" id="p2Minus">−</button>
+            <button class="plus-btn" id="p2Plus">+</button>
+          </div>
         </div>
       </div>
 
-      <div class="preview-box" id="previewBox"></div>
+      <div class="system-bar">
+        <div class="subtle-left">
+          <button class="subtle-btn" id="moveLeftBtn" aria-label="Déplacer à gauche">↢</button>
+        </div>
 
-      <div class="actions">
-        <button class="secondary" id="moveLeftBtn">← Déplacer à gauche</button>
-        <button class="secondary" id="moveRightBtn">Déplacer à droite →</button>
-        <button class="danger" id="resetBtn">Réinitialiser</button>
+        <div class="center-tools">
+          <button class="tool-btn reset-btn" id="resetBtn" aria-label="Réinitialiser">↻</button>
+          <button class="tool-btn fullscreen-btn" id="fullscreenBtn" aria-label="Plein écran">⛶</button>
+        </div>
+
+        <div class="subtle-right">
+          <button class="subtle-btn" id="moveRightBtn" aria-label="Déplacer à droite">↣</button>
+        </div>
       </div>
 
       <div class="live-status">
@@ -451,11 +466,11 @@
     const player2NameText = document.getElementById("player2NameText");
     const score1Display = document.getElementById("score1Display");
     const score2Display = document.getElementById("score2Display");
-    const previewBox = document.getElementById("previewBox");
     const cue1 = document.getElementById("cue1");
     const cue2 = document.getElementById("cue2");
     const liveDot = document.getElementById("liveDot");
     const liveStatusText = document.getElementById("liveStatusText");
+    const fullscreenBtn = document.getElementById("fullscreenBtn");
 
     function setLiveStatus(mode, text) {
       liveDot.classList.remove("ready", "waiting", "error");
@@ -518,11 +533,10 @@
     }
 
     function renderScoreboard() {
-      player1NameText.textContent = state.player1;
-      player2NameText.textContent = state.player2;
+      player1NameText.textContent = state.player1 || "ROUGE";
+      player2NameText.textContent = state.player2 || "BLEU";
       score1Display.textContent = state.score1;
       score2Display.textContent = state.score2;
-      previewBox.textContent = state.visible ? buildDisplayString() : "";
       updateCue();
     }
 
@@ -674,6 +688,18 @@
       }
     }
 
+    async function toggleFullscreen() {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        } else {
+          await document.exitFullscreen();
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
     startBtn.addEventListener("click", startScoreboard);
 
     player1Input.addEventListener("keydown", (e) => {
@@ -758,6 +784,8 @@
         scoreStatus.textContent = "Erreur de communication.";
       }
     });
+
+    fullscreenBtn.addEventListener("click", toggleFullscreen);
 
     startLivePolling();
     restoreFromLatestDweet();
