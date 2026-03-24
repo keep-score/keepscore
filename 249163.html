@@ -132,13 +132,14 @@
     }
 
     .player-name {
-      display: grid;
-      grid-template-columns: auto minmax(0, 1fr) auto;
+      display: flex;
+      flex-direction: column;
       align-items: center;
-      column-gap: 10px;
-      min-height: 56px;
+      justify-content: center;
+      min-height: 72px;
       cursor: pointer;
       user-select: none;
+      gap: 8px;
     }
 
     .player-name-text {
@@ -151,16 +152,12 @@
     }
 
     .cue-slot {
-      width: clamp(20px, 2.4vw, 32px);
-      height: clamp(20px, 2.4vw, 32px);
+      width: clamp(24px, 2.8vw, 34px);
+      height: clamp(24px, 2.8vw, 34px);
       display: flex;
       align-items: center;
       justify-content: center;
       flex: 0 0 auto;
-    }
-
-    .cue-slot.hidden-slot {
-      visibility: hidden;
     }
 
     .cueball {
@@ -176,15 +173,15 @@
     .cueball::before {
       content: "";
       position: absolute;
-      width: 14%;
-      height: 14%;
+      width: 16%;
+      height: 16%;
       border-radius: 50%;
       background: #cf1f1f;
-      top: 22%;
-      left: 43%;
+      top: 18%;
+      left: 42%;
       box-shadow:
-        -22% 34% 0 #cf1f1f,
-         22% 34% 0 #cf1f1f;
+        -26% 46% 0 #cf1f1f,
+         26% 46% 0 #cf1f1f;
     }
 
     .cueball.hidden {
@@ -349,13 +346,13 @@
 
       <div class="setup">
         <div class="field">
-          <label for="player1Input">Joueur rouge</label>
-          <input id="player1Input" type="text" maxlength="30" placeholder="Nom du joueur rouge" />
+          <label for="player1Input">Joueur 1</label>
+          <input id="player1Input" type="text" maxlength="30" placeholder="Nom du joueur 1" />
         </div>
 
         <div class="field">
-          <label for="player2Input">Joueur bleu</label>
-          <input id="player2Input" type="text" maxlength="30" placeholder="Nom du joueur bleu" />
+          <label for="player2Input">Joueur 2</label>
+          <input id="player2Input" type="text" maxlength="30" placeholder="Nom du joueur 2" />
         </div>
 
         <button id="startBtn" class="primary">Démarrer le score</button>
@@ -370,9 +367,8 @@
       <div class="players">
         <div class="player-panel player-red">
           <div class="player-name" id="player1Name">
-            <span class="cue-slot" id="cue1LeftSlot"><span id="cue1" class="cueball hidden"></span></span>
-            <span class="player-name-text" id="player1NameText">ROUGE</span>
-            <span class="cue-slot" id="cue1RightSlot"><span id="cue1RightGhost" class="cueball hidden"></span></span>
+            <span class="player-name-text" id="player1NameText">JOUEUR 1</span>
+            <span class="cue-slot"><span id="cue1" class="cueball hidden"></span></span>
           </div>
           <div class="score-big" id="score1Display">0</div>
           <div class="score-controls">
@@ -383,9 +379,8 @@
 
         <div class="player-panel player-blue">
           <div class="player-name" id="player2Name">
-            <span class="cue-slot" id="cue2LeftSlot"><span id="cue2LeftGhost" class="cueball hidden"></span></span>
-            <span class="player-name-text" id="player2NameText">BLEU</span>
-            <span class="cue-slot" id="cue2RightSlot"><span id="cue2" class="cueball hidden"></span></span>
+            <span class="player-name-text" id="player2NameText">JOUEUR 2</span>
+            <span class="cue-slot"><span id="cue2" class="cueball hidden"></span></span>
           </div>
           <div class="score-big" id="score2Display">0</div>
           <div class="score-controls">
@@ -520,8 +515,8 @@
     }
 
     function renderScoreboard() {
-      player1NameText.textContent = state.player1 || "ROUGE";
-      player2NameText.textContent = state.player2 || "BLEU";
+      player1NameText.textContent = state.player1 || "JOUEUR 1";
+      player2NameText.textContent = state.player2 || "JOUEUR 2";
       score1Display.textContent = state.score1;
       score2Display.textContent = state.score2;
       updateCue();
@@ -752,7 +747,10 @@
       renderScoreboard();
 
       try {
+        // First send visible 0 - 0, no names
         await sendState(scoreStatus);
+
+        // Then hide it, still with no names
         state.visible = 0;
         renderScoreboard();
         await sendState(scoreStatus);
