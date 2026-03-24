@@ -20,10 +20,7 @@
       --sys-btn: #2a2a2a;
       --sys-btn-hover: #3a3a3a;
       --yellow: #facc15;
-      --danger: #b3261e;
-      --danger-hover: #8f1f19;
-      --green: #1f6f3f;
-      --green-hover: #185832;
+      --green: #32d74b;
     }
 
     * { box-sizing: border-box; }
@@ -97,13 +94,15 @@
       font-weight: bold;
       cursor: pointer;
       transition: 0.15s ease;
+      appearance: none;
+      -webkit-appearance: none;
     }
 
     button:hover { transform: translateY(-1px); }
     button:active { transform: translateY(0); }
 
     .primary {
-      background: var(--green);
+      background: #1f6f3f;
       color: white;
     }
 
@@ -134,9 +133,8 @@
 
     .player-name {
       display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      grid-template-columns: auto minmax(0, 1fr) auto;
       align-items: center;
-      justify-content: center;
       column-gap: 10px;
       min-height: 56px;
       cursor: pointer;
@@ -144,7 +142,7 @@
     }
 
     .player-name-text {
-      text-align: right;
+      text-align: center;
       font-size: clamp(1.3rem, 3vw, 3rem);
       font-weight: 900;
       text-transform: uppercase;
@@ -161,6 +159,10 @@
       flex: 0 0 auto;
     }
 
+    .cue-slot.hidden-slot {
+      visibility: hidden;
+    }
+
     .cueball {
       width: 100%;
       height: 100%;
@@ -171,22 +173,18 @@
       display: inline-block;
     }
 
-    .cueball::before,
-    .cueball::after {
+    .cueball::before {
       content: "";
       position: absolute;
-      width: 16%;
-      height: 16%;
+      width: 14%;
+      height: 14%;
       border-radius: 50%;
       background: #cf1f1f;
-    }
-
-    .cueball::before {
-      top: 18%;
-      left: 42%;
+      top: 22%;
+      left: 43%;
       box-shadow:
-        -28% 40% 0 #cf1f1f,
-         28% 40% 0 #cf1f1f;
+        -22% 34% 0 #cf1f1f,
+         22% 34% 0 #cf1f1f;
     }
 
     .cueball.hidden {
@@ -242,19 +240,24 @@
       gap: 8px;
     }
 
-    .subtle-btn {
-      min-width: 56px;
-      min-height: 56px;
+    .subtle-btn,
+    .tool-btn {
+      min-width: 62px;
+      min-height: 62px;
       border-radius: 999px;
-      background: var(--sys-btn);
-      color: var(--yellow);
+      background: var(--sys-btn) !important;
+      color: var(--yellow) !important;
       box-shadow: 0 8px 18px rgba(0,0,0,0.28), inset 0 0 0 2px rgba(255,255,255,0.05);
-      font-size: 1.5rem;
+      font-size: 1.45rem;
       padding: 0;
+      border: none;
+      appearance: none;
+      -webkit-appearance: none;
     }
 
-    .subtle-btn:hover {
-      background: var(--sys-btn-hover);
+    .subtle-btn:hover,
+    .tool-btn:hover {
+      background: var(--sys-btn-hover) !important;
     }
 
     .center-tools {
@@ -262,21 +265,6 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-    }
-
-    .tool-btn {
-      min-width: 62px;
-      min-height: 62px;
-      border-radius: 999px;
-      background: var(--sys-btn);
-      color: var(--yellow);
-      box-shadow: 0 8px 18px rgba(0,0,0,0.28), inset 0 0 0 2px rgba(255,255,255,0.05);
-      font-size: 1.45rem;
-      padding: 0;
-    }
-
-    .tool-btn:hover {
-      background: var(--sys-btn-hover);
     }
 
     .live-status {
@@ -298,7 +286,7 @@
     }
 
     .live-dot.ready {
-      background: #32d74b;
+      background: var(--green);
       box-shadow: 0 0 8px rgba(50,215,75,0.7);
     }
 
@@ -382,8 +370,9 @@
       <div class="players">
         <div class="player-panel player-red">
           <div class="player-name" id="player1Name">
+            <span class="cue-slot" id="cue1LeftSlot"><span id="cue1" class="cueball hidden"></span></span>
             <span class="player-name-text" id="player1NameText">ROUGE</span>
-            <span class="cue-slot"><span id="cue1" class="cueball"></span></span>
+            <span class="cue-slot" id="cue1RightSlot"><span id="cue1RightGhost" class="cueball hidden"></span></span>
           </div>
           <div class="score-big" id="score1Display">0</div>
           <div class="score-controls">
@@ -394,8 +383,9 @@
 
         <div class="player-panel player-blue">
           <div class="player-name" id="player2Name">
+            <span class="cue-slot" id="cue2LeftSlot"><span id="cue2LeftGhost" class="cueball hidden"></span></span>
             <span class="player-name-text" id="player2NameText">BLEU</span>
-            <span class="cue-slot"><span id="cue2" class="cueball hidden"></span></span>
+            <span class="cue-slot" id="cue2RightSlot"><span id="cue2" class="cueball hidden"></span></span>
           </div>
           <div class="score-big" id="score2Display">0</div>
           <div class="score-controls">
@@ -513,11 +503,12 @@
     }
 
     function updateCue() {
+      cue1.classList.add("hidden");
+      cue2.classList.add("hidden");
+
       if (currentBreaker === 1) {
         cue1.classList.remove("hidden");
-        cue2.classList.add("hidden");
       } else {
-        cue1.classList.add("hidden");
         cue2.classList.remove("hidden");
       }
     }
