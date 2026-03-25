@@ -26,6 +26,9 @@
       --warn-bg: #2a2105;
       --warn-border: #8b6a00;
       --warn-text: #ffe28a;
+      --alert-bg: #2a1205;
+      --alert-border: #a34a00;
+      --alert-text: #ffd2a8;
     }
 
     * { box-sizing: border-box; }
@@ -267,7 +270,10 @@
     }
 
     .subtle-btn:hover,
-    .tool-btn:hover {
+    .tool-btn:hover,
+    .audio-toggle-btn:hover,
+    .stream-btn:hover,
+    .confirm-btn:hover {
       background: var(--sys-btn-hover) !important;
     }
 
@@ -294,7 +300,7 @@
     }
 
     .audio-toggle-btn {
-      min-width: 240px;
+      min-width: 260px;
       background: var(--sys-btn);
       color: var(--yellow);
     }
@@ -379,6 +385,29 @@
       padding: 12px 14px;
       line-height: 1.4;
       font-size: 0.95rem;
+    }
+
+    .alert-box {
+      background: var(--alert-bg);
+      border: 1px solid var(--alert-border);
+      color: var(--alert-text);
+      border-radius: 16px;
+      padding: 12px 14px;
+      line-height: 1.45;
+      font-size: 0.95rem;
+      display: grid;
+      gap: 12px;
+    }
+
+    .confirm-row {
+      display: flex;
+      justify-content: center;
+    }
+
+    .confirm-btn {
+      min-width: 180px;
+      background: var(--sys-btn);
+      color: white;
     }
 
     .audio-tools {
@@ -556,20 +585,29 @@
 
       <div class="audio-panel">
         <div class="audio-panel-header">
-          <button class="audio-toggle-btn" id="audioPanelToggle">Mode audio / commentaire</button>
+          <button class="audio-toggle-btn" id="audioPanelToggle">Options son / commentaire</button>
         </div>
 
         <div class="audio-options hidden" id="audioOptions">
           <div class="audio-card">
             <div class="switch-row">
               <div>
-                <div class="switch-label">Micro caméra</div>
-                <div class="switch-sub">Active le son d’ambiance pris directement par la caméra.</div>
+                <div class="switch-label">Micro de table</div>
+                <div class="switch-sub">Active le son d’ambiance pris au-dessus de la table.</div>
               </div>
               <label class="toggle">
-                <input type="checkbox" id="cameraMicToggle" />
+                <input type="checkbox" id="tableMicToggle" />
                 <span class="slider"></span>
               </label>
+            </div>
+
+            <div class="alert-box hidden" id="tableMicConsentBox">
+              <div>
+                <strong>Important :</strong> en activant le micro de table, vous confirmez que toutes les personnes enregistrées ont donné leur accord pour être filmées et entendues.
+              </div>
+              <div class="confirm-row">
+                <button class="confirm-btn" id="tableMicConsentBtn">Compris</button>
+              </div>
             </div>
 
             <div class="switch-row">
@@ -589,7 +627,7 @@
               Cette fonction ne marche que si vous êtes connecté au Wi-Fi du club : <strong>CBC</strong>.
             </div>
 
-            <div class="audio-tools">
+            <div class="audio-tools hidden" id="localStreamTools">
               <button class="stream-btn" id="localStreamBtn">Ouvrir le flux local</button>
             </div>
 
@@ -623,7 +661,7 @@
       rect0: DEFAULT_RECT.rect0,
       rect2: DEFAULT_RECT.rect2,
       visible: 1,
-      cameraMicEnabled: false,
+      tableMicEnabled: false,
       commentaryMicsEnabled: false,
     };
 
@@ -653,27 +691,31 @@
 
     const audioPanelToggle = document.getElementById("audioPanelToggle");
     const audioOptions = document.getElementById("audioOptions");
-    const cameraMicToggle = document.getElementById("cameraMicToggle");
+    const tableMicToggle = document.getElementById("tableMicToggle");
     const commentaryMicToggle = document.getElementById("commentaryMicToggle");
     const commentaryWarning = document.getElementById("commentaryWarning");
+    const localStreamTools = document.getElementById("localStreamTools");
     const localStreamBtn = document.getElementById("localStreamBtn");
     const audioStatus = document.getElementById("audioStatus");
+    const tableMicConsentBox = document.getElementById("tableMicConsentBox");
+    const tableMicConsentBtn = document.getElementById("tableMicConsentBtn");
 
     function getAudioMode() {
-      if (state.cameraMicEnabled && state.commentaryMicsEnabled) return "both";
-      if (state.cameraMicEnabled) return "camera";
+      if (state.tableMicEnabled && state.commentaryMicsEnabled) return "both";
+      if (state.tableMicEnabled) return "table";
       if (state.commentaryMicsEnabled) return "commentary";
       return "off";
     }
 
     function updateAudioUi() {
-      cameraMicToggle.checked = state.cameraMicEnabled;
+      tableMicToggle.checked = state.tableMicEnabled;
       commentaryMicToggle.checked = state.commentaryMicsEnabled;
 
-      if (state.commentaryMicsEnabled) {
-        commentaryWarning.classList.remove("hidden");
-      } else {
-        commentaryWarning.classList.add("hidden");
+      commentaryWarning.classList.toggle("hidden", !state.commentaryMicsEnabled);
+      localStreamTools.classList.toggle("hidden", !state.commentaryMicsEnabled);
+
+      if (!state.tableMicEnabled) {
+        tableMicConsentBox.classList.add("hidden");
       }
 
       if (audioOptions.classList.contains("hidden")) {
@@ -683,13 +725,13 @@
 
       const mode = getAudioMode();
       if (mode === "off") {
-        audioStatus.textContent = "Audio désactivé.";
-      } else if (mode === "camera") {
-        audioStatus.textContent = "Micro caméra activé.";
+        audioStatus.textContent = "Son désactivé.";
+      } else if (mode === "table") {
+        audioStatus.textContent = "Micro de table activé.";
       } else if (mode === "commentary") {
         audioStatus.textContent = "Micros commentaire activés.";
       } else {
-        audioStatus.textContent = "Micro caméra + micros commentaire activés.";
+        audioStatus.textContent = "Micro de table + micros commentaire activés.";
       }
     }
 
@@ -712,7 +754,7 @@
       state.rect2 = Number.isFinite(rect2) ? rect2 : DEFAULT_RECT.rect2;
       currentBreaker = latestBreaker === 2 ? 2 : 1;
 
-      state.cameraMicEnabled = String(latest.camera_mic_enabled ?? "0") === "1";
+      state.tableMicEnabled = String(latest.table_mic_enabled ?? "0") === "1";
       state.commentaryMicsEnabled = String(latest.commentary_mics_enabled ?? "0") === "1";
       updateAudioUi();
 
@@ -819,7 +861,7 @@
             latestDisplay !== currentDisplay ||
             latestVisible !== currentVisible ||
             latestBreaker !== currentBreakerString ||
-            String(latest.camera_mic_enabled ?? "0") !== (state.cameraMicEnabled ? "1" : "0") ||
+            String(latest.table_mic_enabled ?? "0") !== (state.tableMicEnabled ? "1" : "0") ||
             String(latest.commentary_mics_enabled ?? "0") !== (state.commentaryMicsEnabled ? "1" : "0")
           ) {
             applyLatestDweetState(latest);
@@ -858,7 +900,7 @@
         rect2: String(state.rect2),
         visible: String(state.visible),
         breaker: String(currentBreaker),
-        camera_mic_enabled: state.cameraMicEnabled ? "1" : "0",
+        table_mic_enabled: state.tableMicEnabled ? "1" : "0",
         commentary_mics_enabled: state.commentaryMicsEnabled ? "1" : "0",
         audio_mode: getAudioMode(),
         ts: String(Date.now())
@@ -930,7 +972,7 @@
 
     async function sendAudioOnlyStatus() {
       ignoreRemoteUntil = Date.now() + 1200;
-      audioStatus.textContent = "Mise à jour audio en cours...";
+      audioStatus.textContent = "Mise à jour des options en cours...";
 
       if (sendTimer) clearTimeout(sendTimer);
 
@@ -1057,8 +1099,23 @@
       updateAudioUi();
     });
 
-    cameraMicToggle.addEventListener("change", async () => {
-      state.cameraMicEnabled = cameraMicToggle.checked;
+    tableMicToggle.addEventListener("change", async () => {
+      if (tableMicToggle.checked) {
+        tableMicToggle.checked = false;
+        tableMicConsentBox.classList.remove("hidden");
+        audioStatus.textContent = "Confirmation requise pour le micro de table.";
+        return;
+      }
+
+      state.tableMicEnabled = false;
+      tableMicConsentBox.classList.add("hidden");
+      updateAudioUi();
+      await sendAudioOnlyStatus();
+    });
+
+    tableMicConsentBtn.addEventListener("click", async () => {
+      state.tableMicEnabled = true;
+      tableMicConsentBox.classList.add("hidden");
       updateAudioUi();
       await sendAudioOnlyStatus();
     });
