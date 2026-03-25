@@ -423,13 +423,6 @@
       min-width: 220px;
     }
 
-    .audio-status {
-      text-align: center;
-      color: var(--muted);
-      min-height: 1.2em;
-      font-size: 0.95rem;
-    }
-
     .live-status {
       display: flex;
       align-items: center;
@@ -630,8 +623,6 @@
             <div class="audio-tools hidden" id="localStreamTools">
               <button class="stream-btn" id="localStreamBtn">Ouvrir le flux local</button>
             </div>
-
-            <div class="audio-status" id="audioStatus"></div>
           </div>
         </div>
       </div>
@@ -696,7 +687,6 @@
     const commentaryWarning = document.getElementById("commentaryWarning");
     const localStreamTools = document.getElementById("localStreamTools");
     const localStreamBtn = document.getElementById("localStreamBtn");
-    const audioStatus = document.getElementById("audioStatus");
     const tableMicConsentBox = document.getElementById("tableMicConsentBox");
     const tableMicConsentBtn = document.getElementById("tableMicConsentBtn");
 
@@ -716,22 +706,6 @@
 
       if (!state.tableMicEnabled) {
         tableMicConsentBox.classList.add("hidden");
-      }
-
-      if (audioOptions.classList.contains("hidden")) {
-        audioStatus.textContent = "";
-        return;
-      }
-
-      const mode = getAudioMode();
-      if (mode === "off") {
-        audioStatus.textContent = "Son désactivé.";
-      } else if (mode === "table") {
-        audioStatus.textContent = "Micro de table activé.";
-      } else if (mode === "commentary") {
-        audioStatus.textContent = "Micros commentaire activés.";
-      } else {
-        audioStatus.textContent = "Micro de table + micros commentaire activés.";
       }
     }
 
@@ -972,7 +946,6 @@
 
     async function sendAudioOnlyStatus() {
       ignoreRemoteUntil = Date.now() + 1200;
-      audioStatus.textContent = "Mise à jour des options en cours...";
 
       if (sendTimer) clearTimeout(sendTimer);
 
@@ -982,7 +955,6 @@
           updateAudioUi();
         } catch (error) {
           console.error(error);
-          audioStatus.textContent = "Erreur de communication.";
         }
       }, 120);
     }
@@ -1069,6 +1041,11 @@
       state.rect2 = DEFAULT_RECT.rect2;
       state.visible = 1;
       currentBreaker = 1;
+
+      state.tableMicEnabled = false;
+      state.commentaryMicsEnabled = false;
+      tableMicConsentBox.classList.add("hidden");
+
       renderScoreboard();
 
       try {
@@ -1103,7 +1080,6 @@
       if (tableMicToggle.checked) {
         tableMicToggle.checked = false;
         tableMicConsentBox.classList.remove("hidden");
-        audioStatus.textContent = "Confirmation requise pour le micro de table.";
         return;
       }
 
