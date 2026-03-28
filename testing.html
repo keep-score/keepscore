@@ -148,7 +148,6 @@
       text-align: center;
       font-size: clamp(1.3rem, 3vw, 3rem);
       font-weight: 900;
-      text-transform: uppercase;
       line-height: 1.05;
       word-break: break-word;
     }
@@ -455,7 +454,7 @@
       <div class="players">
         <div class="player-panel player-red">
           <div class="player-name" id="player1Name">
-            <span class="player-name-text" id="player1NameText">JOUEUR 1</span>
+            <span class="player-name-text" id="player1NameText">Joueur 1</span>
             <span class="cue-slot">
               <span id="cue1" class="cueball hidden">
                 <span class="dot dot-top"></span>
@@ -473,7 +472,7 @@
 
         <div class="player-panel player-blue">
           <div class="player-name" id="player2Name">
-            <span class="player-name-text" id="player2NameText">JOUEUR 2</span>
+            <span class="player-name-text" id="player2NameText">Joueur 2</span>
             <span class="cue-slot">
               <span id="cue2" class="cueball hidden">
                 <span class="dot dot-top"></span>
@@ -567,7 +566,11 @@
       matchTitleFieldWrap.classList.toggle("hidden", !state.matchTitleEnabled);
 
       const cleanTitle = (state.matchTitle || DEFAULT_MATCH_TITLE).trim() || DEFAULT_MATCH_TITLE;
-      matchTitleInput.value = cleanTitle;
+
+      if (document.activeElement !== matchTitleInput) {
+        matchTitleInput.value = cleanTitle;
+      }
+
       scoreboardMatchTitle.textContent = cleanTitle;
 
       scoreboardHeaderDefault.classList.toggle("hidden", state.matchTitleEnabled);
@@ -583,7 +586,7 @@
       const rect2 = parseInt(latest.rect2 ?? DEFAULT_RECT.rect2, 10);
       const latestBreaker = parseInt(latest.breaker ?? "1", 10);
       const latestTitleEnabled = String(latest.match_title_enabled ?? "0") === "1";
-      const latestMatchTitle = String(latest.match_title || DEFAULT_MATCH_TITLE).trim();
+      const latestMatchTitle = String(latest.match_title || DEFAULT_MATCH_TITLE);
 
       state.rect0 = Number.isFinite(rect0) ? rect0 : DEFAULT_RECT.rect0;
       state.rect2 = Number.isFinite(rect2) ? rect2 : DEFAULT_RECT.rect2;
@@ -636,8 +639,8 @@
     }
 
     function renderScoreboard() {
-      player1NameText.textContent = state.player1 || "JOUEUR 1";
-      player2NameText.textContent = state.player2 || "JOUEUR 2";
+      player1NameText.textContent = state.player1 || "Joueur 1";
+      player2NameText.textContent = state.player2 || "Joueur 2";
       score1Display.textContent = state.score1;
       score2Display.textContent = state.score2;
       updateCue();
@@ -689,13 +692,13 @@
         const latestVisible = String(latest.visible ?? "1").trim();
         const latestBreaker = String(latest.breaker ?? "1").trim();
         const latestTitleEnabled = String(latest.match_title_enabled ?? "0").trim();
-        const latestMatchTitle = String(latest.match_title || DEFAULT_MATCH_TITLE).trim();
+        const latestMatchTitle = String(latest.match_title || DEFAULT_MATCH_TITLE);
 
         const currentDisplay = buildDisplayString();
         const currentVisible = String(state.visible);
         const currentBreakerString = String(currentBreaker);
         const currentTitleEnabled = state.matchTitleEnabled ? "1" : "0";
-        const currentMatchTitle = String(state.matchTitle || DEFAULT_MATCH_TITLE).trim();
+        const currentMatchTitle = String(state.matchTitle || DEFAULT_MATCH_TITLE);
 
         if (Date.now() >= ignoreRemoteUntil) {
           if (scoreboardScreen.classList.contains("hidden")) {
@@ -719,7 +722,7 @@
         const refreshedVisible = String(state.visible);
         const refreshedBreaker = String(currentBreaker);
         const refreshedTitleEnabled = state.matchTitleEnabled ? "1" : "0";
-        const refreshedMatchTitle = String(state.matchTitle || DEFAULT_MATCH_TITLE).trim();
+        const refreshedMatchTitle = String(state.matchTitle || DEFAULT_MATCH_TITLE);
 
         if (
           latestDisplay === refreshedDisplay &&
@@ -779,7 +782,7 @@
     async function startScoreboard() {
       const p1 = player1Input.value.trim();
       const p2 = player2Input.value.trim();
-      const title = matchTitleInput.value.trim();
+      const title = matchTitleInput.value;
 
       state.player1 = p1;
       state.player2 = p2;
@@ -856,13 +859,12 @@
 
     matchTitleEnabledToggle.addEventListener("change", () => {
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
-      state.matchTitle = matchTitleInput.value.trim() || DEFAULT_MATCH_TITLE;
+      state.matchTitle = matchTitleInput.value || DEFAULT_MATCH_TITLE;
       updateMatchTitleUi();
     });
 
     matchTitleInput.addEventListener("input", () => {
-      state.matchTitle = matchTitleInput.value.trim() || DEFAULT_MATCH_TITLE;
-      updateMatchTitleUi();
+      state.matchTitle = matchTitleInput.value;
     });
 
     player1Name.addEventListener("click", () => updateAndSend(() => {
