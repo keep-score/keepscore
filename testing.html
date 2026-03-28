@@ -233,23 +233,16 @@
     }
 
     .system-bar {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr;
-      align-items: center;
-      gap: 10px;
-      margin-top: 2px;
-    }
-
-    .subtle-left,
-    .subtle-right {
       display: flex;
-      align-items: center;
       justify-content: center;
-      gap: 8px;
+      align-items: center;
+      gap: 14px;
+      margin-top: 2px;
+      flex-wrap: wrap;
     }
 
-    .subtle-btn,
-    .tool-btn {
+    .tool-btn,
+    .subtle-btn {
       min-width: 62px;
       min-height: 62px;
       border-radius: 999px;
@@ -266,13 +259,6 @@
     .subtle-btn:hover,
     .tool-btn:hover {
       background: var(--sys-btn-hover) !important;
-    }
-
-    .center-tools {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
     }
 
     .option-card {
@@ -505,18 +491,10 @@
       </div>
 
       <div class="system-bar">
-        <div class="subtle-left">
-          <button class="subtle-btn" id="moveLeftBtn" aria-label="Déplacer à gauche">↢</button>
-        </div>
-
-        <div class="center-tools">
-          <button class="tool-btn" id="resetBtn" aria-label="Réinitialiser">↻</button>
-          <button class="tool-btn" id="fullscreenBtn" aria-label="Plein écran">⛶</button>
-        </div>
-
-        <div class="subtle-right">
-          <button class="subtle-btn" id="moveRightBtn" aria-label="Déplacer à droite">↣</button>
-        </div>
+        <button class="subtle-btn" id="moveLeftBtn" aria-label="Déplacer à gauche" title="Décaler le score vers la gauche sur la vidéo">↢</button>
+        <button class="tool-btn" id="resetBtn" aria-label="Réinitialiser" title="Réinitialiser le score et revenir à l'écran de départ">↻</button>
+        <button class="tool-btn" id="fullscreenBtn" aria-label="Plein écran" title="Afficher le site en plein écran">⛶</button>
+        <button class="subtle-btn" id="moveRightBtn" aria-label="Déplacer à droite" title="Décaler le score vers la droite sur la vidéo">↣</button>
       </div>
 
       <div class="live-status">
