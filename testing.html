@@ -610,9 +610,6 @@
       state.rect0 = Number.isFinite(rect0) ? rect0 : DEFAULT_RECT.rect0;
       state.rect2 = Number.isFinite(rect2) ? rect2 : DEFAULT_RECT.rect2;
       currentBreaker = latestBreaker === 2 ? 2 : 1;
-      state.matchTitleEnabled = latestTitleEnabled;
-      state.matchTitle = latestMatchTitle || DEFAULT_MATCH_TITLE;
-      updateMatchTitleUi();
 
       if (latestVisible === "0" || !latestDisplay) {
         state.player1 = "";
@@ -625,6 +622,10 @@
         scoreboardScreen.classList.add("hidden");
         return;
       }
+
+      state.matchTitleEnabled = latestTitleEnabled;
+      state.matchTitle = latestMatchTitle || DEFAULT_MATCH_TITLE;
+      updateMatchTitleUi();
 
       const match = latestDisplay.match(/^(.*?)(?:\s+)?(\d+)\s+-\s+(\d+)(?:\s+(.*))?$/);
       if (!match) return;
@@ -719,14 +720,20 @@
         const currentMatchTitle = String(state.matchTitle || DEFAULT_MATCH_TITLE).trim();
 
         if (Date.now() >= ignoreRemoteUntil) {
-          if (
-            latestDisplay !== currentDisplay ||
-            latestVisible !== currentVisible ||
-            latestBreaker !== currentBreakerString ||
-            latestTitleEnabled !== currentTitleEnabled ||
-            latestMatchTitle !== currentMatchTitle
-          ) {
-            applyLatestDweetState(latest);
+          if (scoreboardScreen.classList.contains("hidden")) {
+            if (latestVisible === "1" && latestDisplay) {
+              applyLatestDweetState(latest);
+            }
+          } else {
+            if (
+              latestDisplay !== currentDisplay ||
+              latestVisible !== currentVisible ||
+              latestBreaker !== currentBreakerString ||
+              latestTitleEnabled !== currentTitleEnabled ||
+              latestMatchTitle !== currentMatchTitle
+            ) {
+              applyLatestDweetState(latest);
+            }
           }
         }
 
@@ -871,9 +878,7 @@
 
     matchTitleEnabledToggle.addEventListener("change", () => {
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
-      if (!state.matchTitleInput) {
-        state.matchTitle = matchTitleInput.value.trim() || DEFAULT_MATCH_TITLE;
-      }
+      state.matchTitle = matchTitleInput.value.trim() || DEFAULT_MATCH_TITLE;
       updateMatchTitleUi();
     });
 
