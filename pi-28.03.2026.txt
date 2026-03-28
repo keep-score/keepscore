@@ -1,0 +1,518 @@
+import json
+import time
+import os
+import urllib.request
+import urllib.error
+import urllib.parse
+import tkinter as tk
+
+# =========================
+# CONFIG
+# =========================
+
+THING_NAME = "cbc1"
+POLL_SECONDS = 1
+IDLE_RESET_SECONDS = 3600
+
+DWEET_GET_URL = f"https://dweet.cc/get/latest/dweet/for/{THING_NAME}"
+DWEET_SET_BASE = f"https://dweet.cc/dweet/for/{THING_NAME}"
+
+CAMERA_HOST = "192.168.1.35"
+CAMERA_BASE = f"http://{CAMERA_HOST}/cgi-bin/configManager.cgi"
+CAMERA_USERNAME = "admin"
+CAMERA_PASSWORD = "cbcdirect1"
+
+DEFAULT_RECT_0 = 4000
+DEFAULT_RECT_2 = 5400
+
+SUCCESS_TEXT = "OK"
+
+# =========================
+# CAMERA AUTH
+# =========================
+
+password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+password_mgr.add_password(None, f"http://{CAMERA_HOST}", CAMERA_USERNAME, CAMERA_PASSWORD)
+digest_handler = urllib.request.HTTPDigestAuthHandler(password_mgr)
+camera_opener = urllib.request.build_opener(digest_handler)
+
+# =========================
+# STATE
+# =========================
+
+last_seen_signature = None
+last_change_time = time.time()
+
+dweet_score = ""
+dweet_visible = True
+dweet_rect_0 = DEFAULT_RECT_0
+dweet_rect_2 = DEFAULT_RECT_2
+
+camera_score = ""
+camera_visible = False
+camera_rect_0 = DEFAULT_RECT_0
+camera_rect_2 = DEFAULT_RECT_2
+
+pending_action = None
+confirm_frame = None
+last_camera_ok = False
+
+# =========================
+# STATUS
+# =========================
+
+def set_status(msg, color="white"):
+    status_label.config(text=msg, fg=color)
+
+def update_sync():
+    if pending_action:
+        camera_state.config(text="Synchronisation...", fg="#f2c14e")
+    else:
+        if last_camera_ok:
+            camera_state.config(text="Synchronisé", fg="#62d26f")
+        else:
+            camera_state.config(text="Non synchronisé", fg="#ff6b6b")
+
+# =========================
+# NETWORK / SHARED STATE
+# =========================
+
+def fetch_data():
+    req = urllib.request.Request(
+        DWEET_GET_URL,
+        headers={"User-Agent": "Pi-Scoreboard-Controller/1.0"}
+    )
+    with urllib.request.urlopen(req, timeout=5) as r:
+        return json.loads(r.read().decode())
+
+def get_content(data):
+    items = data.get("with", [])
+    return items[0]["content"] if items else None
+
+def sig(content):
+    return json.dumps(content, sort_keys=True)
+
+def send_shared_state(display_text, rect0, rect2, visible):
+    params = urllib.parse.urlencode({
+        "display": display_text,
+        "rect0": str(rect0),
+        "rect2": str(rect2),
+        "visible": "1" if visible else "0",
+        "ts": str(int(time.time() * 1000))
+    })
+
+    url = f"{DWEET_SET_BASE}?{params}"
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "Pi-Scoreboard-Controller/1.0"}
+    )
+    with urllib.request.urlopen(req, timeout=5) as r:
+        raw = r.read().decode()
+
+    try:
+        parsed = json.loads(raw)
+        return parsed.get("this") == "succeeded"
+    except Exception:
+        return False
+
+# =========================
+# CAMERA COMMANDS
+# =========================
+
+def build_set(score, r0, r2):
+    return (
+        f"{CAMERA_BASE}"
+        "?action=setConfig"
+        f"&ChannelTitle[0].Name={score}"
+        "&RTMP_NVR.Enable=true"
+        "&Encode[0].MainFormat[0].AudioEnable=true"
+        "&VideoWidget[0].ChannelTitle.EncodeBlend=true"
+        f"&VideoWidget[0].ChannelTitle.Rect[0]={r0}"
+        f"&VideoWidget[0].ChannelTitle.Rect[2]={r2}"
+    )
+
+def build_clear():
+    return (
+        f"{CAMERA_BASE}"
+        "?action=setConfig"
+        "&ChannelTitle[0]"
+        "&RTMP_NVR.Enable=true"
+        "&Encode[0].MainFormat[0].AudioEnable=true"
+        "&VideoWidget[0].ChannelTitle.EncodeBlend=false"
+    )
+
+def send_camera(url):
+    global last_camera_ok
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "Pi-Scoreboard-Controller/1.0"}
+        )
+        with camera_opener.open(req, timeout=8) as r:
+            body = r.read().decode(errors="ignore")
+        last_camera_ok = SUCCESS_TEXT in body
+        return last_camera_ok
+    except Exception as e:
+        print("Camera error:", repr(e))
+        last_camera_ok = False
+        return False
+
+# =========================
+# HIGH-LEVEL ACTIONS
+# =========================
+
+def clear_everything_sequence():
+    global dweet_score, dweet_visible, pending_action
+    global camera_score, camera_visible
+
+    set_status("Effacement caméra...", "#f2c14e")
+    camera_ok = send_camera(build_clear())
+
+    if camera_ok:
+        camera_score = ""
+        camera_visible = False
+        set_status("Caméra effacée", "#62d26f")
+    else:
+        set_status("Caméra hors ligne", "#ff6b6b")
+
+    shared_ok_visible = False
+    shared_ok_hidden = False
+    try:
+        shared_ok_visible = send_shared_state("0 - 0", DEFAULT_RECT_0, DEFAULT_RECT_2, True)
+        shared_ok_hidden = send_shared_state("0 - 0", DEFAULT_RECT_0, DEFAULT_RECT_2, False)
+    except Exception as e:
+        print("Shared clear error:", repr(e))
+
+    dweet_score = ""
+    dweet_visible = False
+    refresh()
+
+    pending_action = None
+    update_sync()
+
+    if camera_ok and shared_ok_visible and shared_ok_hidden:
+        set_status("Score effacé", "#62d26f")
+    elif camera_ok:
+        set_status("Caméra effacée, communication incomplète", "#f2c14e")
+    elif shared_ok_visible or shared_ok_hidden:
+        set_status("Caméra hors ligne, score masqué", "#f2c14e")
+    else:
+        set_status("Effacement partiel", "#ff6b6b")
+
+def shutdown_sequence():
+    clear_everything_sequence()
+    root.after(300, lambda: os.system("sudo shutdown -h now"))
+
+def idle_clear_sequence():
+    global dweet_score, dweet_visible, pending_action
+    global camera_score, camera_visible
+
+    shared_ok_visible = False
+    shared_ok_hidden = False
+    try:
+        shared_ok_visible = send_shared_state("0 - 0", DEFAULT_RECT_0, DEFAULT_RECT_2, True)
+        shared_ok_hidden = send_shared_state("0 - 0", DEFAULT_RECT_0, DEFAULT_RECT_2, False)
+    except Exception as e:
+        print("Idle clear shared-state error:", repr(e))
+
+    dweet_score = ""
+    dweet_visible = False
+    refresh()
+
+    pending_action = {"type": "clear"}
+    update_sync()
+
+    if shared_ok_visible and shared_ok_hidden:
+        set_status("Inactivité - effacement", "#f2c14e")
+    else:
+        set_status("Inactivité - effacement partiel", "#ff6b6b")
+
+# =========================
+# APPLY PENDING SYNC ACTIONS
+# =========================
+
+def apply_action():
+    global pending_action
+    global camera_score, camera_visible, camera_rect_0, camera_rect_2
+    global last_change_time, last_camera_ok
+
+    if not pending_action:
+        update_sync()
+        return
+
+    if pending_action["type"] == "clear":
+        set_status("Effacement...", "#f2c14e")
+
+        if send_camera(build_clear()):
+            camera_score = ""
+            camera_visible = False
+            camera_rect_0 = dweet_rect_0
+            camera_rect_2 = dweet_rect_2
+            pending_action = None
+            last_change_time = time.time()
+            last_camera_ok = True
+            set_status("Effacé", "#62d26f")
+        else:
+            last_camera_ok = False
+            set_status("Caméra hors ligne", "#ff6b6b")
+
+        update_sync()
+        return
+
+    if pending_action["type"] == "set":
+        s = pending_action["text"]
+        r0 = pending_action["r0"]
+        r2 = pending_action["r2"]
+
+        set_status("Envoi...", "#f2c14e")
+
+        if send_camera(build_set(s, r0, r2)):
+            camera_score = s
+            camera_visible = True
+            camera_rect_0 = r0
+            camera_rect_2 = r2
+            pending_action = None
+            last_change_time = time.time()
+            last_camera_ok = True
+            set_status("OK", "#62d26f")
+        else:
+            last_camera_ok = False
+            set_status("Caméra hors ligne", "#ff6b6b")
+
+        update_sync()
+        return
+
+# =========================
+# UI HELPERS
+# =========================
+
+def refresh():
+    score_label.config(text=dweet_score if dweet_visible and dweet_score else "")
+
+def hide_confirm():
+    global confirm_frame
+    if confirm_frame:
+        confirm_frame.destroy()
+        confirm_frame = None
+
+def confirm(msg, func):
+    global confirm_frame
+
+    hide_confirm()
+
+    confirm_frame = tk.Frame(root, bg="#000000")
+    confirm_frame.place(relx=0, rely=0, relwidth=1, relheight=1)
+
+    msg_label = tk.Label(
+        confirm_frame,
+        text=msg,
+        fg="white",
+        bg="#000000",
+        font=("Helvetica", 16, "bold"),
+        wraplength=screen_width - 30,
+        justify="center"
+    )
+    msg_label.place(relx=0, rely=0, relwidth=1, relheight=0.78)
+
+    no_btn = tk.Button(
+        confirm_frame,
+        text="Non",
+        font=("Helvetica", 13, "bold"),
+        bg="#2b2b2b",
+        fg="white",
+        activebackground="#3a3a3a",
+        activeforeground="white",
+        bd=0,
+        highlightthickness=0,
+        command=hide_confirm
+    )
+    no_btn.place(relx=0.0, rely=0.78, relwidth=0.5, relheight=0.22)
+
+    yes_btn = tk.Button(
+        confirm_frame,
+        text="Oui",
+        font=("Helvetica", 13, "bold"),
+        bg="#2b2b2b",
+        fg="white",
+        activebackground="#3a3a3a",
+        activeforeground="white",
+        bd=0,
+        highlightthickness=0,
+        command=lambda: [hide_confirm(), func()]
+    )
+    yes_btn.place(relx=0.5, rely=0.78, relwidth=0.5, relheight=0.22)
+
+def clear_btn():
+    clear_everything_sequence()
+
+def shutdown():
+    shutdown_sequence()
+
+# =========================
+# MAIN LOOP
+# =========================
+
+def tick():
+    global last_seen_signature
+    global last_change_time
+    global pending_action
+    global dweet_score, dweet_visible, dweet_rect_0, dweet_rect_2
+
+    now = time.time()
+
+    try:
+        data = fetch_data()
+        content = get_content(data)
+
+        if content:
+            s = sig(content)
+
+            if s != last_seen_signature:
+                last_seen_signature = s
+                last_change_time = now
+
+                dweet_visible = str(content.get("visible", "1")) != "0"
+                dweet_score = str(content.get("display", "")).strip()
+                dweet_rect_0 = int(content.get("rect0", DEFAULT_RECT_0))
+                dweet_rect_2 = int(content.get("rect2", DEFAULT_RECT_2))
+
+                if dweet_visible:
+                    pending_action = {
+                        "type": "set",
+                        "text": dweet_score,
+                        "r0": dweet_rect_0,
+                        "r2": dweet_rect_2
+                    }
+                    set_status("Commande reçue", "#8ecae6")
+                else:
+                    pending_action = {"type": "clear"}
+                    set_status("Masquer demandé", "#f2c14e")
+
+                refresh()
+                update_sync()
+
+    except Exception as e:
+        print("Fetch error:", repr(e))
+        set_status("Erreur réseau", "#ff6b6b")
+
+    if now - last_change_time > IDLE_RESET_SECONDS:
+        idle_clear_sequence()
+
+    apply_action()
+    root.after(POLL_SECONDS * 1000, tick)
+
+# =========================
+# ROOT WINDOW
+# =========================
+
+root = tk.Tk()
+root.attributes("-fullscreen", True)
+root.attributes("-topmost", True)
+root.config(bg="#000000", cursor="none")
+root.lift()
+root.focus_force()
+
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+
+# =========================
+# MAIN LAYOUT
+# =========================
+
+frame = tk.Frame(root, bg="#000000")
+frame.pack(fill="both", expand=True)
+
+title_label = tk.Label(
+    frame,
+    text="Contrôleur Scoreboard",
+    fg="#d9d9d9",
+    bg="#000000",
+    font=("Helvetica", 14, "bold")
+)
+title_label.pack(pady=(10, 6))
+
+scorebox = tk.Frame(
+    frame,
+    bg="#0f0f0f",
+    highlightbackground="#ffffff",
+    highlightcolor="#ffffff",
+    highlightthickness=2,
+    bd=0
+)
+scorebox.pack(fill="both", expand=True, padx=10, pady=(0, 8))
+
+score_title = tk.Label(
+    scorebox,
+    text="Score actuel",
+    fg="#cccccc",
+    bg="#0f0f0f",
+    font=("Helvetica", 10, "bold")
+)
+score_title.pack(side="top", pady=(10, 4))
+
+score_label = tk.Label(
+    scorebox,
+    text="",
+    fg="white",
+    bg="#0f0f0f",
+    font=("Helvetica", 20, "bold"),
+    justify="center",
+    wraplength=screen_width - 40
+)
+score_label.pack(expand=True, fill="both", padx=8, pady=(0, 8))
+
+camera_state = tk.Label(
+    scorebox,
+    text="Non synchronisé",
+    fg="#ff6b6b",
+    bg="#0f0f0f",
+    font=("Helvetica", 10, "bold")
+)
+camera_state.pack(side="bottom", pady=(0, 4))
+
+status_label = tk.Label(
+    frame,
+    text="Prêt",
+    fg="#cfcfcf",
+    bg="#000000",
+    font=("Helvetica", 9),
+    wraplength=screen_width - 20,
+    justify="center"
+)
+status_label.pack(pady=(0, 6))
+
+# Exact 50/50 bottom bar
+button_bar = tk.Frame(frame, bg="#000000", height=72)
+button_bar.pack(fill="x", side="bottom")
+button_bar.pack_propagate(False)
+
+clear_button = tk.Button(
+    button_bar,
+    text="Effacer score",
+    font=("Helvetica", 13, "bold"),
+    bg="#2b2b2b",
+    fg="white",
+    activebackground="#3a3a3a",
+    activeforeground="white",
+    bd=0,
+    highlightthickness=0,
+    command=lambda: confirm("Effacer le score affiché ?", clear_btn)
+)
+clear_button.place(relx=0.0, rely=0.0, relwidth=0.5, relheight=1.0)
+
+shutdown_button = tk.Button(
+    button_bar,
+    text="Éteindre",
+    font=("Helvetica", 13, "bold"),
+    bg="#2b2b2b",
+    fg="white",
+    activebackground="#3a3a3a",
+    activeforeground="white",
+    bd=0,
+    highlightthickness=0,
+    command=lambda: confirm("Éteindre cet appareil ?", shutdown)
+)
+shutdown_button.place(relx=0.5, rely=0.0, relwidth=0.5, relheight=1.0)
+
+root.after(1000, tick)
+root.mainloop()
