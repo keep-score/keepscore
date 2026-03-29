@@ -111,6 +111,15 @@
       color: white;
     }
 
+    .primary.blocked {
+      background: #4a4a4a;
+      color: #d5d5d5;
+    }
+
+    .primary.blocked:hover {
+      transform: none;
+    }
+
     .scoreboard-wrap {
       display: grid;
       gap: 12px;
@@ -438,7 +447,12 @@
           </div>
         </div>
 
-        <button id="startBtn" class="primary">Démarrer le score</button>
+        <div class="live-status">
+          <span id="setupCameraDot" class="live-dot waiting"></span>
+          <span id="setupCameraText">Vérification caméra...</span>
+        </div>
+
+        <button id="startBtn" class="primary blocked">Démarrer le score</button>
         <div class="status" id="setupStatus"></div>
       </div>
     </div>
@@ -509,6 +523,8 @@
   <script>
     const DWEET_THING = "cbctesting";
     const PI_CONTROL_THING = "cbctesting_shutdown";
+    const CAMERA_STATUS_THING = "cbctesting_camera";
+    const CAMERA_STATUS_MAX_AGE_MS = 10000;
     const START_HOLD_MS = 5000;
 
     const MIN_RECT = { rect0: 3000, rect2: 4400 };
@@ -531,6 +547,7 @@
 
     let currentBreaker = 1;
     let livePollTimer = null;
+    let cameraStatusTimer = null;
     let ignoreRemoteUntil = 0;
     let sendTimer = null;
 
@@ -538,6 +555,7 @@
     let startHoldTriggered = false;
     let startPointerActive = false;
     let suppressStartClick = false;
+    let cameraReady = false;
 
     const setupScreen = document.getElementById("setupScreen");
     const scoreboardScreen = document.getElementById("scoreboardScreen");
@@ -563,11 +581,21 @@
     const scoreboardHeaderDefault = document.getElementById("scoreboardHeaderDefault");
     const scoreboardHeaderCustom = document.getElementById("scoreboardHeaderCustom");
     const scoreboardMatchTitle = document.getElementById("scoreboardMatchTitle");
+    const setupCameraDot = document.getElementById("setupCameraDot");
+    const setupCameraText = document.getElementById("setupCameraText");
 
     function setLiveStatus(mode, text) {
       liveDot.classList.remove("ready", "waiting", "error");
       if (mode) liveDot.classList.add(mode);
       liveStatusText.textContent = text;
+    }
+
+    function setSetupCameraStatus(mode, text, ready) {
+      setupCameraDot.classList.remove("ready", "waiting", "error");
+      if (mode) setupCameraDot.classList.add(mode);
+      setupCameraText.textContent = text;
+      cameraReady = !!ready;
+      startBtn.classList.toggle("blocked", !cameraReady);
     }
 
     function updateMatchTitleUi() {
@@ -656,8 +684,8 @@
       updateMatchTitleUi();
     }
 
-    async function fetchLatestDweet() {
-      const response = await fetch(`https://dweet.cc/get/latest/dweet/for/${encodeURIComponent(DWEET_THING)}?t=${Date.now()}`, {
+    async function fetchLatestThing(thingName) {
+      const response = await fetch(`https://dweet.cc/get/latest/dweet/for/${encodeURIComponent(thingName)}?t=${Date.now()}`, {
         method: "GET",
         cache: "no-store"
       });
@@ -668,6 +696,14 @@
 
       const data = await response.json();
       return data && data.with && data.with.length ? data.with[0].content : null;
+    }
+
+    async function fetchLatestDweet() {
+      return fetchLatestThing(DWEET_THING);
+    }
+
+    async function fetchLatestCameraStatus() {
+      return fetchLatestThing(CAMERA_STATUS_THING);
     }
 
     async function restoreFromLatestDweet() {
@@ -685,6 +721,33 @@
         updateMatchTitleUi();
         setupScreen.classList.remove("hidden");
         scoreboardScreen.classList.add("hidden");
+      }
+    }
+
+    async function checkCameraStatus() {
+      try {
+        const latest = await fetchLatestCameraStatus();
+
+        if (!latest) {
+          setSetupCameraStatus("waiting", "Caméra non détectée", false);
+          return;
+        }
+
+        const online = String(latest.online ?? "0").trim() === "1";
+        const ts = parseInt(latest.ts ?? "0", 10);
+        const age = Number.isFinite(ts) ? Date.now() - ts : Infinity;
+        const fresh = age >= 0 && age <= CAMERA_STATUS_MAX_AGE_MS;
+
+        if (online && fresh) {
+          setSetupCameraStatus("ready", "Caméra prête", true);
+        } else if (online && !fresh) {
+          setSetupCameraStatus("waiting", "Statut caméra trop ancien", false);
+        } else {
+          setSetupCameraStatus("error", "Caméra hors ligne", false);
+        }
+      } catch (error) {
+        console.error(error);
+        setSetupCameraStatus("error", "Erreur statut caméra", false);
       }
     }
 
@@ -756,6 +819,12 @@
       livePollTimer = window.setInterval(checkLatestDweet, 1000);
     }
 
+    function startCameraStatusPolling() {
+      if (cameraStatusTimer) return;
+      checkCameraStatus();
+      cameraStatusTimer = window.setInterval(checkCameraStatus, 2000);
+    }
+
     async function sendState(statusElement) {
       const params = new URLSearchParams({
         display: buildDisplayString(),
@@ -814,6 +883,11 @@
     }
 
     async function startScoreboard() {
+      if (!cameraReady) {
+        setupStatus.textContent = "Caméra hors ligne ou non prête.";
+        return;
+      }
+
       const p1 = player1Input.value.trim();
       const p2 = player2Input.value.trim();
       const title = matchTitleInput.value;
@@ -1048,6 +1122,7 @@
 
     updateMatchTitleUi();
     startLivePolling();
+    startCameraStatusPolling();
     restoreFromLatestDweet();
   </script>
 </body>
