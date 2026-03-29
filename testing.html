@@ -111,12 +111,15 @@
       color: white;
     }
 
-    .primary.blocked {
+    .primary.blocked,
+    .primary:disabled {
       background: #4a4a4a;
       color: #d5d5d5;
+      cursor: not-allowed;
     }
 
-    .primary.blocked:hover {
+    .primary.blocked:hover,
+    .primary:disabled:hover {
       transform: none;
     }
 
@@ -452,7 +455,7 @@
           <span id="setupCameraText">Vérification caméra...</span>
         </div>
 
-        <button id="startBtn" class="primary blocked">Démarrer le score</button>
+        <button id="startBtn" class="primary blocked" disabled>Démarrer le score</button>
         <div class="status" id="setupStatus"></div>
       </div>
     </div>
@@ -522,10 +525,8 @@
 
   <script>
     const DWEET_THING = "cbctesting";
-    const PI_CONTROL_THING = "cbctesting_shutdown";
     const CAMERA_STATUS_THING = "cbctesting_camera";
     const CAMERA_STATUS_MAX_AGE_MS = 10000;
-    const START_HOLD_MS = 5000;
 
     const MIN_RECT = { rect0: 3000, rect2: 4400 };
     const MAX_RECT = { rect0: 6000, rect2: 7400 };
@@ -550,11 +551,6 @@
     let cameraStatusTimer = null;
     let ignoreRemoteUntil = 0;
     let sendTimer = null;
-
-    let startHoldTimer = null;
-    let startHoldTriggered = false;
-    let startPointerActive = false;
-    let suppressStartClick = false;
     let cameraReady = false;
 
     const setupScreen = document.getElementById("setupScreen");
@@ -596,6 +592,7 @@
       setupCameraText.textContent = text;
       cameraReady = !!ready;
       startBtn.classList.toggle("blocked", !cameraReady);
+      startBtn.disabled = !cameraReady;
     }
 
     function updateMatchTitleUi() {
@@ -855,34 +852,6 @@
       setLiveStatus("waiting", "Synchronisation...");
     }
 
-    async function sendPiShutdownCommand() {
-      const now = Date.now();
-
-      const params = new URLSearchParams({
-        action: "shutdown_pi",
-        ts: String(now),
-        nonce: `${now}_${Math.random().toString(36).slice(2, 10)}`
-      });
-
-      const url = `https://dweet.cc/dweet/for/${encodeURIComponent(PI_CONTROL_THING)}?${params.toString()}`;
-      setupStatus.textContent = "Envoi commande arrêt du Pi...";
-
-      const response = await fetch(url, { method: "GET", cache: "no-store" });
-      const raw = await response.text();
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      try {
-        JSON.parse(raw);
-      } catch (err) {
-        console.warn("Réponse non JSON ou vide:", raw);
-      }
-
-      setupStatus.textContent = "Commande d'arrêt envoyée.";
-    }
-
     async function startScoreboard() {
       if (!cameraReady) {
         setupStatus.textContent = "Caméra hors ligne.";
@@ -946,62 +915,10 @@
       }
     }
 
-    function clearStartHold() {
-      if (startHoldTimer) {
-        clearTimeout(startHoldTimer);
-        startHoldTimer = null;
-      }
-    }
-
-    function beginStartHold() {
-      clearStartHold();
-      startHoldTriggered = false;
-      startPointerActive = true;
-
-      startHoldTimer = setTimeout(async () => {
-        if (!startPointerActive) return;
-
-        startHoldTriggered = true;
-        suppressStartClick = true;
-        clearStartHold();
-
-        const ok = confirm("Éteindre le Raspberry Pi ?");
-        if (!ok) {
-          setupStatus.textContent = "";
-          return;
-        }
-
-        try {
-          await sendPiShutdownCommand();
-        } catch (error) {
-          console.error(error);
-          setupStatus.textContent = "Erreur envoi arrêt du Pi.";
-        }
-      }, START_HOLD_MS);
-    }
-
-    function endStartHold() {
-      startPointerActive = false;
-      clearStartHold();
-    }
-
-    startBtn.addEventListener("click", (e) => {
-      if (suppressStartClick) {
-        e.preventDefault();
-        suppressStartClick = false;
-        return;
-      }
+    startBtn.addEventListener("click", () => {
+      if (startBtn.disabled) return;
       startScoreboard();
     });
-
-    startBtn.addEventListener("pointerdown", (e) => {
-      if (e.button !== undefined && e.button !== 0) return;
-      beginStartHold();
-    });
-
-    startBtn.addEventListener("pointerup", endStartHold);
-    startBtn.addEventListener("pointerleave", endStartHold);
-    startBtn.addEventListener("pointercancel", endStartHold);
 
     player1Input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") player2Input.focus();
