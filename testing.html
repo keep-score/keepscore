@@ -615,7 +615,8 @@
     }
 
     function splitMatchTitleLines(text) {
-      const lines = String(text || "").split(/\r?\n/);
+      const normalized = String(text || "").replace(/\|/g, "\n");
+      const lines = normalized.split(/\r?\n/);
       while (lines.length < 4) lines.push("");
       return lines.slice(0, 4);
     }
@@ -632,6 +633,13 @@
 
     function getMatchTitleFromLines(lines) {
       return cleanMatchTitleLines(lines).join("\n");
+    }
+
+    function getMatchTitleForTransport(linesOrText) {
+      const lines = Array.isArray(linesOrText)
+        ? cleanMatchTitleLines(linesOrText)
+        : splitMatchTitleLines(linesOrText);
+      return lines.join("|");
     }
 
     function getDefaultMatchTitle() {
@@ -665,7 +673,8 @@
       const rect2 = parseInt(latest.rect2 ?? DEFAULT_RECT.rect2, 10);
       const latestBreaker = parseInt(latest.breaker ?? "1", 10);
       const latestTitleEnabled = String(latest.match_title_enabled ?? "0") === "1";
-      const latestMatchTitle = String(latest.match_title || getDefaultMatchTitle());
+      const latestMatchTitleRaw = String(latest.match_title || getDefaultMatchTitle());
+      const latestMatchTitle = getMatchTitleFromLines(splitMatchTitleLines(latestMatchTitleRaw));
 
       state.rect0 = Number.isFinite(rect0) ? rect0 : DEFAULT_RECT.rect0;
       state.rect2 = Number.isFinite(rect2) ? rect2 : DEFAULT_RECT.rect2;
@@ -828,13 +837,13 @@
         const latestVisible = String(latest.visible ?? "1").trim();
         const latestBreaker = String(latest.breaker ?? "1").trim();
         const latestTitleEnabled = String(latest.match_title_enabled ?? "0").trim();
-        const latestMatchTitle = String(latest.match_title || getDefaultMatchTitle());
+        const latestMatchTitle = getMatchTitleForTransport(String(latest.match_title || getDefaultMatchTitle()));
 
         const currentDisplay = buildDisplayString();
         const currentVisible = String(state.visible);
         const currentBreakerString = String(currentBreaker);
         const currentTitleEnabled = state.matchTitleEnabled ? "1" : "0";
-        const currentMatchTitle = String(state.matchTitle || getDefaultMatchTitle());
+        const currentMatchTitle = getMatchTitleForTransport(state.matchTitle || getDefaultMatchTitle());
 
         if (Date.now() >= ignoreRemoteUntil) {
           if (scoreboardScreen.classList.contains("hidden")) {
@@ -858,7 +867,7 @@
         const refreshedVisible = String(state.visible);
         const refreshedBreaker = String(currentBreaker);
         const refreshedTitleEnabled = state.matchTitleEnabled ? "1" : "0";
-        const refreshedMatchTitle = String(state.matchTitle || getDefaultMatchTitle());
+        const refreshedMatchTitle = getMatchTitleForTransport(state.matchTitle || getDefaultMatchTitle());
 
         if (cameraOnlineState === false) {
           setLiveStatus("error", "Caméra hors ligne");
@@ -901,7 +910,7 @@
       const params = new URLSearchParams({
         display: buildDisplayString(),
         match_title_enabled: state.matchTitleEnabled ? "1" : "0",
-        match_title: state.matchTitle || getDefaultMatchTitle(),
+        match_title: getMatchTitleForTransport(state.matchTitle || getDefaultMatchTitle()),
         rect0: String(state.rect0),
         rect2: String(state.rect2),
         visible: String(state.visible),
