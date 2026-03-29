@@ -23,6 +23,7 @@
       --green: #32d74b;
       --panel: #111;
       --panel-2: #171717;
+      --danger: #ff453a;
     }
 
     * { box-sizing: border-box; }
@@ -412,6 +413,175 @@
       line-height: 1.15;
     }
 
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 999;
+    }
+
+    .modal-card {
+      width: 100%;
+      max-width: 460px;
+      background: #121212;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 22px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+      padding: 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .modal-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 900;
+    }
+
+    .modal-close {
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: 999px;
+      background: #262626;
+      color: white;
+      padding: 0;
+      font-size: 1.1rem;
+    }
+
+    .control-card {
+      background: #1a1a1a;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .control-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .control-title {
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .yt-logo {
+      width: 28px;
+      height: 20px;
+      border-radius: 6px;
+      background: #ff0000;
+      position: relative;
+      flex: 0 0 auto;
+    }
+
+    .yt-logo::before {
+      content: "";
+      position: absolute;
+      left: 10px;
+      top: 5px;
+      width: 0;
+      height: 0;
+      border-left: 8px solid white;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+    }
+
+    .always-on {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: #d8ffe0;
+      background: rgba(50,215,75,0.14);
+      border: 1px solid rgba(50,215,75,0.28);
+      border-radius: 999px;
+      padding: 7px 10px;
+      white-space: nowrap;
+    }
+
+    .control-subtext {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+
+    .link-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .mini-btn {
+      background: #2b2b2b;
+      color: white;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 0.95rem;
+      min-height: 44px;
+    }
+
+    .mini-btn:hover {
+      background: #383838;
+    }
+
+    .mini-btn.copy-ok {
+      background: #1f6f3f;
+    }
+
+    .hdmi-toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .hdmi-status-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 0.9rem;
+      white-space: nowrap;
+      background: #2c2c2c;
+      color: #e6e6e6;
+    }
+
+    .hdmi-status-chip.on {
+      background: rgba(50,215,75,0.14);
+      color: #d8ffe0;
+      border: 1px solid rgba(50,215,75,0.28);
+    }
+
+    .hdmi-status-chip.off {
+      background: rgba(255,255,255,0.06);
+      color: #d7d7d7;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .hdmi-status-chip.pending {
+      background: rgba(250,204,21,0.12);
+      color: #fff2b0;
+      border: 1px solid rgba(250,204,21,0.25);
+    }
+
     @media (orientation: portrait) {
       .players {
         grid-template-columns: 1fr;
@@ -544,7 +714,7 @@
         <button class="subtle-btn" id="moveLeftBtn" aria-label="Déplacer à gauche" title="Décaler le score vers la gauche sur la vidéo">↢</button>
         <button class="tool-btn" id="resetBtn" aria-label="Réinitialiser" title="Réinitialiser le score et revenir à l'écran de départ">↻</button>
         <button class="tool-btn" id="fullscreenBtn" aria-label="Plein écran" title="Afficher le site en plein écran">⛶</button>
-        <button class="tool-btn" id="hdmiBtn" aria-label="Affichage HDMI" title="Activer ou désactiver l’affichage HDMI sur le Raspberry Pi">📺</button>
+        <button class="tool-btn" id="hdmiBtn" aria-label="Diffusion vidéo" title="Ouvrir les options de diffusion vidéo">📺</button>
         <button class="subtle-btn" id="moveRightBtn" aria-label="Déplacer à droite" title="Décaler le score vers la droite sur la vidéo">↣</button>
       </div>
 
@@ -556,10 +726,51 @@
     </div>
   </div>
 
+  <div id="tvModal" class="modal-backdrop hidden" aria-hidden="true">
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tvModalTitle">
+      <div class="modal-head">
+        <div id="tvModalTitle" class="modal-title">Diffusion vidéo</div>
+        <button class="modal-close" id="tvModalClose" aria-label="Fermer">✕</button>
+      </div>
+
+      <div class="control-card">
+        <div class="control-top">
+          <div class="control-title">
+            <span class="yt-logo" aria-hidden="true"></span>
+            <span>YouTube Live</span>
+          </div>
+          <span class="always-on">● Activé</span>
+        </div>
+        <div class="control-subtext" id="youtubeUrlText">youtube.com/@ClusesBillardClub/live</div>
+        <div class="link-row">
+          <button class="mini-btn" id="openYoutubeBtn">Ouvrir</button>
+          <button class="mini-btn" id="copyYoutubeBtn">Copier le lien</button>
+        </div>
+      </div>
+
+      <div class="control-card">
+        <div class="hdmi-toggle-row">
+          <div>
+            <div class="control-title">Écran TV local</div>
+            <div class="control-subtext">Active ou coupe l’affichage HDMI sur le Raspberry Pi.</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="modalHdmiToggle" />
+            <span class="slider"></span>
+          </label>
+        </div>
+        <div>
+          <span id="modalHdmiStatus" class="hdmi-status-chip off">HDMI désactivé</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     const DWEET_THING = "cbc1";
     const CAMERA_STATUS_THING = "cbc1_camera";
     const HDMI_THING = "cbc1_hdmi";
+    const YOUTUBE_LIVE_URL = "https://youtube.com/@ClusesBillardClub/live";
 
     const MIN_RECT = { rect0: 3000, rect2: 4400 };
     const MAX_RECT = { rect0: 6000, rect2: 7400 };
@@ -620,6 +831,13 @@
     const setupCameraDot = document.getElementById("setupCameraDot");
     const setupCameraText = document.getElementById("setupCameraText");
 
+    const tvModal = document.getElementById("tvModal");
+    const tvModalClose = document.getElementById("tvModalClose");
+    const modalHdmiToggle = document.getElementById("modalHdmiToggle");
+    const modalHdmiStatus = document.getElementById("modalHdmiStatus");
+    const openYoutubeBtn = document.getElementById("openYoutubeBtn");
+    const copyYoutubeBtn = document.getElementById("copyYoutubeBtn");
+
     function setLiveStatus(mode, text) {
       liveDot.classList.remove("ready", "waiting", "error");
       if (mode) liveDot.classList.add(mode);
@@ -670,11 +888,24 @@
     function updateHdmiButtonUi() {
       hdmiBtn.classList.toggle("active-hdmi", !!state.hdmiEnabled);
       hdmiBtn.classList.toggle("pending-hdmi", !!hdmiPending);
-      hdmiBtn.textContent = state.hdmiEnabled ? "📺" : "📺";
       hdmiBtn.title = state.hdmiEnabled
-        ? "Couper l’affichage HDMI sur le Raspberry Pi"
-        : "Activer l’affichage HDMI sur le Raspberry Pi";
-      hdmiBtn.setAttribute("aria-label", state.hdmiEnabled ? "Couper affichage HDMI" : "Activer affichage HDMI");
+        ? "Ouvrir les options vidéo (TV locale activée)"
+        : "Ouvrir les options vidéo";
+      hdmiBtn.setAttribute("aria-label", state.hdmiEnabled ? "Options vidéo, TV locale activée" : "Options vidéo");
+
+      modalHdmiToggle.checked = !!state.hdmiEnabled;
+
+      modalHdmiStatus.classList.remove("on", "off", "pending");
+      if (hdmiPending) {
+        modalHdmiStatus.classList.add("pending");
+        modalHdmiStatus.textContent = "Commande en cours...";
+      } else if (state.hdmiEnabled) {
+        modalHdmiStatus.classList.add("on");
+        modalHdmiStatus.textContent = "HDMI activé";
+      } else {
+        modalHdmiStatus.classList.add("off");
+        modalHdmiStatus.textContent = "HDMI désactivé";
+      }
     }
 
     function updateMatchTitleUi() {
@@ -771,6 +1002,30 @@
       updateCue();
       updateMatchTitleUi();
       updateHdmiButtonUi();
+    }
+
+    function openTvModal() {
+      tvModal.classList.remove("hidden");
+      tvModal.setAttribute("aria-hidden", "false");
+      updateHdmiButtonUi();
+    }
+
+    function closeTvModal() {
+      tvModal.classList.add("hidden");
+      tvModal.setAttribute("aria-hidden", "true");
+      copyYoutubeBtn.classList.remove("copy-ok");
+      copyYoutubeBtn.textContent = "Copier le lien";
+    }
+
+    async function copyYoutubeLink() {
+      try {
+        await navigator.clipboard.writeText(YOUTUBE_LIVE_URL);
+        copyYoutubeBtn.classList.add("copy-ok");
+        copyYoutubeBtn.textContent = "Lien copié";
+      } catch (error) {
+        console.error(error);
+        scoreStatus.textContent = "Impossible de copier le lien.";
+      }
     }
 
     async function fetchLatestThing(thingName) {
@@ -1257,7 +1512,23 @@
     });
 
     fullscreenBtn.addEventListener("click", toggleFullscreen);
-    hdmiBtn.addEventListener("click", toggleHdmi);
+    hdmiBtn.addEventListener("click", openTvModal);
+    tvModalClose.addEventListener("click", closeTvModal);
+    modalHdmiToggle.addEventListener("change", toggleHdmi);
+    openYoutubeBtn.addEventListener("click", () => {
+      window.open(YOUTUBE_LIVE_URL, "_blank", "noopener,noreferrer");
+    });
+    copyYoutubeBtn.addEventListener("click", copyYoutubeLink);
+
+    tvModal.addEventListener("click", (e) => {
+      if (e.target === tvModal) closeTvModal();
+    });
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape" && !tvModal.classList.contains("hidden")) {
+        closeTvModal();
+      }
+    });
 
     updateMatchTitleUi();
     updateHdmiButtonUi();
