@@ -677,7 +677,12 @@
         state.score1 = 0;
         state.score2 = 0;
         state.visible = 0;
+        state.matchTitleEnabled = false;
+        state.matchTitle = getDefaultMatchTitle();
+
         renderScoreboard();
+        updateMatchTitleUi();
+
         setupScreen.classList.remove("hidden");
         scoreboardScreen.classList.add("hidden");
         return;
@@ -695,6 +700,7 @@
       state.score2 = parseInt(match[3], 10) || 0;
       state.player2 = (match[4] || "").trim();
       state.visible = 1;
+
       renderScoreboard();
       setupScreen.classList.add("hidden");
       scoreboardScreen.classList.remove("hidden");
