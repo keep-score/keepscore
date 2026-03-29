@@ -88,6 +88,11 @@
       font-size: 1rem;
     }
 
+    .multi-line-grid {
+      display: grid;
+      gap: 8px;
+    }
+
     button {
       border: none;
       border-radius: 16px;
@@ -383,6 +388,11 @@
       margin-top: 4px;
     }
 
+    #scoreboardMatchTitle {
+      white-space: pre-line;
+      line-height: 1.15;
+    }
+
     @media (orientation: portrait) {
       .players {
         grid-template-columns: 1fr;
@@ -446,7 +456,12 @@
           </div>
 
           <div class="field hidden" id="matchTitleFieldWrap">
-            <input id="matchTitleInput" type="text" maxlength="60" value="Premier à 9" placeholder="Titre du match" />
+            <div class="multi-line-grid">
+              <input id="matchTitleInput1" type="text" maxlength="60" value="Premier à 9" placeholder="Ligne 1" />
+              <input id="matchTitleInput2" type="text" maxlength="60" value="" placeholder="Ligne 2" />
+              <input id="matchTitleInput3" type="text" maxlength="60" value="" placeholder="Ligne 3" />
+              <input id="matchTitleInput4" type="text" maxlength="60" value="" placeholder="Ligne 4" />
+            </div>
           </div>
         </div>
 
@@ -531,7 +546,7 @@
     const MAX_RECT = { rect0: 6000, rect2: 7400 };
     const RECT_STEP = 200;
     const DEFAULT_RECT = { rect0: 4000, rect2: 5400 };
-    const DEFAULT_MATCH_TITLE = "Premier à 9";
+    const DEFAULT_MATCH_TITLE_LINES = ["Premier à 9", "", "", ""];
 
     const state = {
       player1: "",
@@ -542,7 +557,7 @@
       rect2: DEFAULT_RECT.rect2,
       visible: 1,
       matchTitleEnabled: false,
-      matchTitle: DEFAULT_MATCH_TITLE
+      matchTitle: DEFAULT_MATCH_TITLE_LINES.join("\n")
     };
 
     let currentBreaker = 1;
@@ -551,6 +566,7 @@
     let ignoreRemoteUntil = 0;
     let sendTimer = null;
     let cameraReady = false;
+    let cameraOnlineState = null;
 
     const setupScreen = document.getElementById("setupScreen");
     const scoreboardScreen = document.getElementById("scoreboardScreen");
@@ -558,7 +574,11 @@
     const player2Input = document.getElementById("player2Input");
     const matchTitleEnabledToggle = document.getElementById("matchTitleEnabledToggle");
     const matchTitleFieldWrap = document.getElementById("matchTitleFieldWrap");
-    const matchTitleInput = document.getElementById("matchTitleInput");
+    const matchTitleInput1 = document.getElementById("matchTitleInput1");
+    const matchTitleInput2 = document.getElementById("matchTitleInput2");
+    const matchTitleInput3 = document.getElementById("matchTitleInput3");
+    const matchTitleInput4 = document.getElementById("matchTitleInput4");
+    const matchTitleInputs = [matchTitleInput1, matchTitleInput2, matchTitleInput3, matchTitleInput4];
     const startBtn = document.getElementById("startBtn");
     const setupStatus = document.getElementById("setupStatus");
     const scoreStatus = document.getElementById("scoreStatus");
@@ -594,17 +614,43 @@
       startBtn.disabled = !cameraReady;
     }
 
+    function splitMatchTitleLines(text) {
+      const lines = String(text || "").split(/\r?\n/);
+      while (lines.length < 4) lines.push("");
+      return lines.slice(0, 4);
+    }
+
+    function cleanMatchTitleLines(lines) {
+      const out = lines.slice(0, 4).map(line => String(line || ""));
+      while (out.length < 4) out.push("");
+      return out;
+    }
+
+    function getMatchTitleLinesFromInputs() {
+      return cleanMatchTitleLines(matchTitleInputs.map(input => input.value));
+    }
+
+    function getMatchTitleFromLines(lines) {
+      return cleanMatchTitleLines(lines).join("\n");
+    }
+
+    function getDefaultMatchTitle() {
+      return getMatchTitleFromLines(DEFAULT_MATCH_TITLE_LINES);
+    }
+
     function updateMatchTitleUi() {
       matchTitleEnabledToggle.checked = state.matchTitleEnabled;
       matchTitleFieldWrap.classList.toggle("hidden", !state.matchTitleEnabled);
 
-      const cleanTitle = (state.matchTitle || DEFAULT_MATCH_TITLE).trim() || DEFAULT_MATCH_TITLE;
+      const lines = splitMatchTitleLines(state.matchTitle || getDefaultMatchTitle());
 
-      if (document.activeElement !== matchTitleInput) {
-        matchTitleInput.value = cleanTitle;
-      }
+      matchTitleInputs.forEach((input, index) => {
+        if (document.activeElement !== input) {
+          input.value = lines[index];
+        }
+      });
 
-      scoreboardMatchTitle.textContent = cleanTitle;
+      scoreboardMatchTitle.textContent = lines.join("\n").trim() || DEFAULT_MATCH_TITLE_LINES[0];
 
       scoreboardHeaderDefault.classList.toggle("hidden", state.matchTitleEnabled);
       scoreboardHeaderCustom.classList.toggle("hidden", !state.matchTitleEnabled);
@@ -619,7 +665,7 @@
       const rect2 = parseInt(latest.rect2 ?? DEFAULT_RECT.rect2, 10);
       const latestBreaker = parseInt(latest.breaker ?? "1", 10);
       const latestTitleEnabled = String(latest.match_title_enabled ?? "0") === "1";
-      const latestMatchTitle = String(latest.match_title || DEFAULT_MATCH_TITLE);
+      const latestMatchTitle = String(latest.match_title || getDefaultMatchTitle());
 
       state.rect0 = Number.isFinite(rect0) ? rect0 : DEFAULT_RECT.rect0;
       state.rect2 = Number.isFinite(rect2) ? rect2 : DEFAULT_RECT.rect2;
@@ -638,7 +684,7 @@
       }
 
       state.matchTitleEnabled = latestTitleEnabled;
-      state.matchTitle = latestMatchTitle || DEFAULT_MATCH_TITLE;
+      state.matchTitle = latestMatchTitle || getDefaultMatchTitle();
       updateMatchTitleUi();
 
       const match = latestDisplay.match(/^(.*?)(?:\s+)?(\d+)\s+-\s+(\d+)(?:\s+(.*))?$/);
@@ -725,20 +771,35 @@
         const latest = await fetchLatestCameraStatus();
 
         if (!latest) {
+          cameraOnlineState = null;
           setSetupCameraStatus("waiting", "Vérification caméra...", false);
+
+          if (!scoreboardScreen.classList.contains("hidden")) {
+            setLiveStatus("waiting", "Vérification caméra...");
+          }
           return;
         }
 
         const online = String(latest.online || "0").trim() === "1";
+        cameraOnlineState = online;
 
         if (online) {
           setSetupCameraStatus("ready", "Caméra prête", true);
         } else {
           setSetupCameraStatus("error", "Caméra hors ligne", false);
+
+          if (!scoreboardScreen.classList.contains("hidden")) {
+            setLiveStatus("error", "Caméra hors ligne");
+          }
         }
       } catch (error) {
         console.error(error);
+        cameraOnlineState = null;
         setSetupCameraStatus("waiting", "Vérification caméra...", false);
+
+        if (!scoreboardScreen.classList.contains("hidden")) {
+          setLiveStatus("waiting", "Vérification caméra...");
+        }
       }
     }
 
@@ -747,7 +808,13 @@
         const latest = await fetchLatestDweet();
 
         if (!latest) {
-          setLiveStatus("waiting", "En attente...");
+          if (cameraOnlineState === false) {
+            setLiveStatus("error", "Caméra hors ligne");
+          } else if (cameraOnlineState === null) {
+            setLiveStatus("waiting", "Vérification caméra...");
+          } else {
+            setLiveStatus("waiting", "En attente...");
+          }
           return;
         }
 
@@ -755,13 +822,13 @@
         const latestVisible = String(latest.visible ?? "1").trim();
         const latestBreaker = String(latest.breaker ?? "1").trim();
         const latestTitleEnabled = String(latest.match_title_enabled ?? "0").trim();
-        const latestMatchTitle = String(latest.match_title || DEFAULT_MATCH_TITLE);
+        const latestMatchTitle = String(latest.match_title || getDefaultMatchTitle());
 
         const currentDisplay = buildDisplayString();
         const currentVisible = String(state.visible);
         const currentBreakerString = String(currentBreaker);
         const currentTitleEnabled = state.matchTitleEnabled ? "1" : "0";
-        const currentMatchTitle = String(state.matchTitle || DEFAULT_MATCH_TITLE);
+        const currentMatchTitle = String(state.matchTitle || getDefaultMatchTitle());
 
         if (Date.now() >= ignoreRemoteUntil) {
           if (scoreboardScreen.classList.contains("hidden")) {
@@ -785,9 +852,13 @@
         const refreshedVisible = String(state.visible);
         const refreshedBreaker = String(currentBreaker);
         const refreshedTitleEnabled = state.matchTitleEnabled ? "1" : "0";
-        const refreshedMatchTitle = String(state.matchTitle || DEFAULT_MATCH_TITLE);
+        const refreshedMatchTitle = String(state.matchTitle || getDefaultMatchTitle());
 
-        if (
+        if (cameraOnlineState === false) {
+          setLiveStatus("error", "Caméra hors ligne");
+        } else if (cameraOnlineState === null) {
+          setLiveStatus("waiting", "Vérification caméra...");
+        } else if (
           latestDisplay === refreshedDisplay &&
           latestVisible === refreshedVisible &&
           latestBreaker === refreshedBreaker &&
@@ -800,7 +871,11 @@
         }
       } catch (error) {
         console.error(error);
-        setLiveStatus("error", "Erreur connexion");
+        if (cameraOnlineState === false) {
+          setLiveStatus("error", "Caméra hors ligne");
+        } else {
+          setLiveStatus("error", "Erreur connexion");
+        }
       }
     }
 
@@ -820,7 +895,7 @@
       const params = new URLSearchParams({
         display: buildDisplayString(),
         match_title_enabled: state.matchTitleEnabled ? "1" : "0",
-        match_title: state.matchTitle || DEFAULT_MATCH_TITLE,
+        match_title: state.matchTitle || getDefaultMatchTitle(),
         rect0: String(state.rect0),
         rect2: String(state.rect2),
         visible: String(state.visible),
@@ -845,7 +920,12 @@
       }
 
       statusElement.textContent = "Commande envoyée.";
-      setLiveStatus("waiting", "Synchronisation...");
+
+      if (cameraOnlineState === false) {
+        setLiveStatus("error", "Caméra hors ligne");
+      } else {
+        setLiveStatus("waiting", "Synchronisation...");
+      }
     }
 
     async function startScoreboard() {
@@ -856,11 +936,10 @@
 
       const p1 = player1Input.value.trim();
       const p2 = player2Input.value.trim();
-      const title = matchTitleInput.value;
 
       state.player1 = p1;
       state.player2 = p2;
-      state.matchTitle = title || DEFAULT_MATCH_TITLE;
+      state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
       state.score1 = 0;
       state.score2 = 0;
       state.rect0 = DEFAULT_RECT.rect0;
@@ -923,26 +1002,40 @@
     player2Input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         if (state.matchTitleEnabled) {
-          matchTitleInput.focus();
+          matchTitleInput1.focus();
         } else {
           startScoreboard();
         }
       }
     });
 
-    matchTitleInput.addEventListener("keydown", (e) => {
+    matchTitleInput1.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") matchTitleInput2.focus();
+    });
+
+    matchTitleInput2.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") matchTitleInput3.focus();
+    });
+
+    matchTitleInput3.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") matchTitleInput4.focus();
+    });
+
+    matchTitleInput4.addEventListener("keydown", (e) => {
       if (e.key === "Enter") startScoreboard();
     });
 
     matchTitleEnabledToggle.addEventListener("change", () => {
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
-      state.matchTitle = matchTitleInput.value || DEFAULT_MATCH_TITLE;
+      state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
       updateMatchTitleUi();
     });
 
-    matchTitleInput.addEventListener("input", () => {
-      state.matchTitle = matchTitleInput.value;
-      updateMatchTitleUi();
+    matchTitleInputs.forEach((input) => {
+      input.addEventListener("input", () => {
+        state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
+        updateMatchTitleUi();
+      });
     });
 
     player1Name.addEventListener("click", () => updateAndSend(() => {
@@ -1005,7 +1098,7 @@
       state.rect2 = DEFAULT_RECT.rect2;
       state.visible = 1;
       state.matchTitleEnabled = false;
-      state.matchTitle = DEFAULT_MATCH_TITLE;
+      state.matchTitle = getDefaultMatchTitle();
       currentBreaker = 1;
 
       renderScoreboard();
@@ -1018,7 +1111,10 @@
 
         player1Input.value = "";
         player2Input.value = "";
-        matchTitleInput.value = DEFAULT_MATCH_TITLE;
+        matchTitleInput1.value = DEFAULT_MATCH_TITLE_LINES[0];
+        matchTitleInput2.value = DEFAULT_MATCH_TITLE_LINES[1];
+        matchTitleInput3.value = DEFAULT_MATCH_TITLE_LINES[2];
+        matchTitleInput4.value = DEFAULT_MATCH_TITLE_LINES[3];
         setupStatus.textContent = "";
         scoreStatus.textContent = "";
         updateMatchTitleUi();
