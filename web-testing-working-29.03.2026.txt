@@ -280,6 +280,25 @@
       background: var(--sys-btn-hover) !important;
     }
 
+    .tool-btn.active-hdmi {
+      background: rgba(50, 215, 75, 0.18) !important;
+      color: #d8ffe0 !important;
+      box-shadow:
+        0 0 0 2px rgba(50,215,75,0.45),
+        0 0 18px rgba(50,215,75,0.55),
+        0 8px 18px rgba(0,0,0,0.28),
+        inset 0 0 0 2px rgba(255,255,255,0.08);
+    }
+
+    .tool-btn.pending-hdmi {
+      color: #fff2b0 !important;
+      box-shadow:
+        0 0 0 2px rgba(250,204,21,0.35),
+        0 0 14px rgba(250,204,21,0.35),
+        0 8px 18px rgba(0,0,0,0.28),
+        inset 0 0 0 2px rgba(255,255,255,0.05);
+    }
+
     .option-card {
       background: var(--panel-2);
       border-radius: 16px;
@@ -525,6 +544,7 @@
         <button class="subtle-btn" id="moveLeftBtn" aria-label="Déplacer à gauche" title="Décaler le score vers la gauche sur la vidéo">↢</button>
         <button class="tool-btn" id="resetBtn" aria-label="Réinitialiser" title="Réinitialiser le score et revenir à l'écran de départ">↻</button>
         <button class="tool-btn" id="fullscreenBtn" aria-label="Plein écran" title="Afficher le site en plein écran">⛶</button>
+        <button class="tool-btn" id="hdmiBtn" aria-label="Affichage HDMI" title="Activer ou désactiver l’affichage HDMI sur le Raspberry Pi">📺</button>
         <button class="subtle-btn" id="moveRightBtn" aria-label="Déplacer à droite" title="Décaler le score vers la droite sur la vidéo">↣</button>
       </div>
 
@@ -539,6 +559,7 @@
   <script>
     const DWEET_THING = "cbctesting";
     const CAMERA_STATUS_THING = "cbctesting_camera";
+    const HDMI_THING = "cbctesting_hdmi";
 
     const MIN_RECT = { rect0: 3000, rect2: 4400 };
     const MAX_RECT = { rect0: 6000, rect2: 7400 };
@@ -555,16 +576,19 @@
       rect2: DEFAULT_RECT.rect2,
       visible: 1,
       matchTitleEnabled: false,
-      matchTitle: DEFAULT_MATCH_TITLE_LINES.join("\n")
+      matchTitle: DEFAULT_MATCH_TITLE_LINES.join("\n"),
+      hdmiEnabled: false
     };
 
     let currentBreaker = 1;
     let livePollTimer = null;
     let cameraStatusTimer = null;
+    let hdmiPollTimer = null;
     let ignoreRemoteUntil = 0;
     let sendTimer = null;
     let cameraReady = false;
     let cameraOnlineState = null;
+    let hdmiPending = false;
 
     const setupScreen = document.getElementById("setupScreen");
     const scoreboardScreen = document.getElementById("scoreboardScreen");
@@ -589,6 +613,7 @@
     const liveDot = document.getElementById("liveDot");
     const liveStatusText = document.getElementById("liveStatusText");
     const fullscreenBtn = document.getElementById("fullscreenBtn");
+    const hdmiBtn = document.getElementById("hdmiBtn");
     const scoreboardHeaderDefault = document.getElementById("scoreboardHeaderDefault");
     const scoreboardHeaderCustom = document.getElementById("scoreboardHeaderCustom");
     const scoreboardMatchTitle = document.getElementById("scoreboardMatchTitle");
@@ -640,6 +665,16 @@
 
     function getDefaultMatchTitle() {
       return getMatchTitleFromLines(DEFAULT_MATCH_TITLE_LINES);
+    }
+
+    function updateHdmiButtonUi() {
+      hdmiBtn.classList.toggle("active-hdmi", !!state.hdmiEnabled);
+      hdmiBtn.classList.toggle("pending-hdmi", !!hdmiPending);
+      hdmiBtn.textContent = state.hdmiEnabled ? "📺" : "📺";
+      hdmiBtn.title = state.hdmiEnabled
+        ? "Couper l’affichage HDMI sur le Raspberry Pi"
+        : "Activer l’affichage HDMI sur le Raspberry Pi";
+      hdmiBtn.setAttribute("aria-label", state.hdmiEnabled ? "Couper affichage HDMI" : "Activer affichage HDMI");
     }
 
     function updateMatchTitleUi() {
@@ -735,6 +770,7 @@
       score2Display.textContent = state.score2;
       updateCue();
       updateMatchTitleUi();
+      updateHdmiButtonUi();
     }
 
     async function fetchLatestThing(thingName) {
@@ -759,11 +795,16 @@
       return fetchLatestThing(CAMERA_STATUS_THING);
     }
 
+    async function fetchLatestHdmiStatus() {
+      return fetchLatestThing(HDMI_THING);
+    }
+
     async function restoreFromLatestDweet() {
       try {
         const latest = await fetchLatestDweet();
         if (!latest) {
           updateMatchTitleUi();
+          updateHdmiButtonUi();
           setupScreen.classList.remove("hidden");
           scoreboardScreen.classList.add("hidden");
           return;
@@ -772,8 +813,29 @@
       } catch (error) {
         console.error(error);
         updateMatchTitleUi();
+        updateHdmiButtonUi();
         setupScreen.classList.remove("hidden");
         scoreboardScreen.classList.add("hidden");
+      }
+    }
+
+    async function restoreHdmiState() {
+      try {
+        const latest = await fetchLatestHdmiStatus();
+        if (!latest) {
+          state.hdmiEnabled = false;
+          hdmiPending = false;
+          updateHdmiButtonUi();
+          return;
+        }
+
+        state.hdmiEnabled = String(latest.hdmi ?? "0").trim() === "1";
+        hdmiPending = false;
+        updateHdmiButtonUi();
+      } catch (error) {
+        console.error(error);
+        hdmiPending = false;
+        updateHdmiButtonUi();
       }
     }
 
@@ -890,6 +952,21 @@
       }
     }
 
+    async function checkHdmiStatus() {
+      try {
+        const latest = await fetchLatestHdmiStatus();
+        const remoteHdmiEnabled = !!latest && String(latest.hdmi ?? "0").trim() === "1";
+
+        if (remoteHdmiEnabled !== state.hdmiEnabled || hdmiPending) {
+          state.hdmiEnabled = remoteHdmiEnabled;
+          hdmiPending = false;
+          updateHdmiButtonUi();
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    }
+
     function startLivePolling() {
       if (livePollTimer) return;
       checkLatestDweet();
@@ -900,6 +977,12 @@
       if (cameraStatusTimer) return;
       checkCameraStatus();
       cameraStatusTimer = window.setInterval(checkCameraStatus, 3000);
+    }
+
+    function startHdmiPolling() {
+      if (hdmiPollTimer) return;
+      checkHdmiStatus();
+      hdmiPollTimer = window.setInterval(checkHdmiStatus, 1500);
     }
 
     async function sendState(statusElement) {
@@ -936,6 +1019,49 @@
         setLiveStatus("error", "Caméra hors ligne");
       } else {
         setLiveStatus("waiting", "Synchronisation...");
+      }
+    }
+
+    async function sendHdmiState() {
+      const params = new URLSearchParams({
+        hdmi: state.hdmiEnabled ? "1" : "0",
+        ts: String(Date.now())
+      });
+
+      const url = `https://dweet.cc/dweet/for/${encodeURIComponent(HDMI_THING)}?${params.toString()}`;
+
+      const response = await fetch(url, { method: "GET", cache: "no-store" });
+      const raw = await response.text();
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      try {
+        JSON.parse(raw);
+      } catch (err) {
+        console.warn("Réponse non JSON ou vide:", raw);
+      }
+    }
+
+    async function toggleHdmi() {
+      const previous = state.hdmiEnabled;
+
+      state.hdmiEnabled = !state.hdmiEnabled;
+      hdmiPending = true;
+      updateHdmiButtonUi();
+
+      try {
+        await sendHdmiState();
+        scoreStatus.textContent = state.hdmiEnabled
+          ? "Commande HDMI envoyée : affichage activé."
+          : "Commande HDMI envoyée : affichage coupé.";
+      } catch (error) {
+        console.error(error);
+        state.hdmiEnabled = previous;
+        hdmiPending = false;
+        updateHdmiButtonUi();
+        scoreStatus.textContent = "Erreur de communication HDMI.";
       }
     }
 
@@ -1131,11 +1257,15 @@
     });
 
     fullscreenBtn.addEventListener("click", toggleFullscreen);
+    hdmiBtn.addEventListener("click", toggleHdmi);
 
     updateMatchTitleUi();
+    updateHdmiButtonUi();
     startLivePolling();
     startCameraStatusPolling();
+    startHdmiPolling();
     restoreFromLatestDweet();
+    restoreHdmiState();
   </script>
 </body>
 </html>
