@@ -526,8 +526,6 @@
   <script>
     const DWEET_THING = "cbctesting";
     const CAMERA_STATUS_THING = "cbctesting_camera";
-    const CAMERA_STATUS_MAX_AGE_MS = 20000;
-    const CAMERA_STATUS_OFFLINE_GRACE_MS = 15000;
 
     const MIN_RECT = { rect0: 3000, rect2: 4400 };
     const MAX_RECT = { rect0: 6000, rect2: 7400 };
@@ -553,8 +551,6 @@
     let ignoreRemoteUntil = 0;
     let sendTimer = null;
     let cameraReady = false;
-    let lastCameraOnlineSeenAt = 0;
-    let lastFreshCameraTs = 0;
 
     const setupScreen = document.getElementById("setupScreen");
     const scoreboardScreen = document.getElementById("scoreboardScreen");
@@ -725,34 +721,24 @@
     }
 
     async function checkCameraStatus() {
-      const now = Date.now();
-
       try {
         const latest = await fetchLatestCameraStatus();
 
-        if (latest) {
-          const online = String(latest.online ?? "0").trim() === "1";
-          const ts = parseInt(latest.ts ?? "0", 10);
-          const age = Number.isFinite(ts) ? Math.abs(now - ts) : Infinity;
-          const fresh = age <= CAMERA_STATUS_MAX_AGE_MS;
+        if (!latest) {
+          setSetupCameraStatus("waiting", "Vérification caméra...", false);
+          return;
+        }
 
-          if (online && fresh) {
-            lastCameraOnlineSeenAt = now;
-            lastFreshCameraTs = ts;
-          }
+        const online = String(latest.online || "0").trim() === "1";
+
+        if (online) {
+          setSetupCameraStatus("ready", "Caméra prête", true);
+        } else {
+          setSetupCameraStatus("error", "Caméra hors ligne", false);
         }
       } catch (error) {
         console.error(error);
-      }
-
-      const msSinceGoodHeartbeat = lastCameraOnlineSeenAt ? (now - lastCameraOnlineSeenAt) : Infinity;
-
-      if (msSinceGoodHeartbeat <= CAMERA_STATUS_OFFLINE_GRACE_MS) {
-        setSetupCameraStatus("ready", "Caméra prête", true);
-      } else if (!lastCameraOnlineSeenAt) {
         setSetupCameraStatus("waiting", "Vérification caméra...", false);
-      } else {
-        setSetupCameraStatus("error", "Caméra hors ligne", false);
       }
     }
 
