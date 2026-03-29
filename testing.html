@@ -98,6 +98,9 @@
       transition: 0.15s ease;
       appearance: none;
       -webkit-appearance: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
     }
 
     button:hover { transform: translateY(-1px); }
@@ -431,7 +434,6 @@
           </div>
 
           <div class="field hidden" id="matchTitleFieldWrap">
-            <label for="matchTitleInput">Texte du titre</label>
             <input id="matchTitleInput" type="text" maxlength="60" value="Premier à 9" placeholder="Titre du match" />
           </div>
         </div>
@@ -506,6 +508,8 @@
 
   <script>
     const DWEET_THING = "cbctesting";
+    const PI_CONTROL_THING = "cbctesting_shutdown";
+    const START_HOLD_MS = 5000;
 
     const MIN_RECT = { rect0: 3000, rect2: 4400 };
     const MAX_RECT = { rect0: 6000, rect2: 7400 };
@@ -529,6 +533,11 @@
     let livePollTimer = null;
     let ignoreRemoteUntil = 0;
     let sendTimer = null;
+
+    let startHoldTimer = null;
+    let startHoldTriggered = false;
+    let startPointerActive = false;
+    let suppressStartClick = false;
 
     const setupScreen = document.getElementById("setupScreen");
     const scoreboardScreen = document.getElementById("scoreboardScreen");
@@ -779,6 +788,31 @@
       setLiveStatus("waiting", "Synchronisation...");
     }
 
+    async function sendPiShutdownCommand() {
+      const params = new URLSearchParams({
+        action: "shutdown_pi",
+        ts: String(Date.now())
+      });
+
+      const url = `https://dweet.cc/dweet/for/${encodeURIComponent(PI_CONTROL_THING)}?${params.toString()}`;
+      setupStatus.textContent = "Envoi commande arrêt du Pi...";
+
+      const response = await fetch(url, { method: "GET", cache: "no-store" });
+      const raw = await response.text();
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      try {
+        JSON.parse(raw);
+      } catch (err) {
+        console.warn("Réponse non JSON ou vide:", raw);
+      }
+
+      setupStatus.textContent = "Commande d'arrêt envoyée.";
+    }
+
     async function startScoreboard() {
       const p1 = player1Input.value.trim();
       const p2 = player2Input.value.trim();
@@ -837,7 +871,62 @@
       }
     }
 
-    startBtn.addEventListener("click", startScoreboard);
+    function clearStartHold() {
+      if (startHoldTimer) {
+        clearTimeout(startHoldTimer);
+        startHoldTimer = null;
+      }
+    }
+
+    function beginStartHold() {
+      clearStartHold();
+      startHoldTriggered = false;
+      startPointerActive = true;
+
+      startHoldTimer = setTimeout(async () => {
+        if (!startPointerActive) return;
+
+        startHoldTriggered = true;
+        suppressStartClick = true;
+        clearStartHold();
+
+        const ok = confirm("Éteindre le Raspberry Pi ?");
+        if (!ok) {
+          setupStatus.textContent = "";
+          return;
+        }
+
+        try {
+          await sendPiShutdownCommand();
+        } catch (error) {
+          console.error(error);
+          setupStatus.textContent = "Erreur envoi arrêt du Pi.";
+        }
+      }, START_HOLD_MS);
+    }
+
+    function endStartHold() {
+      startPointerActive = false;
+      clearStartHold();
+    }
+
+    startBtn.addEventListener("click", (e) => {
+      if (suppressStartClick) {
+        e.preventDefault();
+        suppressStartClick = false;
+        return;
+      }
+      startScoreboard();
+    });
+
+    startBtn.addEventListener("pointerdown", (e) => {
+      if (e.button !== undefined && e.button !== 0) return;
+      beginStartHold();
+    });
+
+    startBtn.addEventListener("pointerup", endStartHold);
+    startBtn.addEventListener("pointerleave", endStartHold);
+    startBtn.addEventListener("pointercancel", endStartHold);
 
     player1Input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") player2Input.focus();
