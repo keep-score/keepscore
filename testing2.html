@@ -129,6 +129,20 @@
       transform: none;
     }
 
+    .secondary {
+      background: #2b2b2b;
+      color: white;
+    }
+
+    .secondary:hover {
+      background: #383838;
+    }
+
+    .setup-actions {
+      display: grid;
+      gap: 10px;
+    }
+
     .scoreboard-wrap {
       display: grid;
       gap: 12px;
@@ -657,7 +671,10 @@
           <span id="setupCameraText">Vérification caméra...</span>
         </div>
 
-        <button id="startBtn" class="primary blocked" disabled>Démarrer le score</button>
+        <div class="setup-actions">
+          <button id="startBtn" class="primary blocked" disabled>Démarrer le score</button>
+          <button id="clearSetupBtn" class="secondary">Tout effacer</button>
+        </div>
         <div class="status" id="setupStatus"></div>
       </div>
     </div>
@@ -777,7 +794,6 @@
     const RECT_STEP = 200;
     const DEFAULT_RECT = { rect0: 4000, rect2: 5400 };
     const DEFAULT_MATCH_TITLE_LINES = ["Premier à 9", ""];
-    const DRAFT_STORAGE_KEY = "cbc1_scoreboard_draft";
 
     const state = {
       player1: "",
@@ -812,6 +828,7 @@
     const matchTitleInput2 = document.getElementById("matchTitleInput2");
     const matchTitleInputs = [matchTitleInput1, matchTitleInput2];
     const startBtn = document.getElementById("startBtn");
+    const clearSetupBtn = document.getElementById("clearSetupBtn");
     const setupStatus = document.getElementById("setupStatus");
     const scoreStatus = document.getElementById("scoreStatus");
     const player1Name = document.getElementById("player1Name");
@@ -886,57 +903,6 @@
       return getMatchTitleFromLines(DEFAULT_MATCH_TITLE_LINES);
     }
 
-    function getDraftFromInputs() {
-      return {
-        player1: player1Input.value,
-        player2: player2Input.value,
-        matchTitleEnabled: matchTitleEnabledToggle.checked,
-        matchTitleLines: getMatchTitleLinesFromInputs()
-      };
-    }
-
-    function saveDraftToLocal() {
-      try {
-        localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(getDraftFromInputs()));
-      } catch (error) {
-        console.error("Impossible d'enregistrer le brouillon localement :", error);
-      }
-    }
-
-    function loadDraftFromLocal() {
-      try {
-        const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
-        if (!raw) return null;
-        return JSON.parse(raw);
-      } catch (error) {
-        console.error("Impossible de lire le brouillon local :", error);
-        return null;
-      }
-    }
-
-    function applyDraftToInputs(draft) {
-      if (!draft) return;
-
-      player1Input.value = typeof draft.player1 === "string" ? draft.player1 : "";
-      player2Input.value = typeof draft.player2 === "string" ? draft.player2 : "";
-      matchTitleEnabledToggle.checked = !!draft.matchTitleEnabled;
-
-      const lines = cleanMatchTitleLines(
-        Array.isArray(draft.matchTitleLines) ? draft.matchTitleLines : DEFAULT_MATCH_TITLE_LINES
-      );
-
-      matchTitleInput1.value = lines[0];
-      matchTitleInput2.value = lines[1];
-
-      state.matchTitleEnabled = !!draft.matchTitleEnabled;
-      state.matchTitle = getMatchTitleFromLines(lines);
-      updateMatchTitleUi();
-    }
-
-    function saveCurrentInputsAsDraft() {
-      saveDraftToLocal();
-    }
-
     function updateHdmiButtonUi() {
       hdmiBtn.classList.toggle("active-hdmi", !!state.hdmiEnabled);
       hdmiBtn.classList.toggle("pending-hdmi", !!hdmiPending);
@@ -978,57 +944,6 @@
       scoreboardHeaderCustom.classList.toggle("hidden", !state.matchTitleEnabled);
     }
 
-    function applyLatestDweetState(latest) {
-      if (!latest) return;
-
-      const latestVisible = String(latest.visible ?? "1").trim();
-      const latestDisplay = String(latest.display || "").trim();
-      const rect0 = parseInt(latest.rect0 ?? DEFAULT_RECT.rect0, 10);
-      const rect2 = parseInt(latest.rect2 ?? DEFAULT_RECT.rect2, 10);
-      const latestBreaker = parseInt(latest.breaker ?? "1", 10);
-      const latestTitleEnabled = String(latest.match_title_enabled ?? "0") === "1";
-      const latestMatchTitleRaw = String(latest.match_title || getDefaultMatchTitle());
-      const latestMatchTitle = getMatchTitleFromLines(splitMatchTitleLines(latestMatchTitleRaw));
-
-      state.rect0 = Number.isFinite(rect0) ? rect0 : DEFAULT_RECT.rect0;
-      state.rect2 = Number.isFinite(rect2) ? rect2 : DEFAULT_RECT.rect2;
-      currentBreaker = latestBreaker === 2 ? 2 : 1;
-
-      if (latestVisible === "0" || !latestDisplay) {
-        state.player1 = "";
-        state.player2 = "";
-        state.score1 = 0;
-        state.score2 = 0;
-        state.visible = 0;
-        state.matchTitleEnabled = false;
-        state.matchTitle = getDefaultMatchTitle();
-
-        renderScoreboard();
-        updateMatchTitleUi();
-
-        setupScreen.classList.remove("hidden");
-        scoreboardScreen.classList.add("hidden");
-        return;
-      }
-
-      state.matchTitleEnabled = latestTitleEnabled;
-      state.matchTitle = latestMatchTitle || getDefaultMatchTitle();
-      updateMatchTitleUi();
-
-      const match = latestDisplay.match(/^(.*?)(?:\s+)?(\d+)\s+-\s+(\d+)(?:\s+(.*))?$/);
-      if (!match) return;
-
-      state.player1 = (match[1] || "").trim();
-      state.score1 = parseInt(match[2], 10) || 0;
-      state.score2 = parseInt(match[3], 10) || 0;
-      state.player2 = (match[4] || "").trim();
-      state.visible = 1;
-
-      renderScoreboard();
-      setupScreen.classList.add("hidden");
-      scoreboardScreen.classList.remove("hidden");
-    }
-
     function updateCue() {
       cue1.classList.add("hidden");
       cue2.classList.add("hidden");
@@ -1054,6 +969,103 @@
       updateCue();
       updateMatchTitleUi();
       updateHdmiButtonUi();
+    }
+
+    function populateSetupInputsFromState() {
+      player1Input.value = state.player1 || "";
+      player2Input.value = state.player2 || "";
+
+      const lines = splitMatchTitleLines(state.matchTitle || getDefaultMatchTitle());
+      matchTitleInput1.value = lines[0];
+      matchTitleInput2.value = lines[1];
+      matchTitleEnabledToggle.checked = !!state.matchTitleEnabled;
+
+      updateMatchTitleUi();
+    }
+
+    function clearSetupValues() {
+      state.player1 = "";
+      state.player2 = "";
+      state.score1 = 0;
+      state.score2 = 0;
+      state.rect0 = DEFAULT_RECT.rect0;
+      state.rect2 = DEFAULT_RECT.rect2;
+      state.visible = 0;
+      state.matchTitleEnabled = false;
+      state.matchTitle = getDefaultMatchTitle();
+      currentBreaker = 1;
+
+      populateSetupInputsFromState();
+      renderScoreboard();
+      setupStatus.textContent = "";
+    }
+
+    function parsePlayersFromDisplay(display) {
+      const match = String(display || "").match(/^(.*?)(?:\s+)?(\d+)\s+-\s+(\d+)(?:\s+(.*))?$/);
+      if (!match) return null;
+
+      return {
+        player1: (match[1] || "").trim(),
+        score1: parseInt(match[2], 10) || 0,
+        score2: parseInt(match[3], 10) || 0,
+        player2: (match[4] || "").trim()
+      };
+    }
+
+    function applyLatestDweetState(latest) {
+      if (!latest) return;
+
+      const latestVisible = String(latest.visible ?? "1").trim();
+      const latestDisplay = String(latest.display || "").trim();
+      const latestPlayer1 = String(latest.player1 || "").trim();
+      const latestPlayer2 = String(latest.player2 || "").trim();
+      const rect0 = parseInt(latest.rect0 ?? DEFAULT_RECT.rect0, 10);
+      const rect2 = parseInt(latest.rect2 ?? DEFAULT_RECT.rect2, 10);
+      const latestBreaker = parseInt(latest.breaker ?? "1", 10);
+      const latestTitleEnabled = String(latest.match_title_enabled ?? "0") === "1";
+      const latestMatchTitleRaw = String(latest.match_title || getDefaultMatchTitle());
+      const latestMatchTitle = getMatchTitleFromLines(splitMatchTitleLines(latestMatchTitleRaw));
+      const parsedDisplay = parsePlayersFromDisplay(latestDisplay);
+
+      state.rect0 = Number.isFinite(rect0) ? rect0 : DEFAULT_RECT.rect0;
+      state.rect2 = Number.isFinite(rect2) ? rect2 : DEFAULT_RECT.rect2;
+      currentBreaker = latestBreaker === 2 ? 2 : 1;
+
+      state.matchTitleEnabled = latestTitleEnabled;
+      state.matchTitle = latestMatchTitle || getDefaultMatchTitle();
+
+      if (latestVisible === "0") {
+        state.player1 = latestPlayer1 || parsedDisplay?.player1 || "";
+        state.player2 = latestPlayer2 || parsedDisplay?.player2 || "";
+        state.score1 = 0;
+        state.score2 = 0;
+        state.visible = 0;
+
+        populateSetupInputsFromState();
+        renderScoreboard();
+
+        setupScreen.classList.remove("hidden");
+        scoreboardScreen.classList.add("hidden");
+        return;
+      }
+
+      if (!latestDisplay) {
+        setupScreen.classList.remove("hidden");
+        scoreboardScreen.classList.add("hidden");
+        return;
+      }
+
+      state.player1 = latestPlayer1 || parsedDisplay?.player1 || "";
+      state.player2 = latestPlayer2 || parsedDisplay?.player2 || "";
+      state.score1 = parsedDisplay?.score1 || 0;
+      state.score2 = parsedDisplay?.score2 || 0;
+      state.visible = 1;
+
+      populateSetupInputsFromState();
+      renderScoreboard();
+
+      setupScreen.classList.add("hidden");
+      scoreboardScreen.classList.remove("hidden");
     }
 
     function openTvModal() {
@@ -1110,7 +1122,7 @@
       try {
         const latest = await fetchLatestDweet();
         if (!latest) {
-          updateMatchTitleUi();
+          populateSetupInputsFromState();
           updateHdmiButtonUi();
           setupScreen.classList.remove("hidden");
           scoreboardScreen.classList.add("hidden");
@@ -1119,7 +1131,7 @@
         applyLatestDweetState(latest);
       } catch (error) {
         console.error(error);
-        updateMatchTitleUi();
+        populateSetupInputsFromState();
         updateHdmiButtonUi();
         setupScreen.classList.remove("hidden");
         scoreboardScreen.classList.add("hidden");
@@ -1203,16 +1215,30 @@
         const latestBreaker = String(latest.breaker ?? "1").trim();
         const latestTitleEnabled = String(latest.match_title_enabled ?? "0").trim();
         const latestMatchTitle = getMatchTitleForTransport(String(latest.match_title || getDefaultMatchTitle()));
+        const latestPlayer1 = String(latest.player1 || "").trim();
+        const latestPlayer2 = String(latest.player2 || "").trim();
+        const latestRect0 = String(latest.rect0 ?? DEFAULT_RECT.rect0);
+        const latestRect2 = String(latest.rect2 ?? DEFAULT_RECT.rect2);
 
         const currentDisplay = buildDisplayString();
         const currentVisible = String(state.visible);
         const currentBreakerString = String(currentBreaker);
         const currentTitleEnabled = state.matchTitleEnabled ? "1" : "0";
         const currentMatchTitle = getMatchTitleForTransport(state.matchTitle || getDefaultMatchTitle());
+        const currentRect0 = String(state.rect0);
+        const currentRect2 = String(state.rect2);
 
         if (Date.now() >= ignoreRemoteUntil) {
           if (scoreboardScreen.classList.contains("hidden")) {
-            if (latestVisible === "1" && latestDisplay) {
+            if (
+              latestPlayer1 !== (player1Input.value || "").trim() ||
+              latestPlayer2 !== (player2Input.value || "").trim() ||
+              latestTitleEnabled !== (matchTitleEnabledToggle.checked ? "1" : "0") ||
+              latestMatchTitle !== getMatchTitleForTransport(getMatchTitleLinesFromInputs()) ||
+              latestRect0 !== String(state.rect0) ||
+              latestRect2 !== String(state.rect2) ||
+              latestVisible === "1"
+            ) {
               applyLatestDweetState(latest);
             }
           } else {
@@ -1221,7 +1247,9 @@
               latestVisible !== currentVisible ||
               latestBreaker !== currentBreakerString ||
               latestTitleEnabled !== currentTitleEnabled ||
-              latestMatchTitle !== currentMatchTitle
+              latestMatchTitle !== currentMatchTitle ||
+              latestRect0 !== currentRect0 ||
+              latestRect2 !== currentRect2
             ) {
               applyLatestDweetState(latest);
             }
@@ -1233,6 +1261,8 @@
         const refreshedBreaker = String(currentBreaker);
         const refreshedTitleEnabled = state.matchTitleEnabled ? "1" : "0";
         const refreshedMatchTitle = getMatchTitleForTransport(state.matchTitle || getDefaultMatchTitle());
+        const refreshedRect0 = String(state.rect0);
+        const refreshedRect2 = String(state.rect2);
 
         if (cameraOnlineState === false) {
           setLiveStatus("error", "Caméra hors ligne");
@@ -1243,7 +1273,9 @@
           latestVisible === refreshedVisible &&
           latestBreaker === refreshedBreaker &&
           latestTitleEnabled === refreshedTitleEnabled &&
-          latestMatchTitle === refreshedMatchTitle
+          latestMatchTitle === refreshedMatchTitle &&
+          latestRect0 === refreshedRect0 &&
+          latestRect2 === refreshedRect2
         ) {
           setLiveStatus("ready", "Prêt");
         } else {
@@ -1294,6 +1326,8 @@
 
     async function sendState(statusElement) {
       const params = new URLSearchParams({
+        player1: state.player1,
+        player2: state.player2,
         display: buildDisplayString(),
         match_title_enabled: state.matchTitleEnabled ? "1" : "0",
         match_title: getMatchTitleForTransport(state.matchTitle || getDefaultMatchTitle()),
@@ -1378,20 +1412,12 @@
         return;
       }
 
-      saveCurrentInputsAsDraft();
-
-      const p1 = player1Input.value.trim();
-      const p2 = player2Input.value.trim();
-      const titleLines = getMatchTitleLinesFromInputs();
-
-      state.player1 = p1;
-      state.player2 = p2;
+      state.player1 = player1Input.value.trim();
+      state.player2 = player2Input.value.trim();
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
-      state.matchTitle = getMatchTitleFromLines(titleLines);
+      state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
       state.score1 = 0;
       state.score2 = 0;
-      state.rect0 = DEFAULT_RECT.rect0;
-      state.rect2 = DEFAULT_RECT.rect2;
       state.visible = 1;
       currentBreaker = 1;
 
@@ -1443,13 +1469,20 @@
       startScoreboard();
     });
 
+    clearSetupBtn.addEventListener("click", () => {
+      if (!confirm("Tout effacer et repartir de zéro ?")) {
+        return;
+      }
+      clearSetupValues();
+    });
+
     player1Input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") player2Input.focus();
     });
 
     player2Input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
-        if (state.matchTitleEnabled) {
+        if (matchTitleEnabledToggle.checked) {
           matchTitleInput1.focus();
         } else {
           startScoreboard();
@@ -1465,21 +1498,16 @@
       if (e.key === "Enter") startScoreboard();
     });
 
-    player1Input.addEventListener("input", saveCurrentInputsAsDraft);
-    player2Input.addEventListener("input", saveCurrentInputsAsDraft);
-
     matchTitleEnabledToggle.addEventListener("change", () => {
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
       state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
       updateMatchTitleUi();
-      saveCurrentInputsAsDraft();
     });
 
     matchTitleInputs.forEach((input) => {
       input.addEventListener("input", () => {
         state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
         updateMatchTitleUi();
-        saveCurrentInputsAsDraft();
       });
     });
 
@@ -1532,33 +1560,25 @@
         return;
       }
 
-      saveCurrentInputsAsDraft();
-
       const previous = { ...state };
       const previousBreaker = currentBreaker;
 
-      state.player1 = "";
-      state.player2 = "";
+      state.player1 = player1Input.value.trim();
+      state.player2 = player2Input.value.trim();
+      state.matchTitleEnabled = matchTitleEnabledToggle.checked;
+      state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
       state.score1 = 0;
       state.score2 = 0;
-      state.rect0 = DEFAULT_RECT.rect0;
-      state.rect2 = DEFAULT_RECT.rect2;
       state.visible = 0;
-      state.matchTitleEnabled = false;
-      state.matchTitle = getDefaultMatchTitle();
       currentBreaker = 1;
 
       renderScoreboard();
 
       try {
         await sendState(scoreStatus);
-
         setupStatus.textContent = "";
         scoreStatus.textContent = "";
-
-        const savedDraft = loadDraftFromLocal();
-        applyDraftToInputs(savedDraft);
-
+        populateSetupInputsFromState();
         setupScreen.classList.remove("hidden");
         scoreboardScreen.classList.add("hidden");
       } catch (error) {
@@ -1589,13 +1609,7 @@
       }
     });
 
-    const savedDraft = loadDraftFromLocal();
-    if (savedDraft) {
-      applyDraftToInputs(savedDraft);
-    } else {
-      saveCurrentInputsAsDraft();
-    }
-
+    populateSetupInputsFromState();
     updateMatchTitleUi();
     updateHdmiButtonUi();
     startLivePolling();
