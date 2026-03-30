@@ -673,7 +673,7 @@
 
         <div class="setup-actions">
           <button id="startBtn" class="primary blocked" disabled>Démarrer le score</button>
-          <button id="clearSetupBtn" class="secondary">Tout effacer</button>
+          <button id="clearSetupBtn" class="secondary hidden">Tout effacer</button>
         </div>
         <div class="status" id="setupStatus"></div>
       </div>
@@ -903,6 +903,26 @@
       return getMatchTitleFromLines(DEFAULT_MATCH_TITLE_LINES);
     }
 
+    function hasReusableSetupValues() {
+      const titleLines = splitMatchTitleLines(state.matchTitle || getDefaultMatchTitle());
+      const hasNonDefaultTitle =
+        !!state.matchTitleEnabled ||
+        titleLines[0] !== DEFAULT_MATCH_TITLE_LINES[0] ||
+        titleLines[1] !== DEFAULT_MATCH_TITLE_LINES[1];
+
+      return !!(
+        state.player1 ||
+        state.player2 ||
+        hasNonDefaultTitle ||
+        state.rect0 !== DEFAULT_RECT.rect0 ||
+        state.rect2 !== DEFAULT_RECT.rect2
+      );
+    }
+
+    function updateClearSetupButtonVisibility() {
+      clearSetupBtn.classList.toggle("hidden", !hasReusableSetupValues());
+    }
+
     function updateHdmiButtonUi() {
       hdmiBtn.classList.toggle("active-hdmi", !!state.hdmiEnabled);
       hdmiBtn.classList.toggle("pending-hdmi", !!hdmiPending);
@@ -969,6 +989,7 @@
       updateCue();
       updateMatchTitleUi();
       updateHdmiButtonUi();
+      updateClearSetupButtonVisibility();
     }
 
     function populateSetupInputsFromState() {
@@ -981,6 +1002,7 @@
       matchTitleEnabledToggle.checked = !!state.matchTitleEnabled;
 
       updateMatchTitleUi();
+      updateClearSetupButtonVisibility();
     }
 
     function clearSetupValues() {
@@ -998,6 +1020,7 @@
       populateSetupInputsFromState();
       renderScoreboard();
       setupStatus.textContent = "";
+      scoreStatus.textContent = "";
     }
 
     function parsePlayersFromDisplay(display) {
@@ -1215,8 +1238,6 @@
         const latestBreaker = String(latest.breaker ?? "1").trim();
         const latestTitleEnabled = String(latest.match_title_enabled ?? "0").trim();
         const latestMatchTitle = getMatchTitleForTransport(String(latest.match_title || getDefaultMatchTitle()));
-        const latestPlayer1 = String(latest.player1 || "").trim();
-        const latestPlayer2 = String(latest.player2 || "").trim();
         const latestRect0 = String(latest.rect0 ?? DEFAULT_RECT.rect0);
         const latestRect2 = String(latest.rect2 ?? DEFAULT_RECT.rect2);
 
@@ -1230,15 +1251,7 @@
 
         if (Date.now() >= ignoreRemoteUntil) {
           if (scoreboardScreen.classList.contains("hidden")) {
-            if (
-              latestPlayer1 !== (player1Input.value || "").trim() ||
-              latestPlayer2 !== (player2Input.value || "").trim() ||
-              latestTitleEnabled !== (matchTitleEnabledToggle.checked ? "1" : "0") ||
-              latestMatchTitle !== getMatchTitleForTransport(getMatchTitleLinesFromInputs()) ||
-              latestRect0 !== String(state.rect0) ||
-              latestRect2 !== String(state.rect2) ||
-              latestVisible === "1"
-            ) {
+            if (latestVisible === "1") {
               applyLatestDweetState(latest);
             }
           } else {
@@ -1469,11 +1482,27 @@
       startScoreboard();
     });
 
-    clearSetupBtn.addEventListener("click", () => {
+    clearSetupBtn.addEventListener("click", async () => {
       if (!confirm("Tout effacer et repartir de zéro ?")) {
         return;
       }
+
+      const previous = { ...state };
+      const previousBreaker = currentBreaker;
+
       clearSetupValues();
+
+      try {
+        await sendState(setupStatus);
+        setupStatus.textContent = "Valeurs effacées.";
+      } catch (error) {
+        console.error(error);
+        Object.assign(state, previous);
+        currentBreaker = previousBreaker;
+        populateSetupInputsFromState();
+        renderScoreboard();
+        setupStatus.textContent = "Erreur de communication.";
+      }
     });
 
     player1Input.addEventListener("keydown", (e) => {
@@ -1502,14 +1531,19 @@
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
       state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
       updateMatchTitleUi();
+      updateClearSetupButtonVisibility();
     });
 
     matchTitleInputs.forEach((input) => {
       input.addEventListener("input", () => {
         state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
         updateMatchTitleUi();
+        updateClearSetupButtonVisibility();
       });
     });
+
+    player1Input.addEventListener("input", updateClearSetupButtonVisibility);
+    player2Input.addEventListener("input", updateClearSetupButtonVisibility);
 
     player1Name.addEventListener("click", () => updateAndSend(() => {
       currentBreaker = currentBreaker === 1 ? 2 : 1;
@@ -1556,7 +1590,7 @@
     });
 
     document.getElementById("resetBtn").addEventListener("click", async () => {
-      if (!confirm("Réinitialiser le score et revenir à l'écran de départ ?")) {
+      if (!confirm("Masquer le score et revenir à l'écran de départ ?")) {
         return;
       }
 
@@ -1612,6 +1646,7 @@
     populateSetupInputsFromState();
     updateMatchTitleUi();
     updateHdmiButtonUi();
+    updateClearSetupButtonVisibility();
     startLivePolling();
     startCameraStatusPolling();
     startHdmiPolling();
