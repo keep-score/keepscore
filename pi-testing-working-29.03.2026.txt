@@ -9,9 +9,9 @@ import subprocess
 # CONFIG
 # =========================
 
-THING_NAME = "cbctesting"
-THING_NAME_CAMERA = "cbctesting_camera"
-THING_NAME_HDMI = "cbctesting_hdmi"
+THING_NAME = "cbc1"
+THING_NAME_CAMERA = "cbc1_camera"
+THING_NAME_HDMI = "cbc1_hdmi"
 
 POLL_SECONDS = 1.0
 CAMERA_STATUS_SECONDS = 2.0
