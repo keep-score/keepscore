@@ -818,6 +818,7 @@
     let cameraReady = false;
     let cameraOnlineState = null;
     let hdmiPending = false;
+    let setupDirty = false;
 
     const setupScreen = document.getElementById("setupScreen");
     const scoreboardScreen = document.getElementById("scoreboardScreen");
@@ -1004,6 +1005,7 @@
 
       updateMatchTitleUi();
       updateClearSetupButtonVisibility();
+      setupDirty = false;
     }
 
     function clearSetupValues() {
@@ -1252,7 +1254,7 @@
 
         if (Date.now() >= ignoreRemoteUntil) {
           if (scoreboardScreen.classList.contains("hidden")) {
-            if (latestVisible === "1" || latestVisible === "0") {
+            if (!setupDirty && (latestVisible === "1" || latestVisible === "0")) {
               applyLatestDweetState(latest);
             }
           } else {
@@ -1460,6 +1462,7 @@
       state.score2 = 0;
       state.visible = 1;
       currentBreaker = 1;
+      setupDirty = false;
 
       renderScoreboard();
 
@@ -1555,6 +1558,7 @@
     });
 
     matchTitleEnabledToggle.addEventListener("change", () => {
+      setupDirty = true;
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
       state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
       updateMatchTitleUi();
@@ -1563,14 +1567,22 @@
 
     matchTitleInputs.forEach((input) => {
       input.addEventListener("input", () => {
+        setupDirty = true;
         state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
         updateMatchTitleUi();
         updateClearSetupButtonVisibility();
       });
     });
 
-    player1Input.addEventListener("input", updateClearSetupButtonVisibility);
-    player2Input.addEventListener("input", updateClearSetupButtonVisibility);
+    player1Input.addEventListener("input", () => {
+      setupDirty = true;
+      updateClearSetupButtonVisibility();
+    });
+
+    player2Input.addEventListener("input", () => {
+      setupDirty = true;
+      updateClearSetupButtonVisibility();
+    });
 
     player1Name.addEventListener("click", () => updateAndSend(() => {
       currentBreaker = currentBreaker === 1 ? 2 : 1;
@@ -1638,6 +1650,7 @@
       state.score2 = 0;
       state.visible = 0;
       currentBreaker = 1;
+      setupDirty = false;
 
       renderScoreboard();
 
