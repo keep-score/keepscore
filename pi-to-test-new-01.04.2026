@@ -1,0 +1,516 @@
+import json
+import time
+import urllib.request
+import urllib.error
+import urllib.parse
+import subprocess
+
+# =========================
+# CONFIG
+# =========================
+
+THING_NAME = "cbc3"
+THING_NAME_CAMERA = "cbc3_camera"
+THING_NAME_HDMI = "cbc3_hdmi"
+
+POLL_SECONDS = 1.0
+CAMERA_STATUS_SECONDS = 2.0
+HDMI_POLL_SECONDS = 1.0
+IDLE_RESET_SECONDS = 3600
+
+HTTP_TIMEOUT_DWEET = 4
+HTTP_TIMEOUT_CAMERA = 4
+
+DWEET_GET_URL = f"https://dweet.cc/get/latest/dweet/for/{THING_NAME}"
+DWEET_SET_BASE = f"https://dweet.cc/dweet/for/{THING_NAME}"
+DWEET_CAMERA_SET_BASE = f"https://dweet.cc/dweet/for/{THING_NAME_CAMERA}"
+DWEET_HDMI_GET_URL = f"https://dweet.cc/get/latest/dweet/for/{THING_NAME_HDMI}"
+
+CAMERA_HOST = "192.168.1.35"
+CAMERA_BASE = f"http://{CAMERA_HOST}/cgi-bin/configManager.cgi"
+CAMERA_USERNAME = "admin"
+CAMERA_PASSWORD = "cbcdirect1"
+
+DEFAULT_RECT_0 = 4000
+DEFAULT_RECT_2 = 5400
+
+DEFAULT_MATCH_TITLE = "Premier à 9"
+
+# Title overlay mappings
+TITLE_LINE1_BASE = "VideoWidget[0].CustomTitle[1]"
+TITLE_LINE2_BASE = "VideoWidget[0].UserDefinedTitle[0]"
+
+SUCCESS_TEXT = "OK"
+
+# =========================
+# HDMI SUBSTREAM CONFIG
+# =========================
+
+RTSP_SUBSTREAM_URL = (
+    f"rtsp://{CAMERA_USERNAME}:{CAMERA_PASSWORD}@{CAMERA_HOST}:554/"
+    f"cam/realmonitor?channel=1&subtype=1"
+)
+
+HDMI_START_CMD = [
+    "omxplayer",
+    "--live",
+    RTSP_SUBSTREAM_URL
+]
+
+# =========================
+# CAMERA AUTH
+# =========================
+
+password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+password_mgr.add_password(None, f"http://{CAMERA_HOST}", CAMERA_USERNAME, CAMERA_PASSWORD)
+digest_handler = urllib.request.HTTPDigestAuthHandler(password_mgr)
+camera_opener = urllib.request.build_opener(digest_handler)
+
+# =========================
+# GLOBAL STATE
+# =========================
+
+last_seen_ts = 0
+last_seen_signature = None
+last_camera_status_push_at = 0.0
+last_dweet_poll_at = 0.0
+
+last_hdmi_poll_at = 0.0
+last_hdmi_signature = None
+hdmi_process = None
+
+# =========================
+# HELPERS
+# =========================
+
+def log(msg):
+    print(f"[dcw] {msg}", flush=True)
+
+def now_ms():
+    return int(time.time() * 1000)
+
+def safe_int(value, default):
+    try:
+        return int(value)
+    except Exception:
+        return default
+
+def http_get_json(url, timeout=4):
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        raw = response.read().decode("utf-8", errors="replace")
+        return json.loads(raw)
+
+def http_get_text(url, timeout=4):
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        return response.read().decode("utf-8", errors="replace")
+
+def fetch_latest_dweet():
+    data = http_get_json(f"{DWEET_GET_URL}?t={now_ms()}", timeout=HTTP_TIMEOUT_DWEET)
+    items = data.get("with", [])
+    if not items:
+        return None
+    return items[0].get("content", {})
+
+def fetch_latest_hdmi_dweet():
+    data = http_get_json(f"{DWEET_HDMI_GET_URL}?t={now_ms()}", timeout=HTTP_TIMEOUT_DWEET)
+    items = data.get("with", [])
+    if not items:
+        return None
+    return items[0].get("content", {})
+
+def push_camera_status(online):
+    params = urllib.parse.urlencode({
+        "online": "1" if online else "0",
+        "ts": str(now_ms())
+    })
+    url = f"{DWEET_CAMERA_SET_BASE}?{params}"
+    raw = http_get_text(url, timeout=HTTP_TIMEOUT_DWEET)
+    log(f"Camera status pushed: {'online' if online else 'offline'}")
+    return raw
+
+def dweet_reset_state():
+    params = urllib.parse.urlencode({
+        "player1": "",
+        "player2": "",
+        "display": "",
+        "visible": "0",
+        "breaker": "1",
+        "rect0": str(DEFAULT_RECT_0),
+        "rect2": str(DEFAULT_RECT_2),
+        "match_title_enabled": "0",
+        "match_title": DEFAULT_MATCH_TITLE,
+        "ts": str(now_ms())
+    })
+    url = f"{DWEET_SET_BASE}?{params}"
+    http_get_text(url, timeout=HTTP_TIMEOUT_DWEET)
+    log("Dweet state reset.")
+
+def build_camera_query(params):
+    return urllib.parse.urlencode(params, doseq=True, safe="[]", quote_via=urllib.parse.quote)
+
+def split_match_title_lines(title_text):
+    text = str(title_text or "").replace("\r\n", "\n").replace("\r", "\n").replace("|", "\n")
+    parts = [part.strip() for part in text.split("\n")]
+
+    while parts and parts[-1] == "":
+        parts.pop()
+
+    if not parts:
+        parts = ["", ""]
+
+    while len(parts) < 2:
+        parts.append("")
+
+    return parts[:2]
+
+# =========================
+# CAMERA COMMANDS
+# =========================
+
+def camera_request(params):
+    query = build_camera_query(params)
+    url = f"{CAMERA_BASE}?{query}"
+    try:
+        with camera_opener.open(url, timeout=HTTP_TIMEOUT_CAMERA) as response:
+            return response.read().decode("utf-8", errors="replace")
+    except urllib.error.HTTPError as e:
+        try:
+            body = e.read().decode("utf-8", errors="replace")
+        except Exception:
+            body = ""
+        log(f"Camera HTTP error {e.code}: {body}")
+        return ""
+    except Exception as e:
+        log(f"Camera request error: {e}")
+        return ""
+
+def camera_is_online():
+    raw = camera_request({
+        "action": "getConfig",
+        "name": "ChannelTitle[0].Name"
+    })
+
+    if not raw or not raw.strip():
+        return False
+
+    low = raw.lower()
+    if "unauthorized" in low:
+        return False
+
+    return True
+
+def camera_set_config(params, label):
+    query = build_camera_query(params)
+    url = f"{CAMERA_BASE}?{query}"
+
+    try:
+        with camera_opener.open(url, timeout=HTTP_TIMEOUT_CAMERA) as response:
+            raw = response.read().decode("utf-8", errors="replace")
+            log(f"{label} response: {raw.strip()}")
+            return SUCCESS_TEXT in raw
+    except urllib.error.HTTPError as e:
+        try:
+            body = e.read().decode("utf-8", errors="replace")
+        except Exception:
+            body = ""
+        log(f"{label} HTTP error {e.code}: {body}")
+        return False
+    except Exception as e:
+        log(f"{label} error: {e}")
+        return False
+
+def set_camera_overlay(display_text, rect0, rect2, visible):
+    visible_str = "true" if str(visible) == "1" else "false"
+
+    params = [
+        ("action", "setConfig"),
+        ("ChannelTitle[0].Name", display_text),
+        ("VideoWidget[0].ChannelTitle.EncodeBlend", visible_str),
+        ("VideoWidget[0].ChannelTitle.PreviewBlend", visible_str),
+        ("VideoWidget[0].ChannelTitle.Rect[0]", str(rect0)),
+        ("VideoWidget[0].ChannelTitle.Rect[2]", str(rect2)),
+    ]
+
+    return camera_set_config(params, "Camera overlay")
+
+def clear_camera_overlay():
+    return set_camera_overlay(".", DEFAULT_RECT_0, DEFAULT_RECT_2, 0)
+
+def set_title_line(base, text, enabled):
+    visible_str = "true" if str(enabled) == "1" else "false"
+    text_to_send = text if (str(enabled) == "1" and str(text).strip()) else "."
+
+    params = [
+        ("action", "setConfig"),
+        (f"{base}.Text", text_to_send),
+        (f"{base}.EncodeBlend", visible_str),
+        (f"{base}.PreviewBlend", visible_str),
+    ]
+
+    return camera_set_config(params, f"Set {base}")
+
+def set_camera_match_title(title_text, enabled):
+    line1, line2 = split_match_title_lines(title_text)
+
+    ok1 = set_title_line(TITLE_LINE1_BASE, line1, enabled if line1.strip() else 0)
+    ok2 = set_title_line(TITLE_LINE2_BASE, line2, enabled if line2.strip() else 0)
+
+    return ok1 and ok2
+
+def clear_camera_match_title():
+    ok1 = set_title_line(TITLE_LINE1_BASE, "", 0)
+    ok2 = set_title_line(TITLE_LINE2_BASE, "", 0)
+    return ok1 and ok2
+
+# =========================
+# HDMI SUBSTREAM CONTROL
+# =========================
+
+def hdmi_process_alive():
+    global hdmi_process
+    return hdmi_process is not None and hdmi_process.poll() is None
+
+def hdmi_power_on():
+    try:
+        subprocess.call(
+            ["tvservice", "-p"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        time.sleep(1.0)
+    except Exception as e:
+        log(f"HDMI power on error: {e}")
+
+def hdmi_power_off():
+    try:
+        subprocess.call(
+            ["tvservice", "-o"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+    except Exception as e:
+        log(f"HDMI power off error: {e}")
+
+def start_hdmi_substream():
+    global hdmi_process
+
+    if hdmi_process_alive():
+        log("HDMI substream already running.")
+        return
+
+    try:
+        hdmi_power_on()
+
+        hdmi_process = subprocess.Popen(
+            HDMI_START_CMD,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        log("HDMI substream started.")
+    except Exception as e:
+        hdmi_process = None
+        log(f"Failed to start HDMI substream: {e}")
+
+def stop_hdmi_substream():
+    global hdmi_process
+
+    if hdmi_process_alive():
+        try:
+            hdmi_process.terminate()
+            try:
+                hdmi_process.wait(timeout=3)
+            except Exception:
+                hdmi_process.kill()
+                hdmi_process.wait(timeout=2)
+        except Exception as e:
+            log(f"Tracked omxplayer stop issue: {e}")
+
+    try:
+        subprocess.call(
+            ["killall", "-q", "omxplayer.bin"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+    except Exception:
+        pass
+
+    try:
+        subprocess.call(
+            ["killall", "-q", "omxplayer"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+    except Exception:
+        pass
+
+    hdmi_process = None
+
+    time.sleep(0.5)
+    hdmi_power_off()
+    log("HDMI substream stopped.")
+
+def process_latest_hdmi_dweet():
+    global last_hdmi_signature, hdmi_process
+
+    latest = fetch_latest_hdmi_dweet()
+    if not latest:
+        return
+
+    hdmi_value = str(latest.get("hdmi", "0"))
+    ts = safe_int(latest.get("ts"), 0)
+
+    signature = f"{hdmi_value}|{ts}"
+
+    if signature == last_hdmi_signature:
+        if hdmi_process is not None and not hdmi_process_alive():
+            log("HDMI player exited unexpectedly.")
+            hdmi_process = None
+            if hdmi_value == "0":
+                hdmi_power_off()
+        return
+
+    last_hdmi_signature = signature
+
+    if hdmi_value == "1":
+        start_hdmi_substream()
+    else:
+        stop_hdmi_substream()
+
+# =========================
+# DWEET PROCESSING
+# =========================
+
+def process_latest_dweet():
+    global last_seen_ts, last_seen_signature
+
+    latest = fetch_latest_dweet()
+    if not latest:
+        log("No dweet received.")
+        return
+
+    display = str(latest.get("display", ""))
+    visible = str(latest.get("visible", "1"))
+    rect0 = safe_int(latest.get("rect0"), DEFAULT_RECT_0)
+    rect2 = safe_int(latest.get("rect2"), DEFAULT_RECT_2)
+    match_title_enabled = str(latest.get("match_title_enabled", "0"))
+    match_title = str(latest.get("match_title", DEFAULT_MATCH_TITLE))
+    ts = safe_int(latest.get("ts"), 0)
+
+    signature = f"{display}|{visible}|{rect0}|{rect2}|{match_title_enabled}|{match_title}|{ts}"
+
+    if ts > 0:
+        last_seen_ts = ts
+
+    if signature == last_seen_signature:
+        return
+
+    last_seen_signature = signature
+
+    if visible == "1" and display.strip():
+        ok = set_camera_overlay(display, rect0, rect2, 1)
+        if ok:
+            log(f"Overlay updated: {display}")
+        else:
+            log("Failed to update overlay.")
+    else:
+        ok = clear_camera_overlay()
+        if ok:
+            log("Overlay cleared.")
+        else:
+            log("Failed to clear overlay.")
+
+    if visible == "1" and match_title_enabled == "1" and match_title.strip():
+        ok = set_camera_match_title(match_title, 1)
+        if ok:
+            log(f"Match title updated: {match_title}")
+        else:
+            log("Failed to update match title.")
+    else:
+        ok = clear_camera_match_title()
+        if ok:
+            log("Match title cleared.")
+        else:
+            log("Failed to clear match title.")
+
+def idle_check():
+    global last_seen_signature
+
+    if last_seen_ts <= 0:
+        return
+
+    age_seconds = (now_ms() - last_seen_ts) / 1000.0
+    if age_seconds < IDLE_RESET_SECONDS:
+        return
+
+    log("Inactivity detected. Auto-clearing overlay.")
+    clear_camera_overlay()
+    clear_camera_match_title()
+    dweet_reset_state()
+    last_seen_signature = None
+
+# =========================
+# MAIN LOOP
+# =========================
+
+def main():
+    global last_camera_status_push_at, last_dweet_poll_at, last_hdmi_poll_at
+
+    log("Starting headless scoreboard controller.")
+
+    try:
+        clear_camera_overlay()
+    except Exception as e:
+        log(f"Startup clear overlay error: {e}")
+
+    try:
+        clear_camera_match_title()
+    except Exception as e:
+        log(f"Startup clear title error: {e}")
+
+    try:
+        stop_hdmi_substream()
+    except Exception as e:
+        log(f"Startup stop HDMI error: {e}")
+
+    while True:
+        loop_started = time.time()
+
+        try:
+            if loop_started - last_camera_status_push_at >= CAMERA_STATUS_SECONDS:
+                online = camera_is_online()
+                push_camera_status(online)
+                last_camera_status_push_at = loop_started
+        except Exception as e:
+            log(f"Camera status section error: {e}")
+
+        try:
+            if loop_started - last_dweet_poll_at >= POLL_SECONDS:
+                process_latest_dweet()
+                last_dweet_poll_at = loop_started
+        except Exception as e:
+            log(f"Dweet processing section error: {e}")
+
+        try:
+            if loop_started - last_hdmi_poll_at >= HDMI_POLL_SECONDS:
+                process_latest_hdmi_dweet()
+                last_hdmi_poll_at = loop_started
+        except Exception as e:
+            log(f"HDMI section error: {e}")
+
+        try:
+            idle_check()
+        except Exception as e:
+            log(f"Idle check section error: {e}")
+
+        time.sleep(0.2)
+
+if __name__ == "__main__":
+    try:
+        main()
+    finally:
+        try:
+            stop_hdmi_substream()
+        except Exception:
+            pass
