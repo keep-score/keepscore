@@ -790,8 +790,8 @@
     const YOUTUBE_LIVE_URL = "https://youtube.com/@ClusesBillardClub/live";
     const HDMI_PIN = "2481";
 
-    const MIN_RECT = { rect0: 3000, rect2: 4400 };
-    const MAX_RECT = { rect0: 6000, rect2: 7400 };
+    const MIN_RECT = { rect0: 2600, rect2: 4000 };
+    const MAX_RECT = { rect0: 6400, rect2: 7800 };
     const RECT_STEP = 200;
     const DEFAULT_RECT = { rect0: 3600, rect2: 5000 };
     const DEFAULT_MATCH_TITLE_LINES = ["Premier à 9", ""];
