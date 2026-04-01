@@ -37,7 +37,24 @@
     }
 
     body {
-      padding: 10px;
+      padding: 6px 10px 10px;
+    }
+
+    .top-logo-wrap {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 4px 0 10px;
+    }
+
+    .top-logo {
+      max-width: 110px;
+      width: 20vw;
+      height: auto;
+      display: block;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.35));
     }
 
     .app {
@@ -604,7 +621,16 @@
 
     @media (orientation: landscape) {
       body {
-        padding: 8px;
+        padding: 4px 8px 8px;
+      }
+
+      .top-logo-wrap {
+        padding: 2px 0 8px;
+      }
+
+      .top-logo {
+        max-width: 90px;
+        width: 10vw;
       }
 
       .players {
@@ -630,6 +656,10 @@
   </style>
 </head>
 <body>
+  <div class="top-logo-wrap">
+    <img src="https://raw.githubusercontent.com/keep-score/keepscore/refs/heads/main/cluses-billard-club.png" alt="Cluses Billard Club" class="top-logo">
+  </div>
+
   <div class="app">
     <div id="setupScreen">
       <h1>Cluses Billard Club</h1>
