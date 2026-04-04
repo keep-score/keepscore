@@ -557,13 +557,25 @@
       background: #1f6f3f;
     }
 
+    .stream-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .stream-icon {
+      font-size: 1.25rem;
+      line-height: 1;
+      flex: 0 0 auto;
+    }
+
     .stream-info-box {
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.07);
       border-radius: 14px;
       padding: 12px;
       display: grid;
-      gap: 6px;
+      gap: 8px;
     }
 
     .stream-cred {
@@ -573,6 +585,10 @@
 
     .stream-warning {
       color: #fff2b0;
+    }
+
+    .stream-actions {
+      margin-top: 10px;
     }
 
     @media (orientation: portrait) {
@@ -759,8 +775,11 @@
 
       <div class="control-card">
         <div>
-          <div class="control-title">Flux local (Wi-Fi CBC)</div>
-          <div class="control-subtext">Accès au flux vidéo local du club.</div>
+          <div class="control-title stream-title">
+            <span class="stream-icon" aria-hidden="true">📡</span>
+            <span>Flux local</span>
+          </div>
+          <div class="control-subtext">Visionnage en direct sur le réseau du club.</div>
         </div>
 
         <div id="localStreamInitial">
@@ -771,17 +790,16 @@
 
         <div id="localStreamDetails" class="hidden">
           <div class="stream-info-box">
-            <div class="control-subtext stream-warning">
-              Vous devez être connecté au réseau Wi-Fi CBC pour accéder à ce flux.
-            </div>
-            <div class="stream-cred"><strong>Identifiant :</strong> Cluses</div>
+            <div class="stream-cred stream-warning"><strong>Wi-Fi requis :</strong> CBC</div>
+            <div class="stream-cred"><strong>Lien local :</strong> 192.168.1.35</div>
+            <div class="stream-cred"><strong>Identifiants de connexion :</strong></div>
+            <div class="stream-cred"><strong>Utilisateur :</strong> Cluses</div>
             <div class="stream-cred"><strong>Mot de passe :</strong> Billard1</div>
-            <div class="stream-cred"><strong>Adresse :</strong> 192.168.1.35</div>
           </div>
 
-          <div class="link-row">
-            <button class="mini-btn" id="openLocalStreamBtn">Ouvrir le flux</button>
-            <button class="mini-btn" id="copyLocalStreamBtn">Copier l’adresse</button>
+          <div class="link-row stream-actions">
+            <button class="mini-btn" id="openLocalStreamBtn">Ouvrir</button>
+            <button class="mini-btn" id="copyLocalStreamBtn">Copier le lien</button>
           </div>
         </div>
       </div>
@@ -789,11 +807,10 @@
   </div>
 
   <script>
-
     const DWEET_THING = "cbctesting";
     const CAMERA_STATUS_THING = "cbctesting_camera";
     const YOUTUBE_LIVE_URL = "https://youtube.com/@ClusesBillardClub/live";
-    const LOCAL_STREAM_URL = "http://192.168.1.108";
+    const LOCAL_STREAM_URL = "http://192.168.1.35";
 
     const MIN_RECT = { rect0: 2600, rect2: 4000 };
     const MAX_RECT = { rect0: 6400, rect2: 7800 };
@@ -1083,7 +1100,7 @@
       copyYoutubeBtn.classList.remove("copy-ok");
       copyYoutubeBtn.textContent = "Copier le lien";
       copyLocalStreamBtn.classList.remove("copy-ok");
-      copyLocalStreamBtn.textContent = "Copier l’adresse";
+      copyLocalStreamBtn.textContent = "Copier le lien";
     }
 
     function closeTvModal() {
@@ -1092,7 +1109,7 @@
       copyYoutubeBtn.classList.remove("copy-ok");
       copyYoutubeBtn.textContent = "Copier le lien";
       copyLocalStreamBtn.classList.remove("copy-ok");
-      copyLocalStreamBtn.textContent = "Copier l’adresse";
+      copyLocalStreamBtn.textContent = "Copier le lien";
     }
 
     async function copyYoutubeLink() {
@@ -1110,10 +1127,10 @@
       try {
         await navigator.clipboard.writeText(LOCAL_STREAM_URL);
         copyLocalStreamBtn.classList.add("copy-ok");
-        copyLocalStreamBtn.textContent = "Adresse copiée";
+        copyLocalStreamBtn.textContent = "Lien copié";
       } catch (error) {
         console.error(error);
-        scoreStatus.textContent = "Impossible de copier l’adresse.";
+        scoreStatus.textContent = "Impossible de copier le lien.";
       }
     }
 
