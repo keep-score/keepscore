@@ -479,11 +479,6 @@
       gap: 12px;
     }
 
-    .control-card > div:first-child {
-      display: grid;
-      gap: 6px;
-    }
-
     .control-top {
       display: flex;
       justify-content: space-between;
@@ -563,6 +558,11 @@
 
     .mini-btn.copy-ok {
       background: #1f6f3f;
+    }
+
+    .stream-head {
+      display: grid;
+      gap: 6px;
     }
 
     .stream-title {
@@ -791,7 +791,7 @@
       </div>
 
       <div class="control-card">
-        <div>
+        <div class="stream-head">
           <div class="control-title stream-title">
             <span class="stream-icon" aria-hidden="true">📡</span>
             <span>Flux local</span>
@@ -808,7 +808,7 @@
         <div id="localStreamDetails" class="hidden">
           <div class="stream-info-box">
             <div class="stream-cred stream-warning"><strong>Wi-Fi requis :</strong> CBC</div>
-            <div class="stream-cred"><strong>Lien local :</strong> <a href="http://192.168.1.108/" target="_blank" rel="noopener noreferrer" class="inline-link">http://192.168.1.108/</a></div>
+            <div class="stream-cred"><strong>Lien local :</strong> <a href="http://192.168.1.108/" target="_blank" rel="noopener noreferrer" class="inline-link">192.168.1.108</a></div>
             <div class="stream-cred"><strong>Nom de l'utilisateur :</strong> Cluses</div>
             <div class="stream-cred"><strong>Mot de passe :</strong> Billard1</div>
           </div>
