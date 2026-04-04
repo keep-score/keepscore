@@ -489,6 +489,7 @@
       justify-content: space-between;
       align-items: center;
       gap: 14px;
+      flex-wrap: nowrap;
     }
 
     .control-title {
@@ -496,6 +497,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
+      min-width: 0;
     }
 
     .yt-logo {
@@ -530,6 +532,7 @@
       border-radius: 999px;
       padding: 7px 10px;
       white-space: nowrap;
+      flex-shrink: 0;
     }
 
     .control-subtext {
@@ -598,7 +601,7 @@
 
     .inline-link {
       color: inherit;
-      text-decoration: underline;
+      text-decoration: none;
     }
 
     @media (orientation: portrait) {
@@ -805,8 +808,8 @@
         <div id="localStreamDetails" class="hidden">
           <div class="stream-info-box">
             <div class="stream-cred stream-warning"><strong>Wi-Fi requis :</strong> CBC</div>
-            <div class="stream-cred"><strong>Lien local :</strong> <a href="http://192.168.1.35" target="_blank" rel="noopener noreferrer" class="inline-link">192.168.1.35</a></div>
-            <div class="stream-cred"><strong>Utilisateur :</strong> Cluses</div>
+            <div class="stream-cred"><strong>Lien local :</strong> <a href="http://192.168.1.108/" target="_blank" rel="noopener noreferrer" class="inline-link">http://192.168.1.108/</a></div>
+            <div class="stream-cred"><strong>Nom de l'utilisateur :</strong> Cluses</div>
             <div class="stream-cred"><strong>Mot de passe :</strong> Billard1</div>
           </div>
 
@@ -823,7 +826,7 @@
     const DWEET_THING = "cbctesting";
     const CAMERA_STATUS_THING = "cbctesting_camera";
     const YOUTUBE_LIVE_URL = "https://youtube.com/@ClusesBillardClub/live";
-    const LOCAL_STREAM_URL = "http://192.168.1.35";
+    const LOCAL_STREAM_URL = "http://192.168.1.108/";
 
     const MIN_RECT = { rect0: 2600, rect2: 4000 };
     const MAX_RECT = { rect0: 6400, rect2: 7800 };
