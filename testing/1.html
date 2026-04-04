@@ -479,6 +479,11 @@
       gap: 12px;
     }
 
+    .control-card > div:first-child {
+      display: grid;
+      gap: 6px;
+    }
+
     .control-top {
       display: flex;
       justify-content: space-between;
@@ -589,6 +594,11 @@
 
     .stream-actions {
       margin-top: 10px;
+    }
+
+    .inline-link {
+      color: inherit;
+      text-decoration: underline;
     }
 
     @media (orientation: portrait) {
@@ -766,7 +776,11 @@
           </div>
           <span class="always-on">● Activé</span>
         </div>
-        <div class="control-subtext" id="youtubeUrlText">youtube.com/@ClusesBillardClub/live</div>
+        <div class="control-subtext" id="youtubeUrlText">
+          <a href="https://youtube.com/@ClusesBillardClub/live" target="_blank" rel="noopener noreferrer" class="inline-link">
+            youtube.com/@ClusesBillardClub/live
+          </a>
+        </div>
         <div class="link-row">
           <button class="mini-btn" id="openYoutubeBtn">Ouvrir</button>
           <button class="mini-btn" id="copyYoutubeBtn">Copier le lien</button>
@@ -777,9 +791,9 @@
         <div>
           <div class="control-title stream-title">
             <span class="stream-icon" aria-hidden="true">📡</span>
-            <span>Direct local</span>
+            <span>Flux local</span>
           </div>
-          <div class="control-subtext">Disponible sur le réseau du club.</div>
+          <div class="control-subtext">Uniquement disponible sur le réseau Wi-Fi du club.</div>
         </div>
 
         <div id="localStreamInitial">
@@ -791,7 +805,7 @@
         <div id="localStreamDetails" class="hidden">
           <div class="stream-info-box">
             <div class="stream-cred stream-warning"><strong>Wi-Fi requis :</strong> CBC</div>
-            <div class="stream-cred"><strong>Lien local :</strong> 192.168.1.35</div>
+            <div class="stream-cred"><strong>Lien local :</strong> <a href="http://192.168.1.35" target="_blank" rel="noopener noreferrer" class="inline-link">192.168.1.35</a></div>
             <div class="stream-cred"><strong>Utilisateur :</strong> Cluses</div>
             <div class="stream-cred"><strong>Mot de passe :</strong> Billard1</div>
           </div>
