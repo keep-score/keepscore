@@ -428,20 +428,21 @@
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.62);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 18px;
       z-index: 999;
+      backdrop-filter: blur(4px);
     }
 
     .modal-card {
       width: 100%;
-      max-width: 460px;
-      background: #121212;
+      max-width: 470px;
+      background: linear-gradient(180deg, #141414, #101010);
       border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 22px;
+      border-radius: 24px;
       box-shadow: 0 20px 50px rgba(0,0,0,0.45);
       padding: 18px;
       display: grid;
@@ -455,9 +456,20 @@
       gap: 12px;
     }
 
+    .modal-title-wrap {
+      display: grid;
+      gap: 4px;
+    }
+
     .modal-title {
       font-size: 1.15rem;
       font-weight: 900;
+    }
+
+    .modal-subtitle {
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.35;
     }
 
     .modal-close {
@@ -470,29 +482,36 @@
       font-size: 1.1rem;
     }
 
-    .control-card {
-      background: #1a1a1a;
+    .video-card {
+      background: linear-gradient(180deg, #1b1b1b, #151515);
       border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 16px;
-      padding: 14px;
+      border-radius: 18px;
+      padding: 15px;
       display: grid;
       gap: 12px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
     }
 
-    .control-top {
+    .video-card-head {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       gap: 14px;
-      flex-wrap: nowrap;
     }
 
-    .control-title {
-      font-weight: bold;
+    .video-title-wrap {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .video-title {
+      font-weight: 800;
       display: flex;
       align-items: center;
       gap: 10px;
       min-width: 0;
+      font-size: 1rem;
     }
 
     .yt-logo {
@@ -502,6 +521,7 @@
       background: #ff0000;
       position: relative;
       flex: 0 0 auto;
+      box-shadow: 0 0 12px rgba(255,0,0,0.25);
     }
 
     .yt-logo::before {
@@ -516,31 +536,75 @@
       border-bottom: 5px solid transparent;
     }
 
-    .delay-badge {
+    .stream-icon-wrap {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 0.9rem;
-      color: #e8eefc;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 999px;
-      padding: 7px 10px;
-      white-space: nowrap;
-      flex-shrink: 0;
+      justify-content: center;
+      background: rgba(50,215,75,0.12);
+      border: 1px solid rgba(50,215,75,0.18);
+      flex: 0 0 28px;
     }
 
-    .delay-dot {
+    .stream-icon {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .video-delay {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      width: fit-content;
+      font-size: 0.83rem;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 7px 11px;
+      white-space: nowrap;
+      letter-spacing: 0.01em;
+    }
+
+    .video-delay.youtube {
+      color: #fff1c3;
+      background: rgba(250,204,21,0.11);
+      border: 1px solid rgba(250,204,21,0.22);
+    }
+
+    .video-delay.local {
+      color: #d8ffe1;
+      background: rgba(50,215,75,0.11);
+      border: 1px solid rgba(50,215,75,0.22);
+    }
+
+    .video-delay-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: #9ca3af;
+      background: currentColor;
       flex: 0 0 8px;
+      opacity: 0.95;
     }
 
-    .control-subtext {
+    .video-desc {
+      color: #e1e1e1;
+      font-size: 0.95rem;
+      line-height: 1.45;
+    }
+
+    .video-note {
       color: var(--muted);
-      font-size: 0.92rem;
+      font-size: 0.91rem;
+      line-height: 1.42;
+    }
+
+    .video-link-box {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 14px;
+      padding: 11px 12px;
+      color: #f0f0f0;
       line-height: 1.4;
       word-break: break-word;
     }
@@ -566,23 +630,6 @@
 
     .mini-btn.copy-ok {
       background: #1f6f3f;
-    }
-
-    .stream-head {
-      display: grid;
-      gap: 6px;
-    }
-
-    .stream-title {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .stream-icon {
-      font-size: 1.25rem;
-      line-height: 1;
-      flex: 0 0 auto;
     }
 
     .stream-info-box {
@@ -775,39 +822,69 @@
   <div id="tvModal" class="modal-backdrop hidden" aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tvModalTitle">
       <div class="modal-head">
-        <div id="tvModalTitle" class="modal-title">Regarder le direct</div>
+        <div class="modal-title-wrap">
+          <div id="tvModalTitle" class="modal-title">Regarder le direct</div>
+          <div class="modal-subtitle">Choisissez le mode de visionnage qui vous convient le mieux.</div>
+        </div>
         <button class="modal-close" id="tvModalClose" aria-label="Fermer">✕</button>
       </div>
 
-      <div class="control-card">
-        <div class="control-top">
-          <div class="control-title">
-            <span class="yt-logo" aria-hidden="true"></span>
-            <span>YouTube Live</span>
+      <div class="video-card">
+        <div class="video-card-head">
+          <div class="video-title-wrap">
+            <div class="video-title">
+              <span class="yt-logo" aria-hidden="true"></span>
+              <span>Diffusion YouTube</span>
+            </div>
+            <div class="video-delay youtube">
+              <span class="video-delay-dot"></span>
+              <span>Environ 10 secondes de décalage</span>
+            </div>
           </div>
-          <span class="delay-badge"><span class="delay-dot"></span>Délai : ~10 s</span>
         </div>
-        <div class="control-subtext" id="youtubeUrlText">
+
+        <div class="video-desc">
+          Idéal pour suivre le direct à distance ou partager facilement le match.
+        </div>
+
+        <div class="video-note">
+          Le léger décalage est normal avec une diffusion en ligne.
+        </div>
+
+        <div class="video-link-box" id="youtubeUrlText">
           <a href="https://youtube.com/@ClusesBillardClub/live" target="_blank" rel="noopener noreferrer" class="inline-link">
             youtube.com/@ClusesBillardClub/live
           </a>
         </div>
+
         <div class="link-row">
           <button class="mini-btn" id="openYoutubeBtn">Ouvrir</button>
           <button class="mini-btn" id="copyYoutubeBtn">Copier le lien</button>
         </div>
       </div>
 
-      <div class="control-card">
-        <div class="stream-head">
-          <div class="control-top">
-            <div class="control-title stream-title">
-              <span class="stream-icon" aria-hidden="true">📡</span>
+      <div class="video-card">
+        <div class="video-card-head">
+          <div class="video-title-wrap">
+            <div class="video-title">
+              <span class="stream-icon-wrap" aria-hidden="true">
+                <span class="stream-icon">📡</span>
+              </span>
               <span>Flux local</span>
             </div>
-            <span class="delay-badge"><span class="delay-dot"></span>Délai : quasi nul</span>
+            <div class="video-delay local">
+              <span class="video-delay-dot"></span>
+              <span>Direct quasi instantané</span>
+            </div>
           </div>
-          <div class="control-subtext">Uniquement disponible sur le réseau Wi-Fi du club.</div>
+        </div>
+
+        <div class="video-desc">
+          Le meilleur choix sur place pour voir l’action avec un minimum de décalage.
+        </div>
+
+        <div class="video-note">
+          Accessible uniquement depuis le réseau Wi-Fi du club.
         </div>
 
         <div id="localStreamInitial">
@@ -819,7 +896,7 @@
         <div id="localStreamDetails" class="hidden">
           <div class="stream-info-box">
             <div class="stream-cred stream-warning"><strong>Wi-Fi requis :</strong> CBC</div>
-            <div class="stream-cred"><strong>Lien local :</strong> <a href="http://192.168.1.108/" target="_blank" rel="noopener noreferrer" class="inline-link">192.168.1.108</a></div>
+            <div class="stream-cred"><strong>Adresse locale :</strong> <a href="http://192.168.1.108/" target="_blank" rel="noopener noreferrer" class="inline-link">192.168.1.108</a></div>
             <div class="stream-cred"><strong>Nom de l'utilisateur :</strong> Cluses</div>
             <div class="stream-cred"><strong>Mot de passe :</strong> Billard1</div>
           </div>
