@@ -516,18 +516,26 @@
       border-bottom: 5px solid transparent;
     }
 
-    .always-on {
+    .delay-badge {
       display: inline-flex;
       align-items: center;
       gap: 6px;
       font-size: 0.9rem;
-      color: #d8ffe0;
-      background: rgba(50,215,75,0.14);
-      border: 1px solid rgba(50,215,75,0.28);
+      color: #e8eefc;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.12);
       border-radius: 999px;
       padding: 7px 10px;
       white-space: nowrap;
       flex-shrink: 0;
+    }
+
+    .delay-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #9ca3af;
+      flex: 0 0 8px;
     }
 
     .control-subtext {
@@ -777,7 +785,7 @@
             <span class="yt-logo" aria-hidden="true"></span>
             <span>YouTube Live</span>
           </div>
-          <span class="always-on">● Activé</span>
+          <span class="delay-badge"><span class="delay-dot"></span>Délai : ~10 s</span>
         </div>
         <div class="control-subtext" id="youtubeUrlText">
           <a href="https://youtube.com/@ClusesBillardClub/live" target="_blank" rel="noopener noreferrer" class="inline-link">
@@ -792,9 +800,12 @@
 
       <div class="control-card">
         <div class="stream-head">
-          <div class="control-title stream-title">
-            <span class="stream-icon" aria-hidden="true">📡</span>
-            <span>Flux local</span>
+          <div class="control-top">
+            <div class="control-title stream-title">
+              <span class="stream-icon" aria-hidden="true">📡</span>
+              <span>Flux local</span>
+            </div>
+            <span class="delay-badge"><span class="delay-dot"></span>Délai : quasi nul</span>
           </div>
           <div class="control-subtext">Uniquement disponible sur le réseau Wi-Fi du club.</div>
         </div>
