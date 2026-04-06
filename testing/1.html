@@ -106,10 +106,6 @@
       font-size: 1rem;
     }
 
-    .player-input {
-      text-transform: uppercase;
-    }
-
     button {
       border: none;
       border-radius: 16px;
@@ -723,12 +719,12 @@
       <div class="setup">
         <div class="field">
           <label for="player1Input">Joueur 1</label>
-          <input id="player1Input" class="player-input" type="text" maxlength="15" placeholder="Nom du joueur 1" />
+          <input id="player1Input" type="text" maxlength="15" placeholder="Nom du joueur 1" />
         </div>
 
         <div class="field">
           <label for="player2Input">Joueur 2</label>
-          <input id="player2Input" class="player-input" type="text" maxlength="15" placeholder="Nom du joueur 2" />
+          <input id="player2Input" type="text" maxlength="15" placeholder="Nom du joueur 2" />
         </div>
 
         <div class="option-card">
@@ -1473,18 +1469,15 @@
       }
     }
 
-[player1Input, player2Input].forEach(input => {
-  input.addEventListener("input", () => {
-    const cleaned = input.value.toUpperCase().slice(0, 15);
+    player1Input.addEventListener("input", () => {
+      setupDirty = true;
+      updateClearSetupButtonVisibility();
+    });
 
-    if (input.value !== cleaned) {
-      input.value = cleaned;
-    }
-
-    setupDirty = true;
-    updateClearSetupButtonVisibility();
-  });
-});
+    player2Input.addEventListener("input", () => {
+      setupDirty = true;
+      updateClearSetupButtonVisibility();
+    });
 
     startBtn.addEventListener("click", () => {
       if (startBtn.disabled) return;
