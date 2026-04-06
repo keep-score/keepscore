@@ -10,9 +10,9 @@ import subprocess
 # CONFIG
 # =========================
 
-THING_NAME = "cbctesting"
-THING_NAME_CAMERA = "cbctesting_camera"
-THING_NAME_HDMI = "cbctesting_hdmi"
+THING_NAME = "cbc1"
+THING_NAME_CAMERA = "cbc1_camera"
+THING_NAME_HDMI = "cbc1_hdmi"
 
 POLL_SECONDS = 1.0
 CAMERA_STATUS_SECONDS = 2.0
@@ -27,7 +27,7 @@ DWEET_SET_BASE = f"https://dweet.cc/dweet/for/{THING_NAME}"
 DWEET_CAMERA_SET_BASE = f"https://dweet.cc/dweet/for/{THING_NAME_CAMERA}"
 DWEET_HDMI_GET_URL = f"https://dweet.cc/get/latest/dweet/for/{THING_NAME_HDMI}"
 
-CAMERA_HOST = "192.168.1.108"
+CAMERA_HOST = "192.168.1.35"
 CAMERA_BASE = f"http://{CAMERA_HOST}/cgi-bin/configManager.cgi"
 CAMERA_USERNAME = "admin"
 CAMERA_PASSWORD = "cbcdirect1"
