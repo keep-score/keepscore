@@ -291,8 +291,7 @@
       flex-wrap: wrap;
     }
 
-    .tool-btn,
-    .subtle-btn {
+    .tool-btn {
       min-width: 62px;
       min-height: 62px;
       border-radius: 999px;
@@ -306,7 +305,6 @@
       -webkit-appearance: none;
     }
 
-    .subtle-btn:hover,
     .tool-btn:hover {
       background: var(--sys-btn-hover) !important;
     }
@@ -725,12 +723,12 @@
       <div class="setup">
         <div class="field">
           <label for="player1Input">Joueur 1</label>
-          <input id="player1Input" class="player-input" type="text" maxlength="16" placeholder="Nom du joueur 1" />
+          <input id="player1Input" class="player-input" type="text" maxlength="15" placeholder="Nom du joueur 1" />
         </div>
 
         <div class="field">
           <label for="player2Input">Joueur 2</label>
-          <input id="player2Input" class="player-input" type="text" maxlength="16" placeholder="Nom du joueur 2" />
+          <input id="player2Input" class="player-input" type="text" maxlength="15" placeholder="Nom du joueur 2" />
         </div>
 
         <div class="option-card">
@@ -746,7 +744,7 @@
           </div>
 
           <div class="field hidden" id="matchTitleFieldWrap">
-            <input id="matchTitleInput" type="text" maxlength="22" value="Premier à 9" placeholder="Premier à 9" />
+            <input id="matchTitleInput" type="text" maxlength="22" value="Premier à 9" placeholder="Ex. Premier à 9" />
           </div>
         </div>
 
@@ -776,7 +774,7 @@
       <div class="players">
         <div class="player-panel player-red">
           <div class="player-name" id="player1Name">
-            <span class="player-name-text" id="player1NameText">JOUEUR 1</span>
+            <span class="player-name-text" id="player1NameText">Joueur 1</span>
             <span class="cue-slot">
               <span id="cue1" class="cueball hidden">
                 <span class="dot dot-top"></span>
@@ -794,7 +792,7 @@
 
         <div class="player-panel player-blue">
           <div class="player-name" id="player2Name">
-            <span class="player-name-text" id="player2NameText">JOUEUR 2</span>
+            <span class="player-name-text" id="player2NameText">Joueur 2</span>
             <span class="cue-slot">
               <span id="cue2" class="cueball hidden">
                 <span class="dot dot-top"></span>
@@ -910,7 +908,6 @@
     const YOUTUBE_LIVE_URL = "https://youtube.com/@ClusesBillardClub/live";
     const LOCAL_STREAM_URL = "http://192.168.1.108/";
 
-    const DEFAULT_RECT = { rect0: 3600, rect2: 5000 };
     const DEFAULT_MATCH_INFO = "Premier à 9";
 
     const state = {
@@ -918,8 +915,6 @@
       player2: "",
       score1: 0,
       score2: 0,
-      rect0: DEFAULT_RECT.rect0,
-      rect2: DEFAULT_RECT.rect2,
       visible: 1,
       matchTitleEnabled: false,
       matchTitle: DEFAULT_MATCH_INFO
@@ -973,15 +968,6 @@
     const openLocalStreamBtn = document.getElementById("openLocalStreamBtn");
     const copyLocalStreamBtn = document.getElementById("copyLocalStreamBtn");
 
-    [player1Input, player2Input].forEach(input => {
-      input.addEventListener("input", () => {
-        const start = input.selectionStart;
-        const end = input.selectionEnd;
-        input.value = input.value.toUpperCase();
-        input.setSelectionRange(start, end);
-      });
-    });
-
     function setLiveStatus(mode, text) {
       liveDot.classList.remove("ready", "waiting", "error");
       if (mode) liveDot.classList.add(mode);
@@ -997,22 +983,27 @@
       startBtn.disabled = !cameraReady;
     }
 
-    function normalizeMatchTitle(text) {
-      return String(text || "").trim();
+    function sanitizeName(name) {
+      return String(name || "").toUpperCase().slice(0, 15);
+    }
+
+    function clampStateNames() {
+      state.player1 = sanitizeName(state.player1);
+      state.player2 = sanitizeName(state.player2);
+    }
+
+    function getMatchTitleFromInput() {
+      return String(matchTitleInput.value || "").trim().slice(0, 22);
     }
 
     function getDefaultMatchTitle() {
       return DEFAULT_MATCH_INFO;
     }
 
-    function getDisplayName(name) {
-      return String(name || "").trim().toUpperCase();
-    }
-
     function hasReusableSetupValues() {
       const hasNonDefaultTitle =
         !!state.matchTitleEnabled ||
-        normalizeMatchTitle(state.matchTitle || getDefaultMatchTitle()) !== getDefaultMatchTitle();
+        (state.matchTitle || "") !== DEFAULT_MATCH_INFO;
 
       return !!(
         state.player1 ||
@@ -1030,10 +1021,10 @@
       matchTitleFieldWrap.classList.toggle("hidden", !state.matchTitleEnabled);
 
       if (document.activeElement !== matchTitleInput) {
-        matchTitleInput.value = normalizeMatchTitle(state.matchTitle || getDefaultMatchTitle());
+        matchTitleInput.value = state.matchTitle || DEFAULT_MATCH_INFO;
       }
 
-      scoreboardMatchTitle.textContent = normalizeMatchTitle(state.matchTitle || getDefaultMatchTitle()) || getDefaultMatchTitle();
+      scoreboardMatchTitle.textContent = (state.matchTitle || DEFAULT_MATCH_INFO).trim() || DEFAULT_MATCH_INFO;
 
       scoreboardHeaderDefault.classList.toggle("hidden", state.matchTitleEnabled);
       scoreboardHeaderCustom.classList.toggle("hidden", !state.matchTitleEnabled);
@@ -1051,16 +1042,17 @@
     }
 
     function buildDisplayString(player1 = state.player1, score1 = state.score1, score2 = state.score2, player2 = state.player2) {
-      const displayPlayer1 = getDisplayName(player1);
-      const displayPlayer2 = getDisplayName(player2);
-      const left = displayPlayer1 ? `${displayPlayer1} ` : "";
-      const right = displayPlayer2 ? ` ${displayPlayer2}` : "";
+      const safePlayer1 = sanitizeName(player1);
+      const safePlayer2 = sanitizeName(player2);
+      const left = safePlayer1 ? `${safePlayer1} ` : "";
+      const right = safePlayer2 ? ` ${safePlayer2}` : "";
       return `${left}${score1} - ${score2}${right}`;
     }
 
     function renderScoreboard() {
-      player1NameText.textContent = getDisplayName(state.player1) || "JOUEUR 1";
-      player2NameText.textContent = getDisplayName(state.player2) || "JOUEUR 2";
+      clampStateNames();
+      player1NameText.textContent = state.player1 || "Joueur 1";
+      player2NameText.textContent = state.player2 || "Joueur 2";
       score1Display.textContent = state.score1;
       score2Display.textContent = state.score2;
       updateCue();
@@ -1069,9 +1061,10 @@
     }
 
     function populateSetupInputsFromState() {
+      clampStateNames();
       player1Input.value = state.player1 || "";
       player2Input.value = state.player2 || "";
-      matchTitleInput.value = normalizeMatchTitle(state.matchTitle || getDefaultMatchTitle());
+      matchTitleInput.value = state.matchTitle || DEFAULT_MATCH_INFO;
       matchTitleEnabledToggle.checked = !!state.matchTitleEnabled;
 
       updateMatchTitleUi();
@@ -1084,8 +1077,6 @@
       state.player2 = "";
       state.score1 = 0;
       state.score2 = 0;
-      state.rect0 = DEFAULT_RECT.rect0;
-      state.rect2 = DEFAULT_RECT.rect2;
       state.visible = 0;
       state.matchTitleEnabled = false;
       state.matchTitle = getDefaultMatchTitle();
@@ -1102,10 +1093,10 @@
       if (!match) return null;
 
       return {
-        player1: (match[1] || "").trim(),
+        player1: sanitizeName(match[1] || ""),
         score1: parseInt(match[2], 10) || 0,
         score2: parseInt(match[3], 10) || 0,
-        player2: (match[4] || "").trim()
+        player2: sanitizeName(match[4] || "")
       };
     }
 
@@ -1114,25 +1105,21 @@
 
       const latestVisible = String(latest.visible ?? "1").trim();
       const latestDisplay = String(latest.display || "").trim();
-      const latestPlayer1 = String(latest.player1 || "").trim();
-      const latestPlayer2 = String(latest.player2 || "").trim();
-      const rect0 = parseInt(latest.rect0 ?? DEFAULT_RECT.rect0, 10);
-      const rect2 = parseInt(latest.rect2 ?? DEFAULT_RECT.rect2, 10);
+      const latestPlayer1 = sanitizeName(latest.player1 || "");
+      const latestPlayer2 = sanitizeName(latest.player2 || "");
       const latestBreaker = parseInt(latest.breaker ?? "1", 10);
       const latestTitleEnabled = String(latest.match_title_enabled ?? "0") === "1";
-      const latestMatchTitle = normalizeMatchTitle(String(latest.match_title || getDefaultMatchTitle()));
+      const latestMatchTitle = String(latest.match_title || getDefaultMatchTitle()).trim().slice(0, 22);
       const parsedDisplay = parsePlayersFromDisplay(latestDisplay);
 
-      state.rect0 = Number.isFinite(rect0) ? rect0 : DEFAULT_RECT.rect0;
-      state.rect2 = Number.isFinite(rect2) ? rect2 : DEFAULT_RECT.rect2;
       currentBreaker = latestBreaker === 2 ? 2 : 1;
 
       state.matchTitleEnabled = latestTitleEnabled;
       state.matchTitle = latestMatchTitle || getDefaultMatchTitle();
 
       if (latestVisible === "0") {
-        state.player1 = latestPlayer1 || parsedDisplay?.player1 || "";
-        state.player2 = latestPlayer2 || parsedDisplay?.player2 || "";
+        state.player1 = latestPlayer1 || (parsedDisplay?.player1 || "");
+        state.player2 = latestPlayer2 || (parsedDisplay?.player2 || "");
         state.score1 = 0;
         state.score2 = 0;
         state.visible = 0;
@@ -1151,8 +1138,8 @@
         return;
       }
 
-      state.player1 = latestPlayer1 || parsedDisplay?.player1 || "";
-      state.player2 = latestPlayer2 || parsedDisplay?.player2 || "";
+      state.player1 = latestPlayer1 || (parsedDisplay?.player1 || "");
+      state.player2 = latestPlayer2 || (parsedDisplay?.player2 || "");
       state.score1 = parsedDisplay?.score1 || 0;
       state.score2 = parsedDisplay?.score2 || 0;
       state.visible = 1;
@@ -1310,17 +1297,13 @@
         const latestVisible = String(latest.visible ?? "1").trim();
         const latestBreaker = String(latest.breaker ?? "1").trim();
         const latestTitleEnabled = String(latest.match_title_enabled ?? "0").trim();
-        const latestMatchTitle = normalizeMatchTitle(String(latest.match_title || getDefaultMatchTitle()));
-        const latestRect0 = String(latest.rect0 ?? DEFAULT_RECT.rect0);
-        const latestRect2 = String(latest.rect2 ?? DEFAULT_RECT.rect2);
+        const latestMatchTitle = String(latest.match_title || getDefaultMatchTitle()).trim().slice(0, 22);
 
         const currentDisplay = buildDisplayString();
         const currentVisible = String(state.visible);
         const currentBreakerString = String(currentBreaker);
         const currentTitleEnabled = state.matchTitleEnabled ? "1" : "0";
-        const currentMatchTitle = normalizeMatchTitle(state.matchTitle || getDefaultMatchTitle());
-        const currentRect0 = String(state.rect0);
-        const currentRect2 = String(state.rect2);
+        const currentMatchTitle = String(state.matchTitle || getDefaultMatchTitle()).trim().slice(0, 22);
 
         if (Date.now() >= ignoreRemoteUntil) {
           if (scoreboardScreen.classList.contains("hidden")) {
@@ -1333,9 +1316,7 @@
               latestVisible !== currentVisible ||
               latestBreaker !== currentBreakerString ||
               latestTitleEnabled !== currentTitleEnabled ||
-              latestMatchTitle !== currentMatchTitle ||
-              latestRect0 !== currentRect0 ||
-              latestRect2 !== currentRect2
+              latestMatchTitle !== currentMatchTitle
             ) {
               applyLatestDweetState(latest);
             }
@@ -1346,9 +1327,7 @@
         const refreshedVisible = String(state.visible);
         const refreshedBreaker = String(currentBreaker);
         const refreshedTitleEnabled = state.matchTitleEnabled ? "1" : "0";
-        const refreshedMatchTitle = normalizeMatchTitle(state.matchTitle || getDefaultMatchTitle());
-        const refreshedRect0 = String(state.rect0);
-        const refreshedRect2 = String(state.rect2);
+        const refreshedMatchTitle = String(state.matchTitle || getDefaultMatchTitle()).trim().slice(0, 22);
 
         if (cameraOnlineState === false) {
           setLiveStatus("error", "Caméra hors ligne");
@@ -1359,9 +1338,7 @@
           latestVisible === refreshedVisible &&
           latestBreaker === refreshedBreaker &&
           latestTitleEnabled === refreshedTitleEnabled &&
-          latestMatchTitle === refreshedMatchTitle &&
-          latestRect0 === refreshedRect0 &&
-          latestRect2 === refreshedRect2
+          latestMatchTitle === refreshedMatchTitle
         ) {
           setLiveStatus("ready", "Prêt");
         } else {
@@ -1390,25 +1367,23 @@
     }
 
     async function sendState(statusElement, overrides = {}) {
-      const rawPlayer1 = overrides.player1 ?? state.player1;
-      const rawPlayer2 = overrides.player2 ?? state.player2;
-      const sendPlayer1 = getDisplayName(rawPlayer1);
-      const sendPlayer2 = getDisplayName(rawPlayer2);
+      clampStateNames();
+
+      const sendPlayer1 = sanitizeName(overrides.player1 ?? state.player1);
+      const sendPlayer2 = sanitizeName(overrides.player2 ?? state.player2);
       const sendScore1 = overrides.score1 ?? state.score1;
       const sendScore2 = overrides.score2 ?? state.score2;
 
       const displayValue =
         overrides.display ??
-        buildDisplayString(rawPlayer1, sendScore1, sendScore2, rawPlayer2);
+        buildDisplayString(sendPlayer1, sendScore1, sendScore2, sendPlayer2);
 
       const params = new URLSearchParams({
         player1: sendPlayer1,
         player2: sendPlayer2,
         display: displayValue,
         match_title_enabled: overrides.match_title_enabled ?? (state.matchTitleEnabled ? "1" : "0"),
-        match_title: overrides.match_title ?? normalizeMatchTitle(state.matchTitle || getDefaultMatchTitle()),
-        rect0: overrides.rect0 ?? String(state.rect0),
-        rect2: overrides.rect2 ?? String(state.rect2),
+        match_title: overrides.match_title ?? String(state.matchTitle || getDefaultMatchTitle()).trim().slice(0, 22),
         visible: overrides.visible ?? String(state.visible),
         breaker: overrides.breaker ?? String(currentBreaker),
         ts: String(Date.now())
@@ -1445,10 +1420,10 @@
         return;
       }
 
-      state.player1 = player1Input.value.trim().toUpperCase();
-      state.player2 = player2Input.value.trim().toUpperCase();
+      state.player1 = sanitizeName(player1Input.value.trim());
+      state.player2 = sanitizeName(player2Input.value.trim());
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
-      state.matchTitle = normalizeMatchTitle(matchTitleInput.value) || getDefaultMatchTitle();
+      state.matchTitle = getMatchTitleFromInput() || DEFAULT_MATCH_INFO;
       state.score1 = 0;
       state.score2 = 0;
       state.visible = 1;
@@ -1497,6 +1472,24 @@
         console.error(err);
       }
     }
+
+    [player1Input, player2Input].forEach(input => {
+      input.addEventListener("input", () => {
+        const original = input.value;
+        const cursor = input.selectionStart || 0;
+        const cleaned = original.toUpperCase().slice(0, 15);
+
+        if (cleaned !== original) {
+          const diff = original.length - cleaned.length;
+          input.value = cleaned;
+          const newPos = Math.max(0, cursor - diff);
+          input.setSelectionRange(newPos, newPos);
+        }
+
+        setupDirty = true;
+        updateClearSetupButtonVisibility();
+      });
+    });
 
     startBtn.addEventListener("click", () => {
       if (startBtn.disabled) return;
@@ -1547,25 +1540,15 @@
     matchTitleEnabledToggle.addEventListener("change", () => {
       setupDirty = true;
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
-      state.matchTitle = normalizeMatchTitle(matchTitleInput.value) || getDefaultMatchTitle();
+      state.matchTitle = getMatchTitleFromInput() || DEFAULT_MATCH_INFO;
       updateMatchTitleUi();
       updateClearSetupButtonVisibility();
     });
 
     matchTitleInput.addEventListener("input", () => {
       setupDirty = true;
-      state.matchTitle = normalizeMatchTitle(matchTitleInput.value) || getDefaultMatchTitle();
+      state.matchTitle = getMatchTitleFromInput() || DEFAULT_MATCH_INFO;
       updateMatchTitleUi();
-      updateClearSetupButtonVisibility();
-    });
-
-    player1Input.addEventListener("input", () => {
-      setupDirty = true;
-      updateClearSetupButtonVisibility();
-    });
-
-    player2Input.addEventListener("input", () => {
-      setupDirty = true;
       updateClearSetupButtonVisibility();
     });
 
@@ -1609,10 +1592,10 @@
       const previous = { ...state };
       const previousBreaker = currentBreaker;
 
-      state.player1 = player1Input.value.trim().toUpperCase();
-      state.player2 = player2Input.value.trim().toUpperCase();
+      state.player1 = sanitizeName(player1Input.value.trim());
+      state.player2 = sanitizeName(player2Input.value.trim());
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
-      state.matchTitle = normalizeMatchTitle(matchTitleInput.value) || getDefaultMatchTitle();
+      state.matchTitle = getMatchTitleFromInput() || DEFAULT_MATCH_INFO;
       state.score1 = 0;
       state.score2 = 0;
       state.visible = 0;
