@@ -106,9 +106,8 @@
       font-size: 1rem;
     }
 
-    .multi-line-grid {
-      display: grid;
-      gap: 8px;
+    .player-input {
+      text-transform: uppercase;
     }
 
     button {
@@ -726,19 +725,19 @@
       <div class="setup">
         <div class="field">
           <label for="player1Input">Joueur 1</label>
-          <input id="player1Input" type="text" maxlength="11" placeholder="Nom du joueur 1" />
+          <input id="player1Input" class="player-input" type="text" maxlength="16" placeholder="Nom du joueur 1" />
         </div>
 
         <div class="field">
           <label for="player2Input">Joueur 2</label>
-          <input id="player2Input" type="text" maxlength="11" placeholder="Nom du joueur 2" />
+          <input id="player2Input" class="player-input" type="text" maxlength="16" placeholder="Nom du joueur 2" />
         </div>
 
         <div class="option-card">
           <div class="switch-row">
             <div>
-              <div class="switch-label">Titre du match</div>
-              <div class="switch-sub">Affiche un titre personnalisé sur l’écran du score.</div>
+              <div class="switch-label">Info du match</div>
+              <div class="switch-sub">Affiche un texte personnalisé sur l’écran du score.</div>
             </div>
             <label class="toggle">
               <input type="checkbox" id="matchTitleEnabledToggle" />
@@ -747,10 +746,7 @@
           </div>
 
           <div class="field hidden" id="matchTitleFieldWrap">
-            <div class="multi-line-grid">
-              <input id="matchTitleInput1" type="text" maxlength="22" value="Premier à 9" placeholder="Ligne 1" />
-              <input id="matchTitleInput2" type="text" maxlength="22" value="" placeholder="Ligne 2" />
-            </div>
+            <input id="matchTitleInput" type="text" maxlength="22" value="Premier à 9" placeholder="Premier à 9" />
           </div>
         </div>
 
@@ -780,7 +776,7 @@
       <div class="players">
         <div class="player-panel player-red">
           <div class="player-name" id="player1Name">
-            <span class="player-name-text" id="player1NameText">Joueur 1</span>
+            <span class="player-name-text" id="player1NameText">JOUEUR 1</span>
             <span class="cue-slot">
               <span id="cue1" class="cueball hidden">
                 <span class="dot dot-top"></span>
@@ -798,7 +794,7 @@
 
         <div class="player-panel player-blue">
           <div class="player-name" id="player2Name">
-            <span class="player-name-text" id="player2NameText">Joueur 2</span>
+            <span class="player-name-text" id="player2NameText">JOUEUR 2</span>
             <span class="cue-slot">
               <span id="cue2" class="cueball hidden">
                 <span class="dot dot-top"></span>
@@ -816,11 +812,9 @@
       </div>
 
       <div class="system-bar">
-        <button class="subtle-btn" id="moveLeftBtn" aria-label="Déplacer à gauche" title="Décaler le score vers la gauche sur la vidéo">↢</button>
         <button class="tool-btn" id="resetBtn" aria-label="Réinitialiser" title="Réinitialiser le score et revenir à l'écran de départ">↻</button>
         <button class="tool-btn" id="fullscreenBtn" aria-label="Plein écran" title="Afficher le site en plein écran">⛶</button>
         <button class="tool-btn" id="hdmiBtn" aria-label="Regarder le direct" title="Ouvrir les options pour regarder le direct">📺</button>
-        <button class="subtle-btn" id="moveRightBtn" aria-label="Déplacer à droite" title="Décaler le score vers la droite sur la vidéo">↣</button>
       </div>
 
       <div class="live-status">
@@ -916,11 +910,8 @@
     const YOUTUBE_LIVE_URL = "https://youtube.com/@ClusesBillardClub/live";
     const LOCAL_STREAM_URL = "http://192.168.1.108/";
 
-    const MIN_RECT = { rect0: 2600, rect2: 4000 };
-    const MAX_RECT = { rect0: 6400, rect2: 7800 };
-    const RECT_STEP = 200;
     const DEFAULT_RECT = { rect0: 3600, rect2: 5000 };
-    const DEFAULT_MATCH_TITLE_LINES = ["Premier à 9", ""];
+    const DEFAULT_MATCH_INFO = "Premier à 9";
 
     const state = {
       player1: "",
@@ -931,7 +922,7 @@
       rect2: DEFAULT_RECT.rect2,
       visible: 1,
       matchTitleEnabled: false,
-      matchTitle: DEFAULT_MATCH_TITLE_LINES.join("\n")
+      matchTitle: DEFAULT_MATCH_INFO
     };
 
     let currentBreaker = 1;
@@ -949,9 +940,7 @@
     const player2Input = document.getElementById("player2Input");
     const matchTitleEnabledToggle = document.getElementById("matchTitleEnabledToggle");
     const matchTitleFieldWrap = document.getElementById("matchTitleFieldWrap");
-    const matchTitleInput1 = document.getElementById("matchTitleInput1");
-    const matchTitleInput2 = document.getElementById("matchTitleInput2");
-    const matchTitleInputs = [matchTitleInput1, matchTitleInput2];
+    const matchTitleInput = document.getElementById("matchTitleInput");
     const startBtn = document.getElementById("startBtn");
     const clearSetupBtn = document.getElementById("clearSetupBtn");
     const setupStatus = document.getElementById("setupStatus");
@@ -984,6 +973,15 @@
     const openLocalStreamBtn = document.getElementById("openLocalStreamBtn");
     const copyLocalStreamBtn = document.getElementById("copyLocalStreamBtn");
 
+    [player1Input, player2Input].forEach(input => {
+      input.addEventListener("input", () => {
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        input.value = input.value.toUpperCase();
+        input.setSelectionRange(start, end);
+      });
+    });
+
     function setLiveStatus(mode, text) {
       liveDot.classList.remove("ready", "waiting", "error");
       if (mode) liveDot.classList.add(mode);
@@ -999,51 +997,27 @@
       startBtn.disabled = !cameraReady;
     }
 
-    function splitMatchTitleLines(text) {
-      const normalized = String(text || "").replace(/\|/g, "\n");
-      const lines = normalized.split(/\r?\n/);
-      while (lines.length < 2) lines.push("");
-      return lines.slice(0, 2);
-    }
-
-    function cleanMatchTitleLines(lines) {
-      const out = lines.slice(0, 2).map(line => String(line || ""));
-      while (out.length < 2) out.push("");
-      return out;
-    }
-
-    function getMatchTitleLinesFromInputs() {
-      return cleanMatchTitleLines(matchTitleInputs.map(input => input.value));
-    }
-
-    function getMatchTitleFromLines(lines) {
-      return cleanMatchTitleLines(lines).join("\n");
-    }
-
-    function getMatchTitleForTransport(linesOrText) {
-      const lines = Array.isArray(linesOrText)
-        ? cleanMatchTitleLines(linesOrText)
-        : splitMatchTitleLines(linesOrText);
-      return lines.join("|");
+    function normalizeMatchTitle(text) {
+      return String(text || "").trim();
     }
 
     function getDefaultMatchTitle() {
-      return getMatchTitleFromLines(DEFAULT_MATCH_TITLE_LINES);
+      return DEFAULT_MATCH_INFO;
+    }
+
+    function getDisplayName(name) {
+      return String(name || "").trim().toUpperCase();
     }
 
     function hasReusableSetupValues() {
-      const titleLines = splitMatchTitleLines(state.matchTitle || getDefaultMatchTitle());
       const hasNonDefaultTitle =
         !!state.matchTitleEnabled ||
-        titleLines[0] !== DEFAULT_MATCH_TITLE_LINES[0] ||
-        titleLines[1] !== DEFAULT_MATCH_TITLE_LINES[1];
+        normalizeMatchTitle(state.matchTitle || getDefaultMatchTitle()) !== getDefaultMatchTitle();
 
       return !!(
         state.player1 ||
         state.player2 ||
-        hasNonDefaultTitle ||
-        state.rect0 !== DEFAULT_RECT.rect0 ||
-        state.rect2 !== DEFAULT_RECT.rect2
+        hasNonDefaultTitle
       );
     }
 
@@ -1055,15 +1029,11 @@
       matchTitleEnabledToggle.checked = state.matchTitleEnabled;
       matchTitleFieldWrap.classList.toggle("hidden", !state.matchTitleEnabled);
 
-      const lines = splitMatchTitleLines(state.matchTitle || getDefaultMatchTitle());
+      if (document.activeElement !== matchTitleInput) {
+        matchTitleInput.value = normalizeMatchTitle(state.matchTitle || getDefaultMatchTitle());
+      }
 
-      matchTitleInputs.forEach((input, index) => {
-        if (document.activeElement !== input) {
-          input.value = lines[index];
-        }
-      });
-
-      scoreboardMatchTitle.textContent = lines.filter(Boolean).join("\n").trim() || DEFAULT_MATCH_TITLE_LINES[0];
+      scoreboardMatchTitle.textContent = normalizeMatchTitle(state.matchTitle || getDefaultMatchTitle()) || getDefaultMatchTitle();
 
       scoreboardHeaderDefault.classList.toggle("hidden", state.matchTitleEnabled);
       scoreboardHeaderCustom.classList.toggle("hidden", !state.matchTitleEnabled);
@@ -1081,14 +1051,16 @@
     }
 
     function buildDisplayString(player1 = state.player1, score1 = state.score1, score2 = state.score2, player2 = state.player2) {
-      const left = player1 ? `${player1} ` : "";
-      const right = player2 ? ` ${player2}` : "";
+      const displayPlayer1 = getDisplayName(player1);
+      const displayPlayer2 = getDisplayName(player2);
+      const left = displayPlayer1 ? `${displayPlayer1} ` : "";
+      const right = displayPlayer2 ? ` ${displayPlayer2}` : "";
       return `${left}${score1} - ${score2}${right}`;
     }
 
     function renderScoreboard() {
-      player1NameText.textContent = state.player1 || "Joueur 1";
-      player2NameText.textContent = state.player2 || "Joueur 2";
+      player1NameText.textContent = getDisplayName(state.player1) || "JOUEUR 1";
+      player2NameText.textContent = getDisplayName(state.player2) || "JOUEUR 2";
       score1Display.textContent = state.score1;
       score2Display.textContent = state.score2;
       updateCue();
@@ -1099,10 +1071,7 @@
     function populateSetupInputsFromState() {
       player1Input.value = state.player1 || "";
       player2Input.value = state.player2 || "";
-
-      const lines = splitMatchTitleLines(state.matchTitle || getDefaultMatchTitle());
-      matchTitleInput1.value = lines[0];
-      matchTitleInput2.value = lines[1];
+      matchTitleInput.value = normalizeMatchTitle(state.matchTitle || getDefaultMatchTitle());
       matchTitleEnabledToggle.checked = !!state.matchTitleEnabled;
 
       updateMatchTitleUi();
@@ -1151,8 +1120,7 @@
       const rect2 = parseInt(latest.rect2 ?? DEFAULT_RECT.rect2, 10);
       const latestBreaker = parseInt(latest.breaker ?? "1", 10);
       const latestTitleEnabled = String(latest.match_title_enabled ?? "0") === "1";
-      const latestMatchTitleRaw = String(latest.match_title || getDefaultMatchTitle());
-      const latestMatchTitle = getMatchTitleFromLines(splitMatchTitleLines(latestMatchTitleRaw));
+      const latestMatchTitle = normalizeMatchTitle(String(latest.match_title || getDefaultMatchTitle()));
       const parsedDisplay = parsePlayersFromDisplay(latestDisplay);
 
       state.rect0 = Number.isFinite(rect0) ? rect0 : DEFAULT_RECT.rect0;
@@ -1342,7 +1310,7 @@
         const latestVisible = String(latest.visible ?? "1").trim();
         const latestBreaker = String(latest.breaker ?? "1").trim();
         const latestTitleEnabled = String(latest.match_title_enabled ?? "0").trim();
-        const latestMatchTitle = getMatchTitleForTransport(String(latest.match_title || getDefaultMatchTitle()));
+        const latestMatchTitle = normalizeMatchTitle(String(latest.match_title || getDefaultMatchTitle()));
         const latestRect0 = String(latest.rect0 ?? DEFAULT_RECT.rect0);
         const latestRect2 = String(latest.rect2 ?? DEFAULT_RECT.rect2);
 
@@ -1350,7 +1318,7 @@
         const currentVisible = String(state.visible);
         const currentBreakerString = String(currentBreaker);
         const currentTitleEnabled = state.matchTitleEnabled ? "1" : "0";
-        const currentMatchTitle = getMatchTitleForTransport(state.matchTitle || getDefaultMatchTitle());
+        const currentMatchTitle = normalizeMatchTitle(state.matchTitle || getDefaultMatchTitle());
         const currentRect0 = String(state.rect0);
         const currentRect2 = String(state.rect2);
 
@@ -1378,7 +1346,7 @@
         const refreshedVisible = String(state.visible);
         const refreshedBreaker = String(currentBreaker);
         const refreshedTitleEnabled = state.matchTitleEnabled ? "1" : "0";
-        const refreshedMatchTitle = getMatchTitleForTransport(state.matchTitle || getDefaultMatchTitle());
+        const refreshedMatchTitle = normalizeMatchTitle(state.matchTitle || getDefaultMatchTitle());
         const refreshedRect0 = String(state.rect0);
         const refreshedRect2 = String(state.rect2);
 
@@ -1422,21 +1390,23 @@
     }
 
     async function sendState(statusElement, overrides = {}) {
-      const sendPlayer1 = overrides.player1 ?? state.player1;
-      const sendPlayer2 = overrides.player2 ?? state.player2;
+      const rawPlayer1 = overrides.player1 ?? state.player1;
+      const rawPlayer2 = overrides.player2 ?? state.player2;
+      const sendPlayer1 = getDisplayName(rawPlayer1);
+      const sendPlayer2 = getDisplayName(rawPlayer2);
       const sendScore1 = overrides.score1 ?? state.score1;
       const sendScore2 = overrides.score2 ?? state.score2;
 
       const displayValue =
         overrides.display ??
-        buildDisplayString(sendPlayer1, sendScore1, sendScore2, sendPlayer2);
+        buildDisplayString(rawPlayer1, sendScore1, sendScore2, rawPlayer2);
 
       const params = new URLSearchParams({
         player1: sendPlayer1,
         player2: sendPlayer2,
         display: displayValue,
         match_title_enabled: overrides.match_title_enabled ?? (state.matchTitleEnabled ? "1" : "0"),
-        match_title: overrides.match_title ?? getMatchTitleForTransport(state.matchTitle || getDefaultMatchTitle()),
+        match_title: overrides.match_title ?? normalizeMatchTitle(state.matchTitle || getDefaultMatchTitle()),
         rect0: overrides.rect0 ?? String(state.rect0),
         rect2: overrides.rect2 ?? String(state.rect2),
         visible: overrides.visible ?? String(state.visible),
@@ -1475,10 +1445,10 @@
         return;
       }
 
-      state.player1 = player1Input.value.trim();
-      state.player2 = player2Input.value.trim();
+      state.player1 = player1Input.value.trim().toUpperCase();
+      state.player2 = player2Input.value.trim().toUpperCase();
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
-      state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
+      state.matchTitle = normalizeMatchTitle(matchTitleInput.value) || getDefaultMatchTitle();
       state.score1 = 0;
       state.score2 = 0;
       state.visible = 1;
@@ -1563,36 +1533,30 @@
     player2Input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         if (matchTitleEnabledToggle.checked) {
-          matchTitleInput1.focus();
+          matchTitleInput.focus();
         } else {
           startScoreboard();
         }
       }
     });
 
-    matchTitleInput1.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") matchTitleInput2.focus();
-    });
-
-    matchTitleInput2.addEventListener("keydown", (e) => {
+    matchTitleInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") startScoreboard();
     });
 
     matchTitleEnabledToggle.addEventListener("change", () => {
       setupDirty = true;
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
-      state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
+      state.matchTitle = normalizeMatchTitle(matchTitleInput.value) || getDefaultMatchTitle();
       updateMatchTitleUi();
       updateClearSetupButtonVisibility();
     });
 
-    matchTitleInputs.forEach((input) => {
-      input.addEventListener("input", () => {
-        setupDirty = true;
-        state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
-        updateMatchTitleUi();
-        updateClearSetupButtonVisibility();
-      });
+    matchTitleInput.addEventListener("input", () => {
+      setupDirty = true;
+      state.matchTitle = normalizeMatchTitle(matchTitleInput.value) || getDefaultMatchTitle();
+      updateMatchTitleUi();
+      updateClearSetupButtonVisibility();
     });
 
     player1Input.addEventListener("input", () => {
@@ -1637,24 +1601,6 @@
       }
     }));
 
-    document.getElementById("moveLeftBtn").addEventListener("click", () => {
-      if (!confirm("Déplacer l'affichage du score vers la gauche sur la vidéo ?")) return;
-
-      updateAndSend(() => {
-        state.rect0 = Math.max(MIN_RECT.rect0, state.rect0 - RECT_STEP);
-        state.rect2 = Math.max(MIN_RECT.rect2, state.rect2 - RECT_STEP);
-      });
-    });
-
-    document.getElementById("moveRightBtn").addEventListener("click", () => {
-      if (!confirm("Déplacer l'affichage du score vers la droite sur la vidéo ?")) return;
-
-      updateAndSend(() => {
-        state.rect0 = Math.min(MAX_RECT.rect0, state.rect0 + RECT_STEP);
-        state.rect2 = Math.min(MAX_RECT.rect2, state.rect2 + RECT_STEP);
-      });
-    });
-
     document.getElementById("resetBtn").addEventListener("click", async () => {
       if (!confirm("Réinitialiser le score et revenir à l’écran de départ ?")) {
         return;
@@ -1663,10 +1609,10 @@
       const previous = { ...state };
       const previousBreaker = currentBreaker;
 
-      state.player1 = player1Input.value.trim();
-      state.player2 = player2Input.value.trim();
+      state.player1 = player1Input.value.trim().toUpperCase();
+      state.player2 = player2Input.value.trim().toUpperCase();
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
-      state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
+      state.matchTitle = normalizeMatchTitle(matchTitleInput.value) || getDefaultMatchTitle();
       state.score1 = 0;
       state.score2 = 0;
       state.visible = 0;
