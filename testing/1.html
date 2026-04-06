@@ -1473,23 +1473,18 @@
       }
     }
 
-    [player1Input, player2Input].forEach(input => {
-      input.addEventListener("input", () => {
-        const original = input.value;
-        const cursor = input.selectionStart || 0;
-        const cleaned = original.toUpperCase().slice(0, 15);
+[player1Input, player2Input].forEach(input => {
+  input.addEventListener("input", () => {
+    const cleaned = input.value.toUpperCase().slice(0, 15);
 
-        if (cleaned !== original) {
-          const diff = original.length - cleaned.length;
-          input.value = cleaned;
-          const newPos = Math.max(0, cursor - diff);
-          input.setSelectionRange(newPos, newPos);
-        }
+    if (input.value !== cleaned) {
+      input.value = cleaned;
+    }
 
-        setupDirty = true;
-        updateClearSetupButtonVisibility();
-      });
-    });
+    setupDirty = true;
+    updateClearSetupButtonVisibility();
+  });
+});
 
     startBtn.addEventListener("click", () => {
       if (startBtn.disabled) return;
