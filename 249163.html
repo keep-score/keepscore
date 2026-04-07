@@ -106,11 +106,6 @@
       font-size: 1rem;
     }
 
-    .multi-line-grid {
-      display: grid;
-      gap: 8px;
-    }
-
     button {
       border: none;
       border-radius: 16px;
@@ -292,8 +287,7 @@
       flex-wrap: wrap;
     }
 
-    .tool-btn,
-    .subtle-btn {
+    .tool-btn {
       min-width: 62px;
       min-height: 62px;
       border-radius: 999px;
@@ -307,28 +301,8 @@
       -webkit-appearance: none;
     }
 
-    .subtle-btn:hover,
     .tool-btn:hover {
       background: var(--sys-btn-hover) !important;
-    }
-
-    .tool-btn.active-hdmi {
-      background: rgba(50, 215, 75, 0.18) !important;
-      color: #d8ffe0 !important;
-      box-shadow:
-        0 0 0 2px rgba(50,215,75,0.45),
-        0 0 18px rgba(50,215,75,0.55),
-        0 8px 18px rgba(0,0,0,0.28),
-        inset 0 0 0 2px rgba(255,255,255,0.08);
-    }
-
-    .tool-btn.pending-hdmi {
-      color: #fff2b0 !important;
-      box-shadow:
-        0 0 0 2px rgba(250,204,21,0.35),
-        0 0 14px rgba(250,204,21,0.35),
-        0 8px 18px rgba(0,0,0,0.28),
-        inset 0 0 0 2px rgba(255,255,255,0.05);
     }
 
     .option-card {
@@ -447,21 +421,27 @@
     .modal-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.68);
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 18px;
       z-index: 999;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
 
     .modal-card {
       width: 100%;
-      max-width: 460px;
-      background: #121212;
+      max-width: 470px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.01)),
+        linear-gradient(180deg, #151515, #101010);
       border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 22px;
-      box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+      border-radius: 24px;
+      box-shadow:
+        0 24px 60px rgba(0,0,0,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.04);
       padding: 18px;
       display: grid;
       gap: 14px;
@@ -474,42 +454,73 @@
       gap: 12px;
     }
 
+    .modal-title-wrap {
+      display: grid;
+      gap: 3px;
+    }
+
     .modal-title {
-      font-size: 1.15rem;
+      font-size: 1.16rem;
       font-weight: 900;
+      letter-spacing: 0.01em;
+    }
+
+    .modal-subtitle {
+      color: #a7a7a7;
+      font-size: 0.88rem;
+      line-height: 1.3;
     }
 
     .modal-close {
       min-width: 44px;
       min-height: 44px;
       border-radius: 999px;
-      background: #262626;
+      background: rgba(255,255,255,0.06);
       color: white;
       padding: 0;
       font-size: 1.1rem;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.04);
     }
 
-    .control-card {
-      background: #1a1a1a;
+    .modal-close:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .video-card {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
+        linear-gradient(180deg, #1a1a1a, #141414);
       border: 1px solid rgba(255,255,255,0.06);
-      border-radius: 16px;
-      padding: 14px;
+      border-radius: 20px;
+      padding: 15px;
       display: grid;
       gap: 12px;
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.03),
+        0 10px 24px rgba(0,0,0,0.16);
     }
 
-    .control-top {
+    .video-card-head {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       gap: 14px;
     }
 
-    .control-title {
-      font-weight: bold;
+    .video-title-wrap {
+      display: grid;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .video-title {
+      font-weight: 800;
       display: flex;
       align-items: center;
       gap: 10px;
+      min-width: 0;
+      font-size: 1rem;
+      letter-spacing: 0.01em;
     }
 
     .yt-logo {
@@ -519,6 +530,7 @@
       background: #ff0000;
       position: relative;
       flex: 0 0 auto;
+      box-shadow: 0 0 14px rgba(255,0,0,0.22);
     }
 
     .yt-logo::before {
@@ -533,22 +545,70 @@
       border-bottom: 5px solid transparent;
     }
 
-    .always-on {
+    .stream-icon-wrap {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      font-size: 0.9rem;
-      color: #d8ffe0;
-      background: rgba(50,215,75,0.14);
-      border: 1px solid rgba(50,215,75,0.28);
-      border-radius: 999px;
-      padding: 7px 10px;
-      white-space: nowrap;
+      justify-content: center;
+      background: rgba(50,215,75,0.12);
+      border: 1px solid rgba(50,215,75,0.18);
+      flex: 0 0 28px;
+      box-shadow: 0 0 12px rgba(50,215,75,0.08);
     }
 
-    .control-subtext {
-      color: var(--muted);
+    .stream-icon {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .video-delay {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      width: fit-content;
+      font-size: 0.82rem;
+      font-weight: 700;
+      border-radius: 999px;
+      padding: 7px 11px;
+      white-space: nowrap;
+      letter-spacing: 0.01em;
+    }
+
+    .video-delay.youtube {
+      color: #fff2c7;
+      background: linear-gradient(180deg, rgba(250,204,21,0.12), rgba(250,204,21,0.08));
+      border: 1px solid rgba(250,204,21,0.2);
+    }
+
+    .video-delay.local {
+      color: #ddffe5;
+      background: linear-gradient(180deg, rgba(50,215,75,0.12), rgba(50,215,75,0.08));
+      border: 1px solid rgba(50,215,75,0.2);
+    }
+
+    .video-delay-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+      flex: 0 0 8px;
+      opacity: 0.95;
+    }
+
+    .video-note {
+      color: #d8d8d8;
       font-size: 0.92rem;
+      line-height: 1.4;
+    }
+
+    .video-link-box {
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.065);
+      border-radius: 14px;
+      padding: 11px 12px;
+      color: #f0f0f0;
       line-height: 1.4;
       word-break: break-word;
     }
@@ -560,57 +620,48 @@
     }
 
     .mini-btn {
-      background: #2b2b2b;
+      background: linear-gradient(180deg, #333, #2a2a2a);
       color: white;
       border-radius: 12px;
       padding: 10px 14px;
       font-size: 0.95rem;
       min-height: 44px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
     }
 
     .mini-btn:hover {
-      background: #383838;
+      background: linear-gradient(180deg, #3b3b3b, #313131);
     }
 
     .mini-btn.copy-ok {
-      background: #1f6f3f;
+      background: linear-gradient(180deg, #238549, #1c6d3b);
     }
 
-    .hdmi-toggle-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 14px;
+    .stream-info-box {
+      background: rgba(255,255,255,0.035);
+      border: 1px solid rgba(255,255,255,0.065);
+      border-radius: 14px;
+      padding: 12px;
+      display: grid;
+      gap: 8px;
     }
 
-    .hdmi-status-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      border-radius: 999px;
-      padding: 7px 10px;
-      font-size: 0.9rem;
-      white-space: nowrap;
-      background: #2c2c2c;
-      color: #e6e6e6;
+    .stream-cred {
+      font-size: 0.95rem;
+      line-height: 1.45;
     }
 
-    .hdmi-status-chip.on {
-      background: rgba(50,215,75,0.14);
-      color: #d8ffe0;
-      border: 1px solid rgba(50,215,75,0.28);
-    }
-
-    .hdmi-status-chip.off {
-      background: rgba(255,255,255,0.06);
-      color: #d7d7d7;
-      border: 1px solid rgba(255,255,255,0.08);
-    }
-
-    .hdmi-status-chip.pending {
-      background: rgba(250,204,21,0.12);
+    .stream-warning {
       color: #fff2b0;
-      border: 1px solid rgba(250,204,21,0.25);
+    }
+
+    .stream-actions {
+      margin-top: 10px;
+    }
+
+    .inline-link {
+      color: inherit;
+      text-decoration: none;
     }
 
     @media (orientation: portrait) {
@@ -668,19 +719,19 @@
       <div class="setup">
         <div class="field">
           <label for="player1Input">Joueur 1</label>
-          <input id="player1Input" type="text" maxlength="11" placeholder="Nom du joueur 1" />
+          <input id="player1Input" type="text" maxlength="15" placeholder="Nom du joueur 1" />
         </div>
 
         <div class="field">
           <label for="player2Input">Joueur 2</label>
-          <input id="player2Input" type="text" maxlength="11" placeholder="Nom du joueur 2" />
+          <input id="player2Input" type="text" maxlength="15" placeholder="Nom du joueur 2" />
         </div>
 
         <div class="option-card">
           <div class="switch-row">
             <div>
-              <div class="switch-label">Titre du match</div>
-              <div class="switch-sub">Affiche un titre personnalisé sur l’écran du score.</div>
+              <div class="switch-label">Info du match</div>
+              <div class="switch-sub">Affiche un texte personnalisé sur l’écran du score.</div>
             </div>
             <label class="toggle">
               <input type="checkbox" id="matchTitleEnabledToggle" />
@@ -689,10 +740,7 @@
           </div>
 
           <div class="field hidden" id="matchTitleFieldWrap">
-            <div class="multi-line-grid">
-              <input id="matchTitleInput1" type="text" maxlength="22" value="Premier à 9" placeholder="Ligne 1" />
-              <input id="matchTitleInput2" type="text" maxlength="22" value="" placeholder="Ligne 2" />
-            </div>
+            <input id="matchTitleInput" type="text" maxlength="22" value="Premier à 9" placeholder="Ex. Premier à 9" />
           </div>
         </div>
 
@@ -758,11 +806,9 @@
       </div>
 
       <div class="system-bar">
-        <button class="subtle-btn" id="moveLeftBtn" aria-label="Déplacer à gauche" title="Décaler le score vers la gauche sur la vidéo">↢</button>
         <button class="tool-btn" id="resetBtn" aria-label="Réinitialiser" title="Réinitialiser le score et revenir à l'écran de départ">↻</button>
         <button class="tool-btn" id="fullscreenBtn" aria-label="Plein écran" title="Afficher le site en plein écran">⛶</button>
-        <button class="tool-btn" id="hdmiBtn" aria-label="Diffusion vidéo" title="Ouvrir les options de diffusion vidéo">📺</button>
-        <button class="subtle-btn" id="moveRightBtn" aria-label="Déplacer à droite" title="Décaler le score vers la droite sur la vidéo">↣</button>
+        <button class="tool-btn" id="hdmiBtn" aria-label="Regarder le direct" title="Ouvrir les options pour regarder le direct">📺</button>
       </div>
 
       <div class="live-status">
@@ -776,38 +822,77 @@
   <div id="tvModal" class="modal-backdrop hidden" aria-hidden="true">
     <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="tvModalTitle">
       <div class="modal-head">
-        <div id="tvModalTitle" class="modal-title">Diffusion vidéo</div>
+        <div class="modal-title-wrap">
+          <div id="tvModalTitle" class="modal-title">Regarder le direct</div>
+          <div class="modal-subtitle">Choisir un flux</div>
+        </div>
         <button class="modal-close" id="tvModalClose" aria-label="Fermer">✕</button>
       </div>
 
-      <div class="control-card">
-        <div class="control-top">
-          <div class="control-title">
-            <span class="yt-logo" aria-hidden="true"></span>
-            <span>YouTube Live</span>
+      <div class="video-card">
+        <div class="video-card-head">
+          <div class="video-title-wrap">
+            <div class="video-title">
+              <span class="yt-logo" aria-hidden="true"></span>
+              <span>Diffusion YouTube</span>
+            </div>
+            <div class="video-delay youtube">
+              <span class="video-delay-dot"></span>
+              <span>Décalage d’environ 10 s</span>
+            </div>
           </div>
-          <span class="always-on">● Activé</span>
         </div>
-        <div class="control-subtext" id="youtubeUrlText">youtube.com/@ClusesBillardClub/live</div>
+
+        <div class="video-note">À distance · replay disponible · enregistré</div>
+
+        <div class="video-link-box" id="youtubeUrlText">
+          <a href="https://youtube.com/@ClusesBillardClub/live" target="_blank" rel="noopener noreferrer" class="inline-link">
+            youtube.com/@ClusesBillardClub/live
+          </a>
+        </div>
+
         <div class="link-row">
           <button class="mini-btn" id="openYoutubeBtn">Ouvrir</button>
           <button class="mini-btn" id="copyYoutubeBtn">Copier le lien</button>
         </div>
       </div>
 
-      <div class="control-card">
-        <div class="hdmi-toggle-row">
-          <div>
-            <div class="control-title">Écran TV local</div>
-            <div class="control-subtext">Active ou coupe l’affichage HDMI</div>
+      <div class="video-card">
+        <div class="video-card-head">
+          <div class="video-title-wrap">
+            <div class="video-title">
+              <span class="stream-icon-wrap" aria-hidden="true">
+                <span class="stream-icon">📡</span>
+              </span>
+              <span>Flux local</span>
+            </div>
+            <div class="video-delay local">
+              <span class="video-delay-dot"></span>
+              <span>Direct quasi instantané</span>
+            </div>
           </div>
-          <label class="toggle">
-            <input type="checkbox" id="modalHdmiToggle" />
-            <span class="slider"></span>
-          </label>
         </div>
-        <div>
-          <span id="modalHdmiStatus" class="hdmi-status-chip off">HDMI désactivé</span>
+
+        <div class="video-note">Sur place · non enregistré · non partageable</div>
+
+        <div id="localStreamInitial">
+          <div class="link-row">
+            <button class="mini-btn" id="showLocalStreamBtn">Accéder au flux local</button>
+          </div>
+        </div>
+
+        <div id="localStreamDetails" class="hidden">
+          <div class="stream-info-box">
+            <div class="stream-cred stream-warning"><strong>Wi-Fi requis :</strong> CBC</div>
+            <div class="stream-cred"><strong>Adresse locale :</strong> <a href="http://192.168.1.35/" target="_blank" rel="noopener noreferrer" class="inline-link">192.168.1.35</a></div>
+            <div class="stream-cred"><strong>Nom de l'utilisateur :</strong> Cluses</div>
+            <div class="stream-cred"><strong>Mot de passe :</strong> Billard1</div>
+          </div>
+
+          <div class="link-row stream-actions">
+            <button class="mini-btn" id="openLocalStreamBtn">Ouvrir</button>
+            <button class="mini-btn" id="copyLocalStreamBtn">Copier le lien</button>
+          </div>
         </div>
       </div>
     </div>
@@ -816,38 +901,28 @@
   <script>
     const DWEET_THING = "cbc3";
     const CAMERA_STATUS_THING = "cbc3_camera";
-    const HDMI_THING = "cbc3_hdmi";
     const YOUTUBE_LIVE_URL = "https://youtube.com/@ClusesBillardClub/live";
-    const HDMI_PIN = "2481";
+    const LOCAL_STREAM_URL = "http://192.168.1.35/";
 
-    const MIN_RECT = { rect0: 2600, rect2: 4000 };
-    const MAX_RECT = { rect0: 6400, rect2: 7800 };
-    const RECT_STEP = 200;
-    const DEFAULT_RECT = { rect0: 3600, rect2: 5000 };
-    const DEFAULT_MATCH_TITLE_LINES = ["Premier à 9", ""];
+    const DEFAULT_MATCH_INFO = "Premier à 9";
 
     const state = {
       player1: "",
       player2: "",
       score1: 0,
       score2: 0,
-      rect0: DEFAULT_RECT.rect0,
-      rect2: DEFAULT_RECT.rect2,
       visible: 1,
       matchTitleEnabled: false,
-      matchTitle: DEFAULT_MATCH_TITLE_LINES.join("\n"),
-      hdmiEnabled: false
+      matchTitle: DEFAULT_MATCH_INFO
     };
 
     let currentBreaker = 1;
     let livePollTimer = null;
     let cameraStatusTimer = null;
-    let hdmiPollTimer = null;
     let ignoreRemoteUntil = 0;
     let sendTimer = null;
     let cameraReady = false;
     let cameraOnlineState = null;
-    let hdmiPending = false;
     let setupDirty = false;
 
     const setupScreen = document.getElementById("setupScreen");
@@ -856,9 +931,7 @@
     const player2Input = document.getElementById("player2Input");
     const matchTitleEnabledToggle = document.getElementById("matchTitleEnabledToggle");
     const matchTitleFieldWrap = document.getElementById("matchTitleFieldWrap");
-    const matchTitleInput1 = document.getElementById("matchTitleInput1");
-    const matchTitleInput2 = document.getElementById("matchTitleInput2");
-    const matchTitleInputs = [matchTitleInput1, matchTitleInput2];
+    const matchTitleInput = document.getElementById("matchTitleInput");
     const startBtn = document.getElementById("startBtn");
     const clearSetupBtn = document.getElementById("clearSetupBtn");
     const setupStatus = document.getElementById("setupStatus");
@@ -883,10 +956,13 @@
 
     const tvModal = document.getElementById("tvModal");
     const tvModalClose = document.getElementById("tvModalClose");
-    const modalHdmiToggle = document.getElementById("modalHdmiToggle");
-    const modalHdmiStatus = document.getElementById("modalHdmiStatus");
     const openYoutubeBtn = document.getElementById("openYoutubeBtn");
     const copyYoutubeBtn = document.getElementById("copyYoutubeBtn");
+    const showLocalStreamBtn = document.getElementById("showLocalStreamBtn");
+    const localStreamInitial = document.getElementById("localStreamInitial");
+    const localStreamDetails = document.getElementById("localStreamDetails");
+    const openLocalStreamBtn = document.getElementById("openLocalStreamBtn");
+    const copyLocalStreamBtn = document.getElementById("copyLocalStreamBtn");
 
     function setLiveStatus(mode, text) {
       liveDot.classList.remove("ready", "waiting", "error");
@@ -903,51 +979,32 @@
       startBtn.disabled = !cameraReady;
     }
 
-    function splitMatchTitleLines(text) {
-      const normalized = String(text || "").replace(/\|/g, "\n");
-      const lines = normalized.split(/\r?\n/);
-      while (lines.length < 2) lines.push("");
-      return lines.slice(0, 2);
+    function sanitizeName(name) {
+      return String(name || "").toUpperCase().slice(0, 15);
     }
 
-    function cleanMatchTitleLines(lines) {
-      const out = lines.slice(0, 2).map(line => String(line || ""));
-      while (out.length < 2) out.push("");
-      return out;
+    function clampStateNames() {
+      state.player1 = sanitizeName(state.player1);
+      state.player2 = sanitizeName(state.player2);
     }
 
-    function getMatchTitleLinesFromInputs() {
-      return cleanMatchTitleLines(matchTitleInputs.map(input => input.value));
-    }
-
-    function getMatchTitleFromLines(lines) {
-      return cleanMatchTitleLines(lines).join("\n");
-    }
-
-    function getMatchTitleForTransport(linesOrText) {
-      const lines = Array.isArray(linesOrText)
-        ? cleanMatchTitleLines(linesOrText)
-        : splitMatchTitleLines(linesOrText);
-      return lines.join("|");
+    function getMatchTitleFromInput() {
+      return String(matchTitleInput.value || "").trim().slice(0, 22);
     }
 
     function getDefaultMatchTitle() {
-      return getMatchTitleFromLines(DEFAULT_MATCH_TITLE_LINES);
+      return DEFAULT_MATCH_INFO;
     }
 
     function hasReusableSetupValues() {
-      const titleLines = splitMatchTitleLines(state.matchTitle || getDefaultMatchTitle());
       const hasNonDefaultTitle =
         !!state.matchTitleEnabled ||
-        titleLines[0] !== DEFAULT_MATCH_TITLE_LINES[0] ||
-        titleLines[1] !== DEFAULT_MATCH_TITLE_LINES[1];
+        (state.matchTitle || "") !== DEFAULT_MATCH_INFO;
 
       return !!(
         state.player1 ||
         state.player2 ||
-        hasNonDefaultTitle ||
-        state.rect0 !== DEFAULT_RECT.rect0 ||
-        state.rect2 !== DEFAULT_RECT.rect2
+        hasNonDefaultTitle
       );
     }
 
@@ -955,42 +1012,15 @@
       clearSetupBtn.classList.toggle("hidden", !hasReusableSetupValues());
     }
 
-    function updateHdmiButtonUi() {
-      hdmiBtn.classList.toggle("active-hdmi", !!state.hdmiEnabled);
-      hdmiBtn.classList.toggle("pending-hdmi", !!hdmiPending);
-      hdmiBtn.title = state.hdmiEnabled
-        ? "Ouvrir les options vidéo (TV locale activée)"
-        : "Ouvrir les options vidéo";
-      hdmiBtn.setAttribute("aria-label", state.hdmiEnabled ? "Options vidéo, TV locale activée" : "Options vidéo");
-
-      modalHdmiToggle.checked = !!state.hdmiEnabled;
-
-      modalHdmiStatus.classList.remove("on", "off", "pending");
-      if (hdmiPending) {
-        modalHdmiStatus.classList.add("pending");
-        modalHdmiStatus.textContent = "Commande en cours...";
-      } else if (state.hdmiEnabled) {
-        modalHdmiStatus.classList.add("on");
-        modalHdmiStatus.textContent = "HDMI activé";
-      } else {
-        modalHdmiStatus.classList.add("off");
-        modalHdmiStatus.textContent = "HDMI désactivé";
-      }
-    }
-
     function updateMatchTitleUi() {
       matchTitleEnabledToggle.checked = state.matchTitleEnabled;
       matchTitleFieldWrap.classList.toggle("hidden", !state.matchTitleEnabled);
 
-      const lines = splitMatchTitleLines(state.matchTitle || getDefaultMatchTitle());
+      if (document.activeElement !== matchTitleInput) {
+        matchTitleInput.value = state.matchTitle || DEFAULT_MATCH_INFO;
+      }
 
-      matchTitleInputs.forEach((input, index) => {
-        if (document.activeElement !== input) {
-          input.value = lines[index];
-        }
-      });
-
-      scoreboardMatchTitle.textContent = lines.filter(Boolean).join("\n").trim() || DEFAULT_MATCH_TITLE_LINES[0];
+      scoreboardMatchTitle.textContent = (state.matchTitle || DEFAULT_MATCH_INFO).trim() || DEFAULT_MATCH_INFO;
 
       scoreboardHeaderDefault.classList.toggle("hidden", state.matchTitleEnabled);
       scoreboardHeaderCustom.classList.toggle("hidden", !state.matchTitleEnabled);
@@ -1008,29 +1038,29 @@
     }
 
     function buildDisplayString(player1 = state.player1, score1 = state.score1, score2 = state.score2, player2 = state.player2) {
-      const left = player1 ? `${player1} ` : "";
-      const right = player2 ? ` ${player2}` : "";
+      const safePlayer1 = sanitizeName(player1);
+      const safePlayer2 = sanitizeName(player2);
+      const left = safePlayer1 ? `${safePlayer1} ` : "";
+      const right = safePlayer2 ? ` ${safePlayer2}` : "";
       return `${left}${score1} - ${score2}${right}`;
     }
 
     function renderScoreboard() {
+      clampStateNames();
       player1NameText.textContent = state.player1 || "Joueur 1";
       player2NameText.textContent = state.player2 || "Joueur 2";
       score1Display.textContent = state.score1;
       score2Display.textContent = state.score2;
       updateCue();
       updateMatchTitleUi();
-      updateHdmiButtonUi();
       updateClearSetupButtonVisibility();
     }
 
     function populateSetupInputsFromState() {
+      clampStateNames();
       player1Input.value = state.player1 || "";
       player2Input.value = state.player2 || "";
-
-      const lines = splitMatchTitleLines(state.matchTitle || getDefaultMatchTitle());
-      matchTitleInput1.value = lines[0];
-      matchTitleInput2.value = lines[1];
+      matchTitleInput.value = state.matchTitle || DEFAULT_MATCH_INFO;
       matchTitleEnabledToggle.checked = !!state.matchTitleEnabled;
 
       updateMatchTitleUi();
@@ -1043,8 +1073,6 @@
       state.player2 = "";
       state.score1 = 0;
       state.score2 = 0;
-      state.rect0 = DEFAULT_RECT.rect0;
-      state.rect2 = DEFAULT_RECT.rect2;
       state.visible = 0;
       state.matchTitleEnabled = false;
       state.matchTitle = getDefaultMatchTitle();
@@ -1061,10 +1089,10 @@
       if (!match) return null;
 
       return {
-        player1: (match[1] || "").trim(),
+        player1: sanitizeName(match[1] || ""),
         score1: parseInt(match[2], 10) || 0,
         score2: parseInt(match[3], 10) || 0,
-        player2: (match[4] || "").trim()
+        player2: sanitizeName(match[4] || "")
       };
     }
 
@@ -1073,26 +1101,21 @@
 
       const latestVisible = String(latest.visible ?? "1").trim();
       const latestDisplay = String(latest.display || "").trim();
-      const latestPlayer1 = String(latest.player1 || "").trim();
-      const latestPlayer2 = String(latest.player2 || "").trim();
-      const rect0 = parseInt(latest.rect0 ?? DEFAULT_RECT.rect0, 10);
-      const rect2 = parseInt(latest.rect2 ?? DEFAULT_RECT.rect2, 10);
+      const latestPlayer1 = sanitizeName(latest.player1 || "");
+      const latestPlayer2 = sanitizeName(latest.player2 || "");
       const latestBreaker = parseInt(latest.breaker ?? "1", 10);
       const latestTitleEnabled = String(latest.match_title_enabled ?? "0") === "1";
-      const latestMatchTitleRaw = String(latest.match_title || getDefaultMatchTitle());
-      const latestMatchTitle = getMatchTitleFromLines(splitMatchTitleLines(latestMatchTitleRaw));
+      const latestMatchTitle = String(latest.match_title || getDefaultMatchTitle()).trim().slice(0, 22);
       const parsedDisplay = parsePlayersFromDisplay(latestDisplay);
 
-      state.rect0 = Number.isFinite(rect0) ? rect0 : DEFAULT_RECT.rect0;
-      state.rect2 = Number.isFinite(rect2) ? rect2 : DEFAULT_RECT.rect2;
       currentBreaker = latestBreaker === 2 ? 2 : 1;
 
       state.matchTitleEnabled = latestTitleEnabled;
       state.matchTitle = latestMatchTitle || getDefaultMatchTitle();
 
       if (latestVisible === "0") {
-        state.player1 = latestPlayer1 || parsedDisplay?.player1 || "";
-        state.player2 = latestPlayer2 || parsedDisplay?.player2 || "";
+        state.player1 = latestPlayer1 || (parsedDisplay?.player1 || "");
+        state.player2 = latestPlayer2 || (parsedDisplay?.player2 || "");
         state.score1 = 0;
         state.score2 = 0;
         state.visible = 0;
@@ -1111,8 +1134,8 @@
         return;
       }
 
-      state.player1 = latestPlayer1 || parsedDisplay?.player1 || "";
-      state.player2 = latestPlayer2 || parsedDisplay?.player2 || "";
+      state.player1 = latestPlayer1 || (parsedDisplay?.player1 || "");
+      state.player2 = latestPlayer2 || (parsedDisplay?.player2 || "");
       state.score1 = parsedDisplay?.score1 || 0;
       state.score2 = parsedDisplay?.score2 || 0;
       state.visible = 1;
@@ -1127,7 +1150,12 @@
     function openTvModal() {
       tvModal.classList.remove("hidden");
       tvModal.setAttribute("aria-hidden", "false");
-      updateHdmiButtonUi();
+      localStreamInitial.classList.remove("hidden");
+      localStreamDetails.classList.add("hidden");
+      copyYoutubeBtn.classList.remove("copy-ok");
+      copyYoutubeBtn.textContent = "Copier le lien";
+      copyLocalStreamBtn.classList.remove("copy-ok");
+      copyLocalStreamBtn.textContent = "Copier le lien";
     }
 
     function closeTvModal() {
@@ -1135,6 +1163,8 @@
       tvModal.setAttribute("aria-hidden", "true");
       copyYoutubeBtn.classList.remove("copy-ok");
       copyYoutubeBtn.textContent = "Copier le lien";
+      copyLocalStreamBtn.classList.remove("copy-ok");
+      copyLocalStreamBtn.textContent = "Copier le lien";
     }
 
     async function copyYoutubeLink() {
@@ -1146,6 +1176,25 @@
         console.error(error);
         scoreStatus.textContent = "Impossible de copier le lien.";
       }
+    }
+
+    async function copyLocalStreamLink() {
+      try {
+        await navigator.clipboard.writeText(LOCAL_STREAM_URL);
+        copyLocalStreamBtn.classList.add("copy-ok");
+        copyLocalStreamBtn.textContent = "Lien copié";
+      } catch (error) {
+        console.error(error);
+        scoreStatus.textContent = "Impossible de copier le lien.";
+      }
+    }
+
+    function revealLocalStreamDetails() {
+      const confirmed = confirm("Vous devez être connecté au réseau Wi-Fi CBC pour accéder à ce flux local. Continuer ?");
+      if (!confirmed) return;
+
+      localStreamInitial.classList.add("hidden");
+      localStreamDetails.classList.remove("hidden");
     }
 
     async function fetchLatestThing(thingName) {
@@ -1170,16 +1219,11 @@
       return fetchLatestThing(CAMERA_STATUS_THING);
     }
 
-    async function fetchLatestHdmiStatus() {
-      return fetchLatestThing(HDMI_THING);
-    }
-
     async function restoreFromLatestDweet() {
       try {
         const latest = await fetchLatestDweet();
         if (!latest) {
           populateSetupInputsFromState();
-          updateHdmiButtonUi();
           setupScreen.classList.remove("hidden");
           scoreboardScreen.classList.add("hidden");
           return;
@@ -1188,29 +1232,8 @@
       } catch (error) {
         console.error(error);
         populateSetupInputsFromState();
-        updateHdmiButtonUi();
         setupScreen.classList.remove("hidden");
         scoreboardScreen.classList.add("hidden");
-      }
-    }
-
-    async function restoreHdmiState() {
-      try {
-        const latest = await fetchLatestHdmiStatus();
-        if (!latest) {
-          state.hdmiEnabled = false;
-          hdmiPending = false;
-          updateHdmiButtonUi();
-          return;
-        }
-
-        state.hdmiEnabled = String(latest.hdmi ?? "0").trim() === "1";
-        hdmiPending = false;
-        updateHdmiButtonUi();
-      } catch (error) {
-        console.error(error);
-        hdmiPending = false;
-        updateHdmiButtonUi();
       }
     }
 
@@ -1270,17 +1293,13 @@
         const latestVisible = String(latest.visible ?? "1").trim();
         const latestBreaker = String(latest.breaker ?? "1").trim();
         const latestTitleEnabled = String(latest.match_title_enabled ?? "0").trim();
-        const latestMatchTitle = getMatchTitleForTransport(String(latest.match_title || getDefaultMatchTitle()));
-        const latestRect0 = String(latest.rect0 ?? DEFAULT_RECT.rect0);
-        const latestRect2 = String(latest.rect2 ?? DEFAULT_RECT.rect2);
+        const latestMatchTitle = String(latest.match_title || getDefaultMatchTitle()).trim().slice(0, 22);
 
         const currentDisplay = buildDisplayString();
         const currentVisible = String(state.visible);
         const currentBreakerString = String(currentBreaker);
         const currentTitleEnabled = state.matchTitleEnabled ? "1" : "0";
-        const currentMatchTitle = getMatchTitleForTransport(state.matchTitle || getDefaultMatchTitle());
-        const currentRect0 = String(state.rect0);
-        const currentRect2 = String(state.rect2);
+        const currentMatchTitle = String(state.matchTitle || getDefaultMatchTitle()).trim().slice(0, 22);
 
         if (Date.now() >= ignoreRemoteUntil) {
           if (scoreboardScreen.classList.contains("hidden")) {
@@ -1293,9 +1312,7 @@
               latestVisible !== currentVisible ||
               latestBreaker !== currentBreakerString ||
               latestTitleEnabled !== currentTitleEnabled ||
-              latestMatchTitle !== currentMatchTitle ||
-              latestRect0 !== currentRect0 ||
-              latestRect2 !== currentRect2
+              latestMatchTitle !== currentMatchTitle
             ) {
               applyLatestDweetState(latest);
             }
@@ -1306,9 +1323,7 @@
         const refreshedVisible = String(state.visible);
         const refreshedBreaker = String(currentBreaker);
         const refreshedTitleEnabled = state.matchTitleEnabled ? "1" : "0";
-        const refreshedMatchTitle = getMatchTitleForTransport(state.matchTitle || getDefaultMatchTitle());
-        const refreshedRect0 = String(state.rect0);
-        const refreshedRect2 = String(state.rect2);
+        const refreshedMatchTitle = String(state.matchTitle || getDefaultMatchTitle()).trim().slice(0, 22);
 
         if (cameraOnlineState === false) {
           setLiveStatus("error", "Caméra hors ligne");
@@ -1319,9 +1334,7 @@
           latestVisible === refreshedVisible &&
           latestBreaker === refreshedBreaker &&
           latestTitleEnabled === refreshedTitleEnabled &&
-          latestMatchTitle === refreshedMatchTitle &&
-          latestRect0 === refreshedRect0 &&
-          latestRect2 === refreshedRect2
+          latestMatchTitle === refreshedMatchTitle
         ) {
           setLiveStatus("ready", "Prêt");
         } else {
@@ -1337,21 +1350,6 @@
       }
     }
 
-    async function checkHdmiStatus() {
-      try {
-        const latest = await fetchLatestHdmiStatus();
-        const remoteHdmiEnabled = !!latest && String(latest.hdmi ?? "0").trim() === "1";
-
-        if (remoteHdmiEnabled !== state.hdmiEnabled || hdmiPending) {
-          state.hdmiEnabled = remoteHdmiEnabled;
-          hdmiPending = false;
-          updateHdmiButtonUi();
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    }
-
     function startLivePolling() {
       if (livePollTimer) return;
       checkLatestDweet();
@@ -1364,15 +1362,11 @@
       cameraStatusTimer = window.setInterval(checkCameraStatus, 3000);
     }
 
-    function startHdmiPolling() {
-      if (hdmiPollTimer) return;
-      checkHdmiStatus();
-      hdmiPollTimer = window.setInterval(checkHdmiStatus, 1500);
-    }
-
     async function sendState(statusElement, overrides = {}) {
-      const sendPlayer1 = overrides.player1 ?? state.player1;
-      const sendPlayer2 = overrides.player2 ?? state.player2;
+      clampStateNames();
+
+      const sendPlayer1 = sanitizeName(overrides.player1 ?? state.player1);
+      const sendPlayer2 = sanitizeName(overrides.player2 ?? state.player2);
       const sendScore1 = overrides.score1 ?? state.score1;
       const sendScore2 = overrides.score2 ?? state.score2;
 
@@ -1385,9 +1379,7 @@
         player2: sendPlayer2,
         display: displayValue,
         match_title_enabled: overrides.match_title_enabled ?? (state.matchTitleEnabled ? "1" : "0"),
-        match_title: overrides.match_title ?? getMatchTitleForTransport(state.matchTitle || getDefaultMatchTitle()),
-        rect0: overrides.rect0 ?? String(state.rect0),
-        rect2: overrides.rect2 ?? String(state.rect2),
+        match_title: overrides.match_title ?? String(state.matchTitle || getDefaultMatchTitle()).trim().slice(0, 22),
         visible: overrides.visible ?? String(state.visible),
         breaker: overrides.breaker ?? String(currentBreaker),
         ts: String(Date.now())
@@ -1418,76 +1410,16 @@
       }
     }
 
-    async function sendHdmiState() {
-      const params = new URLSearchParams({
-        hdmi: state.hdmiEnabled ? "1" : "0",
-        ts: String(Date.now())
-      });
-
-      const url = `https://dweet.cc/dweet/for/${encodeURIComponent(HDMI_THING)}?${params.toString()}`;
-
-      const response = await fetch(url, { method: "GET", cache: "no-store" });
-      const raw = await response.text();
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}`);
-      }
-
-      try {
-        JSON.parse(raw);
-      } catch (err) {
-        console.warn("Réponse non JSON ou vide:", raw);
-      }
-    }
-
-    async function toggleHdmi() {
-      const wantsToEnable = modalHdmiToggle.checked;
-
-      if (wantsToEnable && !state.hdmiEnabled) {
-        const enteredPin = prompt("Code PIN requis pour activer l’écran TV local :");
-        if (enteredPin === null) {
-          modalHdmiToggle.checked = false;
-          updateHdmiButtonUi();
-          return;
-        }
-
-        if (enteredPin.trim() !== HDMI_PIN) {
-          modalHdmiToggle.checked = false;
-          updateHdmiButtonUi();
-          scoreStatus.textContent = "Code PIN incorrect.";
-          return;
-        }
-      }
-
-      const previous = state.hdmiEnabled;
-      state.hdmiEnabled = wantsToEnable;
-      hdmiPending = true;
-      updateHdmiButtonUi();
-
-      try {
-        await sendHdmiState();
-        scoreStatus.textContent = state.hdmiEnabled
-          ? "Commande HDMI envoyée : affichage activé."
-          : "Commande HDMI envoyée : affichage coupé.";
-      } catch (error) {
-        console.error(error);
-        state.hdmiEnabled = previous;
-        hdmiPending = false;
-        updateHdmiButtonUi();
-        scoreStatus.textContent = "Erreur de communication HDMI.";
-      }
-    }
-
     async function startScoreboard() {
       if (!cameraReady) {
         setupStatus.textContent = "Caméra hors ligne.";
         return;
       }
 
-      state.player1 = player1Input.value.trim();
-      state.player2 = player2Input.value.trim();
+      state.player1 = sanitizeName(player1Input.value.trim());
+      state.player2 = sanitizeName(player2Input.value.trim());
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
-      state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
+      state.matchTitle = getMatchTitleFromInput() || DEFAULT_MATCH_INFO;
       state.score1 = 0;
       state.score2 = 0;
       state.visible = 1;
@@ -1537,6 +1469,16 @@
       }
     }
 
+    player1Input.addEventListener("input", () => {
+      setupDirty = true;
+      updateClearSetupButtonVisibility();
+    });
+
+    player2Input.addEventListener("input", () => {
+      setupDirty = true;
+      updateClearSetupButtonVisibility();
+    });
+
     startBtn.addEventListener("click", () => {
       if (startBtn.disabled) return;
       startScoreboard();
@@ -1572,45 +1514,29 @@
     player2Input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         if (matchTitleEnabledToggle.checked) {
-          matchTitleInput1.focus();
+          matchTitleInput.focus();
         } else {
           startScoreboard();
         }
       }
     });
 
-    matchTitleInput1.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") matchTitleInput2.focus();
-    });
-
-    matchTitleInput2.addEventListener("keydown", (e) => {
+    matchTitleInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") startScoreboard();
     });
 
     matchTitleEnabledToggle.addEventListener("change", () => {
       setupDirty = true;
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
-      state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
+      state.matchTitle = getMatchTitleFromInput() || DEFAULT_MATCH_INFO;
       updateMatchTitleUi();
       updateClearSetupButtonVisibility();
     });
 
-    matchTitleInputs.forEach((input) => {
-      input.addEventListener("input", () => {
-        setupDirty = true;
-        state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
-        updateMatchTitleUi();
-        updateClearSetupButtonVisibility();
-      });
-    });
-
-    player1Input.addEventListener("input", () => {
+    matchTitleInput.addEventListener("input", () => {
       setupDirty = true;
-      updateClearSetupButtonVisibility();
-    });
-
-    player2Input.addEventListener("input", () => {
-      setupDirty = true;
+      state.matchTitle = getMatchTitleFromInput() || DEFAULT_MATCH_INFO;
+      updateMatchTitleUi();
       updateClearSetupButtonVisibility();
     });
 
@@ -1646,24 +1572,6 @@
       }
     }));
 
-    document.getElementById("moveLeftBtn").addEventListener("click", () => {
-      if (!confirm("Déplacer l'affichage du score vers la gauche sur la vidéo ?")) return;
-
-      updateAndSend(() => {
-        state.rect0 = Math.max(MIN_RECT.rect0, state.rect0 - RECT_STEP);
-        state.rect2 = Math.max(MIN_RECT.rect2, state.rect2 - RECT_STEP);
-      });
-    });
-
-    document.getElementById("moveRightBtn").addEventListener("click", () => {
-      if (!confirm("Déplacer l'affichage du score vers la droite sur la vidéo ?")) return;
-
-      updateAndSend(() => {
-        state.rect0 = Math.min(MAX_RECT.rect0, state.rect0 + RECT_STEP);
-        state.rect2 = Math.min(MAX_RECT.rect2, state.rect2 + RECT_STEP);
-      });
-    });
-
     document.getElementById("resetBtn").addEventListener("click", async () => {
       if (!confirm("Réinitialiser le score et revenir à l’écran de départ ?")) {
         return;
@@ -1672,10 +1580,10 @@
       const previous = { ...state };
       const previousBreaker = currentBreaker;
 
-      state.player1 = player1Input.value.trim();
-      state.player2 = player2Input.value.trim();
+      state.player1 = sanitizeName(player1Input.value.trim());
+      state.player2 = sanitizeName(player2Input.value.trim());
       state.matchTitleEnabled = matchTitleEnabledToggle.checked;
-      state.matchTitle = getMatchTitleFromLines(getMatchTitleLinesFromInputs());
+      state.matchTitle = getMatchTitleFromInput() || DEFAULT_MATCH_INFO;
       state.score1 = 0;
       state.score2 = 0;
       state.visible = 0;
@@ -1708,11 +1616,19 @@
     fullscreenBtn.addEventListener("click", toggleFullscreen);
     hdmiBtn.addEventListener("click", openTvModal);
     tvModalClose.addEventListener("click", closeTvModal);
-    modalHdmiToggle.addEventListener("change", toggleHdmi);
+
     openYoutubeBtn.addEventListener("click", () => {
       window.open(YOUTUBE_LIVE_URL, "_blank", "noopener,noreferrer");
     });
+
     copyYoutubeBtn.addEventListener("click", copyYoutubeLink);
+    showLocalStreamBtn.addEventListener("click", revealLocalStreamDetails);
+
+    openLocalStreamBtn.addEventListener("click", () => {
+      window.open(LOCAL_STREAM_URL, "_blank", "noopener,noreferrer");
+    });
+
+    copyLocalStreamBtn.addEventListener("click", copyLocalStreamLink);
 
     tvModal.addEventListener("click", (e) => {
       if (e.target === tvModal) closeTvModal();
@@ -1726,13 +1642,10 @@
 
     populateSetupInputsFromState();
     updateMatchTitleUi();
-    updateHdmiButtonUi();
     updateClearSetupButtonVisibility();
     startLivePolling();
     startCameraStatusPolling();
-    startHdmiPolling();
     restoreFromLatestDweet();
-    restoreHdmiState();
   </script>
 </body>
 </html>
