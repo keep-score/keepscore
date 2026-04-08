@@ -523,6 +523,42 @@
       letter-spacing: 0.01em;
     }
 
+    .video-title-link,
+    .video-title-action {
+      color: inherit;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    .video-title-link:hover,
+    .video-title-link:focus,
+    .video-title-link:active,
+    .video-title-link:visited,
+    .video-title-action:hover,
+    .video-title-action:focus,
+    .video-title-action:active {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .video-title-action {
+      background: none;
+      border: none;
+      padding: 0;
+      margin: 0;
+      font: inherit;
+      text-align: left;
+      border-radius: 0;
+      box-shadow: none;
+      transition: none;
+    }
+
+    .video-title-action:hover,
+    .video-title-action:active {
+      transform: none;
+      background: none;
+    }
+
     .yt-logo {
       width: 28px;
       height: 20px;
@@ -660,6 +696,14 @@
     }
 
     .inline-link {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .inline-link:hover,
+    .inline-link:focus,
+    .inline-link:active,
+    .inline-link:visited {
       color: inherit;
       text-decoration: none;
     }
@@ -932,10 +976,10 @@
       <div class="video-card">
         <div class="video-card-head">
           <div class="video-title-wrap">
-            <div class="video-title">
+            <a href="https://youtube.com/@ClusesBillardClub/live" target="_blank" rel="noopener noreferrer" class="video-title video-title-link">
               <span class="yt-logo" aria-hidden="true"></span>
               <span>Diffusion YouTube</span>
-            </div>
+            </a>
             <div class="video-delay youtube">
               <span class="video-delay-dot"></span>
               <span>Décalage d’environ 10 s</span>
@@ -960,12 +1004,12 @@
       <div class="video-card">
         <div class="video-card-head">
           <div class="video-title-wrap">
-            <div class="video-title">
+            <button type="button" class="video-title video-title-action" id="localTitleTrigger">
               <span class="stream-icon-wrap" aria-hidden="true">
                 <span class="stream-icon">📡</span>
               </span>
               <span>Flux local</span>
-            </div>
+            </button>
             <div class="video-delay local">
               <span class="video-delay-dot"></span>
               <span>Direct quasi instantané</span>
@@ -1093,6 +1137,7 @@
     const openYoutubeBtn = document.getElementById("openYoutubeBtn");
     const copyYoutubeBtn = document.getElementById("copyYoutubeBtn");
     const showLocalStreamBtn = document.getElementById("showLocalStreamBtn");
+    const localTitleTrigger = document.getElementById("localTitleTrigger");
     const localStreamInitial = document.getElementById("localStreamInitial");
     const localStreamDetails = document.getElementById("localStreamDetails");
     const openLocalStreamBtn = document.getElementById("openLocalStreamBtn");
@@ -1791,6 +1836,7 @@
 
     copyYoutubeBtn.addEventListener("click", copyYoutubeLink);
     showLocalStreamBtn.addEventListener("click", revealLocalStreamDetails);
+    localTitleTrigger.addEventListener("click", revealLocalStreamDetails);
 
     openLocalStreamBtn.addEventListener("click", () => {
       window.open(LOCAL_STREAM_URL, "_blank", "noopener,noreferrer");
