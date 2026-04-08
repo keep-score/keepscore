@@ -1,0 +1,1132 @@
+import json
+import time
+import re
+import unicodedata
+import urllib.request
+import urllib.error
+import urllib.parse
+import subprocess
+
+# =========================
+# CONFIG
+# =========================
+
+THING_NAME = "cbctesting"
+THING_NAME_CAMERA = "cbctesting_camera"
+THING_NAME_HDMI = "cbctesting_hdmi"
+
+POLL_SECONDS = 1.0
+CAMERA_STATUS_SECONDS = 2.0
+HDMI_POLL_SECONDS = 1.0
+IDLE_RESET_SECONDS = 3600
+AUTO_RESET_SECONDS = 10
+
+HTTP_TIMEOUT_DWEET = 4
+HTTP_TIMEOUT_CAMERA = 4
+
+DWEET_GET_URL = f"https://dweet.cc/get/latest/dweet/for/{THING_NAME}"
+DWEET_SET_BASE = f"https://dweet.cc/dweet/for/{THING_NAME}"
+DWEET_CAMERA_SET_BASE = f"https://dweet.cc/dweet/for/{THING_NAME_CAMERA}"
+DWEET_HDMI_GET_URL = f"https://dweet.cc/get/latest/dweet/for/{THING_NAME_HDMI}"
+
+CAMERA_HOST = "192.168.1.108"
+CAMERA_BASE = f"http://{CAMERA_HOST}/cgi-bin/configManager.cgi"
+CAMERA_USERNAME = "admin"
+CAMERA_PASSWORD = "cbcdirect1"
+
+DEFAULT_MATCH_INFO = "Premier à 9"
+
+# =========================
+# TEXT FIELD MAPPINGS
+# =========================
+
+MATCH_INFO_BASE = "VideoWidget[0].CustomTitle[1]"
+PLAYER2_LINE_BASE = "VideoWidget[0].UserDefinedTitle[0]"
+
+SUCCESS_TEXT = "OK"
+
+# =========================
+# TEXT RECTANGLES
+# =========================
+# Rect = left, top, right, bottom
+
+PLAYER1_TEXT_RECT = (95, 153, 2716, 591)
+PLAYER2_TEXT_RECT = (95, 595, 2707, 1033)
+MATCH_INFO_RECT = (201, 1052, 2822, 1490)
+
+# =========================
+# SCORE BACKGROUND BOXES
+# =========================
+
+PLAYER1_BOX_INDEX = 0
+PLAYER2_BOX_INDEX = 1
+
+PLAYER1_BOX_RECT = (120, 110, 360, 450)
+PLAYER2_BOX_RECT = (120, 560, 360, 900)
+
+PLAYER1_BOX_COLOR = (215, 25, 32, 180)
+PLAYER2_BOX_COLOR = (37, 99, 235, 180)
+
+# =========================
+# PLAYER NAME BLACK BOXES
+# =========================
+
+PLAYER1_NAME_BOX_INDEX = 2
+PLAYER2_NAME_BOX_INDEX = 3
+PLAYER_NAME_BOX_COLOR = (0, 0, 0, 180)
+
+NAME_BOX_LEFT = 360
+
+NAME_BOX_MIN_RIGHT = 1080
+NAME_BOX_MAX_RIGHT = 3050
+NAME_BOX_PER_CHAR = 125
+NAME_BOX_EXTRA = 220
+
+# =========================
+# HDMI SUBSTREAM CONFIG
+# =========================
+
+RTSP_SUBSTREAM_URL = (
+    f"rtsp://{CAMERA_USERNAME}:{CAMERA_PASSWORD}@{CAMERA_HOST}:554/"
+    f"cam/realmonitor?channel=1&subtype=1"
+)
+
+HDMI_START_CMD = [
+    "omxplayer",
+    "--live",
+    RTSP_SUBSTREAM_URL
+]
+
+# =========================
+# CAMERA AUTH
+# =========================
+
+password_mgr = urllib.request.HTTPPasswordMgrWithDefaultRealm()
+password_mgr.add_password(None, f"http://{CAMERA_HOST}", CAMERA_USERNAME, CAMERA_PASSWORD)
+digest_handler = urllib.request.HTTPDigestAuthHandler(password_mgr)
+camera_opener = urllib.request.build_opener(digest_handler)
+
+# =========================
+# GLOBAL STATE
+# =========================
+
+last_seen_ts = 0
+last_seen_signature = None
+last_camera_status_push_at = 0.0
+last_dweet_poll_at = 0.0
+
+last_hdmi_poll_at = 0.0
+last_hdmi_signature = None
+hdmi_process = None
+
+last_visible_value = None
+
+pending_auto_reset_deadline_ms = None
+pending_auto_reset_key = None
+pending_auto_reset_cancelled = False
+
+# =========================
+# HELPERS
+# =========================
+
+def log(msg):
+    print(f"[dcw] {msg}", flush=True)
+
+def now_ms():
+    return int(time.time() * 1000)
+
+def safe_int(value, default):
+    try:
+        return int(value)
+    except Exception:
+        return default
+
+def http_get_json(url, timeout=4):
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        raw = response.read().decode("utf-8", errors="replace")
+        return json.loads(raw)
+
+def http_get_text(url, timeout=4):
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    with urllib.request.urlopen(req, timeout=timeout) as response:
+        return response.read().decode("utf-8", errors="replace")
+
+def fetch_latest_dweet():
+    data = http_get_json(f"{DWEET_GET_URL}?t={now_ms()}", timeout=HTTP_TIMEOUT_DWEET)
+    items = data.get("with", [])
+    if not items:
+        return None
+    return items[0].get("content", {})
+
+def fetch_latest_hdmi_dweet():
+    data = http_get_json(f"{DWEET_HDMI_GET_URL}?t={now_ms()}", timeout=HTTP_TIMEOUT_DWEET)
+    items = data.get("with", [])
+    if not items:
+        return None
+    return items[0].get("content", {})
+
+def push_camera_status(online):
+    params = urllib.parse.urlencode({
+        "online": "1" if online else "0",
+        "ts": str(now_ms())
+    })
+    url = f"{DWEET_CAMERA_SET_BASE}?{params}"
+    raw = http_get_text(url, timeout=HTTP_TIMEOUT_DWEET)
+    log(f"Camera status pushed: {'online' if online else 'offline'}")
+    return raw
+
+def dweet_reset_state(player1="", player2="", match_title_enabled="0", match_title=DEFAULT_MATCH_INFO):
+    player1 = clean_single_line(player1)
+    player2 = clean_single_line(player2)
+    match_title = clean_single_line(match_title) or DEFAULT_MATCH_INFO
+    match_title_enabled = "1" if str(match_title_enabled) == "1" else "0"
+
+    params = urllib.parse.urlencode({
+        "player1": player1,
+        "player2": player2,
+        "score1": "0",
+        "score2": "0",
+        "display": "",
+        "visible": "0",
+        "breaker": "1",
+        "auto_reset_cancel": "0",
+        "match_info_enabled": match_title_enabled,
+        "match_info": match_title,
+        "match_title_enabled": match_title_enabled,
+        "match_title": match_title,
+        "ts": str(now_ms())
+    })
+    url = f"{DWEET_SET_BASE}?{params}"
+    http_get_text(url, timeout=HTTP_TIMEOUT_DWEET)
+    log("Dweet state reset to start screen state.")
+
+def build_camera_query(params):
+    return urllib.parse.urlencode(params, doseq=True, safe="[]", quote_via=urllib.parse.quote)
+
+def clean_single_line(text):
+    text = str(text or "")
+    text = text.replace("\r\n", " ").replace("\r", " ").replace("\n", " ").replace("|", " ")
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+def clean_for_dahua(text):
+    text = str(text or "")
+    text = text.replace("\r\n", " ")
+    text = text.replace("\r", " ")
+    text = text.replace("\n", " ")
+    text = text.replace("|", " ")
+    text = text.replace("'", " ")
+    text = text.replace("’", " ")
+    return text
+
+def score_to_text(value):
+    try:
+        return str(int(value))
+    except Exception:
+        return "0"
+
+def get_first_nonempty(content, keys, default=""):
+    for key in keys:
+        val = content.get(key)
+        if val is not None and str(val) != "":
+            return val
+    return default
+
+def parse_scores_from_display(display):
+    text = str(display or "")
+    m = re.search(r"(\d+)\s*[-:]\s*(\d+)", text)
+    if m:
+        return m.group(1), m.group(2)
+
+    nums = re.findall(r"\d+", text)
+    if len(nums) >= 2:
+        return nums[0], nums[1]
+
+    return "0", "0"
+
+def build_player_line(score, player_name, breaker_for_this_line):
+    try:
+        score_num = int(score)
+    except Exception:
+        score_num = 0
+
+    score_text = str(score_num)
+    player_name = clean_for_dahua(player_name)
+
+    if score_num <= 9:
+        score_text = "  " + score_text
+
+    line = f"{score_text}  {player_name}".rstrip()
+
+    if breaker_for_this_line:
+        line = f"{line} •".rstrip()
+
+    return line if line.strip() else "."
+
+def weighted_name_length_for_box(text):
+    text = clean_for_dahua(text).upper()
+
+    total = 0.0
+    for ch in text:
+        if ch == ".":
+            total += 0.5
+        elif ch == "I":
+            total += 0.5
+        elif ch == " ":
+            total += 0.6
+        else:
+            total += 1.0
+
+    return total
+
+def compute_name_box_right(player1_name, player2_name):
+    p1_weight = weighted_name_length_for_box(player1_name)
+    p2_weight = weighted_name_length_for_box(player2_name)
+
+    longest_weight = max(p1_weight, p2_weight)
+    effective_len = longest_weight + 1.0
+
+    right = NAME_BOX_LEFT + int(effective_len * NAME_BOX_PER_CHAR) + NAME_BOX_EXTRA
+
+    if right < NAME_BOX_MIN_RIGHT:
+        right = NAME_BOX_MIN_RIGHT
+    if right > NAME_BOX_MAX_RIGHT:
+        right = NAME_BOX_MAX_RIGHT
+
+    return right
+
+def get_name_box_rects(player1_name, player2_name):
+    right = compute_name_box_right(player1_name, player2_name)
+    p1_rect = (NAME_BOX_LEFT, 110, right, 450)
+    p2_rect = (NAME_BOX_LEFT, 560, right, 900)
+    return p1_rect, p2_rect
+
+def normalize_match_text(text):
+    text = str(text or "")
+    text = unicodedata.normalize("NFD", text)
+    text = "".join(ch for ch in text if unicodedata.category(ch) != "Mn")
+    return text.lower().strip()
+
+def parse_match_target(match_info):
+    text = normalize_match_text(match_info)
+
+    patterns = [
+        r"\bpremier\s+a\s+(\d{1,3})\b",
+        r"\bpremiere?\s+a\s+(\d{1,3})\b",
+        r"\bfirst\s+to\s+(\d{1,3})\b",
+        r"\brace\s+to\s+(\d{1,3})\b",
+        r"\bcourse\s+a\s+(\d{1,3})\b",
+    ]
+
+    for pattern in patterns:
+        m = re.search(pattern, text, flags=re.IGNORECASE)
+        if m:
+            try:
+                value = int(m.group(1))
+                if value > 0:
+                    return value
+            except Exception:
+                pass
+
+    return None
+
+def get_winner_info(score1, score2, match_info, player1, player2):
+    try:
+        s1 = int(score1)
+    except Exception:
+        s1 = 0
+
+    try:
+        s2 = int(score2)
+    except Exception:
+        s2 = 0
+
+    target = parse_match_target(match_info)
+    if not target:
+        return None
+
+    if s1 < target and s2 < target:
+        return None
+
+    if s1 == s2:
+        return None
+
+    if s1 >= target and s1 > s2:
+        return {
+            "winner_num": 1,
+            "winner_name": player1 or "JOUEUR 1",
+            "target": target,
+            "score1": s1,
+            "score2": s2
+        }
+
+    if s2 >= target and s2 > s1:
+        return {
+            "winner_num": 2,
+            "winner_name": player2 or "JOUEUR 2",
+            "target": target,
+            "score1": s1,
+            "score2": s2
+        }
+
+    return None
+
+# =========================
+# CAMERA COMMANDS
+# =========================
+
+def camera_request(params):
+    query = build_camera_query(params)
+    url = f"{CAMERA_BASE}?{query}"
+    try:
+        with camera_opener.open(url, timeout=HTTP_TIMEOUT_CAMERA) as response:
+            return response.read().decode("utf-8", errors="replace")
+    except urllib.error.HTTPError as e:
+        try:
+            body = e.read().decode("utf-8", errors="replace")
+        except Exception:
+            body = ""
+        log(f"Camera HTTP error {e.code}: {body}")
+        return ""
+    except Exception as e:
+        log(f"Camera request error: {e}")
+        return ""
+
+def camera_is_online():
+    raw = camera_request({
+        "action": "getConfig",
+        "name": "ChannelTitle[0].Name"
+    })
+
+    if not raw or not raw.strip():
+        return False
+
+    low = raw.lower()
+    if "unauthorized" in low:
+        return False
+
+    return True
+
+def camera_set_config(params, label):
+    query = build_camera_query(params)
+    url = f"{CAMERA_BASE}?{query}"
+
+    try:
+        with camera_opener.open(url, timeout=HTTP_TIMEOUT_CAMERA) as response:
+            raw = response.read().decode("utf-8", errors="replace")
+            log(f"{label} response: {raw.strip()}")
+            return SUCCESS_TEXT in raw
+    except urllib.error.HTTPError as e:
+        try:
+            body = e.read().decode("utf-8", errors="replace")
+        except Exception:
+            body = ""
+        log(f"{label} HTTP error {e.code}: {body}")
+        return False
+    except Exception as e:
+        log(f"{label} error: {e}")
+        return False
+
+def set_channel_title_line(text, visible):
+    visible_str = "true" if str(visible) == "1" else "false"
+    text_to_send = clean_for_dahua(text) if (str(visible) == "1" and str(text).strip()) else "."
+
+    left, top, right, bottom = PLAYER1_TEXT_RECT
+
+    params = [
+        ("action", "setConfig"),
+        ("ChannelTitle[0].Name", text_to_send),
+        ("VideoWidget[0].ChannelTitle.EncodeBlend", visible_str),
+        ("VideoWidget[0].ChannelTitle.PreviewBlend", visible_str),
+        ("VideoWidget[0].ChannelTitle.Rect[0]", str(left)),
+        ("VideoWidget[0].ChannelTitle.Rect[1]", str(top)),
+        ("VideoWidget[0].ChannelTitle.Rect[2]", str(right)),
+        ("VideoWidget[0].ChannelTitle.Rect[3]", str(bottom)),
+    ]
+    return camera_set_config(params, "Player 1 line")
+
+def set_text_line(base, text, enabled, rect, label):
+    visible_str = "true" if str(enabled) == "1" else "false"
+    text_to_send = clean_for_dahua(text) if (str(enabled) == "1" and str(text).strip()) else "."
+
+    left, top, right, bottom = rect
+
+    params = [
+        ("action", "setConfig"),
+        (f"{base}.Text", text_to_send),
+        (f"{base}.EncodeBlend", visible_str),
+        (f"{base}.PreviewBlend", visible_str),
+        (f"{base}.Rect[0]", str(left)),
+        (f"{base}.Rect[1]", str(top)),
+        (f"{base}.Rect[2]", str(right)),
+        (f"{base}.Rect[3]", str(bottom)),
+    ]
+    return camera_set_config(params, label)
+
+def set_player2_line(text, enabled):
+    return set_text_line(
+        PLAYER2_LINE_BASE,
+        text,
+        enabled,
+        PLAYER2_TEXT_RECT,
+        "Set player 2 line"
+    )
+
+def set_match_info(text, enabled):
+    text = clean_for_dahua(text)
+    visible_str = "true" if str(enabled) == "1" and text else "false"
+    text_to_send = text if (str(enabled) == "1" and text) else "."
+
+    left, top, right, bottom = MATCH_INFO_RECT
+
+    params = [
+        ("action", "setConfig"),
+        (f"{MATCH_INFO_BASE}.Text", text_to_send),
+        (f"{MATCH_INFO_BASE}.EncodeBlend", visible_str),
+        (f"{MATCH_INFO_BASE}.PreviewBlend", visible_str),
+        (f"{MATCH_INFO_BASE}.Rect[0]", str(left)),
+        (f"{MATCH_INFO_BASE}.Rect[1]", str(top)),
+        (f"{MATCH_INFO_BASE}.Rect[2]", str(right)),
+        (f"{MATCH_INFO_BASE}.Rect[3]", str(bottom)),
+    ]
+    return camera_set_config(params, "Set match info")
+
+def hide_channel_title_line():
+    left, top, right, bottom = PLAYER1_TEXT_RECT
+    params = [
+        ("action", "setConfig"),
+        ("ChannelTitle[0].Name", "."),
+        ("VideoWidget[0].ChannelTitle.EncodeBlend", "false"),
+        ("VideoWidget[0].ChannelTitle.PreviewBlend", "false"),
+        ("VideoWidget[0].ChannelTitle.Rect[0]", str(left)),
+        ("VideoWidget[0].ChannelTitle.Rect[1]", str(top)),
+        ("VideoWidget[0].ChannelTitle.Rect[2]", str(right)),
+        ("VideoWidget[0].ChannelTitle.Rect[3]", str(bottom)),
+    ]
+    return camera_set_config(params, "Hide player 1 line")
+
+def hide_player2_line():
+    left, top, right, bottom = PLAYER2_TEXT_RECT
+    params = [
+        ("action", "setConfig"),
+        (f"{PLAYER2_LINE_BASE}.Text", "."),
+        (f"{PLAYER2_LINE_BASE}.EncodeBlend", "false"),
+        (f"{PLAYER2_LINE_BASE}.PreviewBlend", "false"),
+        (f"{PLAYER2_LINE_BASE}.Rect[0]", str(left)),
+        (f"{PLAYER2_LINE_BASE}.Rect[1]", str(top)),
+        (f"{PLAYER2_LINE_BASE}.Rect[2]", str(right)),
+        (f"{PLAYER2_LINE_BASE}.Rect[3]", str(bottom)),
+    ]
+    return camera_set_config(params, "Hide player 2 line")
+
+def hide_match_info():
+    left, top, right, bottom = MATCH_INFO_RECT
+    params = [
+        ("action", "setConfig"),
+        (f"{MATCH_INFO_BASE}.Text", "."),
+        (f"{MATCH_INFO_BASE}.EncodeBlend", "false"),
+        (f"{MATCH_INFO_BASE}.PreviewBlend", "false"),
+        (f"{MATCH_INFO_BASE}.Rect[0]", str(left)),
+        (f"{MATCH_INFO_BASE}.Rect[1]", str(top)),
+        (f"{MATCH_INFO_BASE}.Rect[2]", str(right)),
+        (f"{MATCH_INFO_BASE}.Rect[3]", str(bottom)),
+    ]
+    return camera_set_config(params, "Hide match info")
+
+def prepare_channel_title_line(text):
+    safe_text = clean_for_dahua(text)
+    left, top, right, bottom = PLAYER1_TEXT_RECT
+    params = [
+        ("action", "setConfig"),
+        ("ChannelTitle[0].Name", safe_text if str(safe_text).strip() else "."),
+        ("VideoWidget[0].ChannelTitle.EncodeBlend", "false"),
+        ("VideoWidget[0].ChannelTitle.PreviewBlend", "false"),
+        ("VideoWidget[0].ChannelTitle.Rect[0]", str(left)),
+        ("VideoWidget[0].ChannelTitle.Rect[1]", str(top)),
+        ("VideoWidget[0].ChannelTitle.Rect[2]", str(right)),
+        ("VideoWidget[0].ChannelTitle.Rect[3]", str(bottom)),
+    ]
+    return camera_set_config(params, "Prepare player 1 line")
+
+def prepare_player2_line(text):
+    safe_text = clean_for_dahua(text)
+    left, top, right, bottom = PLAYER2_TEXT_RECT
+    params = [
+        ("action", "setConfig"),
+        (f"{PLAYER2_LINE_BASE}.Text", safe_text if str(safe_text).strip() else "."),
+        (f"{PLAYER2_LINE_BASE}.EncodeBlend", "false"),
+        (f"{PLAYER2_LINE_BASE}.PreviewBlend", "false"),
+        (f"{PLAYER2_LINE_BASE}.Rect[0]", str(left)),
+        (f"{PLAYER2_LINE_BASE}.Rect[1]", str(top)),
+        (f"{PLAYER2_LINE_BASE}.Rect[2]", str(right)),
+        (f"{PLAYER2_LINE_BASE}.Rect[3]", str(bottom)),
+    ]
+    return camera_set_config(params, "Prepare player 2 line")
+
+def prepare_match_info(text):
+    text = clean_for_dahua(text)
+    left, top, right, bottom = MATCH_INFO_RECT
+    params = [
+        ("action", "setConfig"),
+        (f"{MATCH_INFO_BASE}.Text", text if text else "."),
+        (f"{MATCH_INFO_BASE}.EncodeBlend", "false"),
+        (f"{MATCH_INFO_BASE}.PreviewBlend", "false"),
+        (f"{MATCH_INFO_BASE}.Rect[0]", str(left)),
+        (f"{MATCH_INFO_BASE}.Rect[1]", str(top)),
+        (f"{MATCH_INFO_BASE}.Rect[2]", str(right)),
+        (f"{MATCH_INFO_BASE}.Rect[3]", str(bottom)),
+    ]
+    return camera_set_config(params, "Prepare match info")
+
+def show_channel_title_line():
+    left, top, right, bottom = PLAYER1_TEXT_RECT
+    params = [
+        ("action", "setConfig"),
+        ("VideoWidget[0].ChannelTitle.EncodeBlend", "true"),
+        ("VideoWidget[0].ChannelTitle.PreviewBlend", "true"),
+        ("VideoWidget[0].ChannelTitle.Rect[0]", str(left)),
+        ("VideoWidget[0].ChannelTitle.Rect[1]", str(top)),
+        ("VideoWidget[0].ChannelTitle.Rect[2]", str(right)),
+        ("VideoWidget[0].ChannelTitle.Rect[3]", str(bottom)),
+    ]
+    return camera_set_config(params, "Show player 1 line")
+
+def show_player2_line():
+    left, top, right, bottom = PLAYER2_TEXT_RECT
+    params = [
+        ("action", "setConfig"),
+        (f"{PLAYER2_LINE_BASE}.EncodeBlend", "true"),
+        (f"{PLAYER2_LINE_BASE}.PreviewBlend", "true"),
+        (f"{PLAYER2_LINE_BASE}.Rect[0]", str(left)),
+        (f"{PLAYER2_LINE_BASE}.Rect[1]", str(top)),
+        (f"{PLAYER2_LINE_BASE}.Rect[2]", str(right)),
+        (f"{PLAYER2_LINE_BASE}.Rect[3]", str(bottom)),
+    ]
+    return camera_set_config(params, "Show player 2 line")
+
+def show_match_info():
+    left, top, right, bottom = MATCH_INFO_RECT
+    params = [
+        ("action", "setConfig"),
+        (f"{MATCH_INFO_BASE}.EncodeBlend", "true"),
+        (f"{MATCH_INFO_BASE}.PreviewBlend", "true"),
+        (f"{MATCH_INFO_BASE}.Rect[0]", str(left)),
+        (f"{MATCH_INFO_BASE}.Rect[1]", str(top)),
+        (f"{MATCH_INFO_BASE}.Rect[2]", str(right)),
+        (f"{MATCH_INFO_BASE}.Rect[3]", str(bottom)),
+    ]
+    return camera_set_config(params, "Show match info")
+
+def set_cover_box(index, rect, color, enabled):
+    visible_str = "true" if str(enabled) == "1" else "false"
+    base = f"VideoWidget[0].Covers[{index}]"
+
+    left, top, right, bottom = rect
+    r, g, b, a = color
+
+    params = [
+        ("action", "setConfig"),
+        (f"{base}.EncodeBlend", visible_str),
+        (f"{base}.PreviewBlend", visible_str),
+        (f"{base}.BackColor[0]", str(r)),
+        (f"{base}.BackColor[1]", str(g)),
+        (f"{base}.BackColor[2]", str(b)),
+        (f"{base}.BackColor[3]", str(a)),
+        (f"{base}.FrontColor[0]", str(r)),
+        (f"{base}.FrontColor[1]", str(g)),
+        (f"{base}.FrontColor[2]", str(b)),
+        (f"{base}.FrontColor[3]", "0"),
+        (f"{base}.Rect[0]", str(left)),
+        (f"{base}.Rect[1]", str(top)),
+        (f"{base}.Rect[2]", str(right)),
+        (f"{base}.Rect[3]", str(bottom)),
+    ]
+    return camera_set_config(params, f"Cover box {index}")
+
+def show_name_box(index, rect):
+    return set_cover_box(index, rect, PLAYER_NAME_BOX_COLOR, 1)
+
+def hide_name_box(index, rect):
+    return set_cover_box(index, rect, PLAYER_NAME_BOX_COLOR, 0)
+
+def clear_overlay(player1_name="", player2_name=""):
+    rect1, rect2 = get_name_box_rects(player1_name, player2_name)
+
+    ok_info = hide_match_info()
+    ok_p2 = hide_player2_line()
+    ok_black2 = hide_name_box(PLAYER2_NAME_BOX_INDEX, rect2)
+    ok_blue = set_cover_box(PLAYER2_BOX_INDEX, PLAYER2_BOX_RECT, PLAYER2_BOX_COLOR, 0)
+    ok_p1 = hide_channel_title_line()
+    ok_black1 = hide_name_box(PLAYER1_NAME_BOX_INDEX, rect1)
+    ok_red = set_cover_box(PLAYER1_BOX_INDEX, PLAYER1_BOX_RECT, PLAYER1_BOX_COLOR, 0)
+
+    return ok_info and ok_p2 and ok_black2 and ok_blue and ok_p1 and ok_black1 and ok_red
+
+# =========================
+# HDMI SUBSTREAM CONTROL
+# =========================
+
+def hdmi_process_alive():
+    global hdmi_process
+    return hdmi_process is not None and hdmi_process.poll() is None
+
+def hdmi_power_on():
+    try:
+        subprocess.call(
+            ["tvservice", "-p"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        time.sleep(1.0)
+    except Exception as e:
+        log(f"HDMI power on error: {e}")
+
+def hdmi_power_off():
+    try:
+        subprocess.call(
+            ["tvservice", "-o"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+    except Exception as e:
+        log(f"HDMI power off error: {e}")
+
+def start_hdmi_substream():
+    global hdmi_process
+
+    if hdmi_process_alive():
+        log("HDMI substream already running.")
+        return
+
+    try:
+        hdmi_power_on()
+        hdmi_process = subprocess.Popen(
+            HDMI_START_CMD,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        log("HDMI substream started.")
+    except Exception as e:
+        hdmi_process = None
+        log(f"Failed to start HDMI substream: {e}")
+
+def stop_hdmi_substream():
+    global hdmi_process
+
+    if hdmi_process_alive():
+        try:
+            hdmi_process.terminate()
+            try:
+                hdmi_process.wait(timeout=3)
+            except Exception:
+                hdmi_process.kill()
+                hdmi_process.wait(timeout=2)
+        except Exception as e:
+            log(f"Tracked omxplayer stop issue: {e}")
+
+    try:
+        subprocess.call(
+            ["killall", "-q", "omxplayer.bin"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+    except Exception:
+        pass
+
+    try:
+        subprocess.call(
+            ["killall", "-q", "omxplayer"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+    except Exception:
+        pass
+
+    hdmi_process = None
+    time.sleep(0.5)
+    hdmi_power_off()
+    log("HDMI substream stopped.")
+
+def process_latest_hdmi_dweet():
+    global last_hdmi_signature, hdmi_process
+
+    latest = fetch_latest_hdmi_dweet()
+    if not latest:
+        return
+
+    hdmi_value = str(latest.get("hdmi", "0"))
+    ts = safe_int(latest.get("ts"), 0)
+    signature = f"{hdmi_value}|{ts}"
+
+    if signature == last_hdmi_signature:
+        if hdmi_process is not None and not hdmi_process_alive():
+            log("HDMI player exited unexpectedly.")
+            hdmi_process = None
+            if hdmi_value == "0":
+                hdmi_power_off()
+        return
+
+    last_hdmi_signature = signature
+
+    if hdmi_value == "1":
+        start_hdmi_substream()
+    else:
+        stop_hdmi_substream()
+
+# =========================
+# AUTO RESET LOGIC
+# =========================
+
+def clear_pending_auto_reset():
+    global pending_auto_reset_deadline_ms, pending_auto_reset_key, pending_auto_reset_cancelled
+    pending_auto_reset_deadline_ms = None
+    pending_auto_reset_key = None
+    pending_auto_reset_cancelled = False
+
+def auto_reset_check():
+    global last_seen_signature, last_visible_value, last_seen_ts
+
+    if pending_auto_reset_deadline_ms is None:
+        return
+
+    if pending_auto_reset_cancelled:
+        return
+
+    if now_ms() < pending_auto_reset_deadline_ms:
+        return
+
+    log("Winner countdown elapsed. Auto-clearing overlay.")
+    clear_overlay("", "")
+
+    latest = fetch_latest_dweet() or {}
+
+    reset_player1 = clean_single_line(get_first_nonempty(latest, ["player1", "name1"], ""))
+    reset_player2 = clean_single_line(get_first_nonempty(latest, ["player2", "name2"], ""))
+    reset_match_title_enabled = str(
+        get_first_nonempty(latest, ["match_info_enabled", "match_title_enabled"], "0")
+    )
+    reset_match_title = clean_single_line(
+        get_first_nonempty(latest, ["match_info", "match_title"], DEFAULT_MATCH_INFO)
+    )
+
+    dweet_reset_state(
+        player1=reset_player1,
+        player2=reset_player2,
+        match_title_enabled=reset_match_title_enabled,
+        match_title=reset_match_title
+    )
+
+    last_seen_signature = None
+    last_visible_value = "0"
+    last_seen_ts = now_ms()
+    clear_pending_auto_reset()
+
+# =========================
+# DWEET PROCESSING
+# =========================
+
+def process_latest_dweet():
+    global last_seen_ts, last_seen_signature, last_visible_value
+    global pending_auto_reset_deadline_ms, pending_auto_reset_key, pending_auto_reset_cancelled
+
+    latest = fetch_latest_dweet()
+    if not latest:
+        log("No dweet received.")
+        return
+
+    visible = str(latest.get("visible", "1"))
+    breaker = str(latest.get("breaker", "1")).strip()
+    auto_reset_cancel = str(latest.get("auto_reset_cancel", "0")).strip()
+
+    player1 = clean_single_line(get_first_nonempty(latest, ["player1", "name1"], ""))
+    player2 = clean_single_line(get_first_nonempty(latest, ["player2", "name2"], ""))
+
+    score1_raw = get_first_nonempty(latest, ["score1", "p1score", "player1score"], "")
+    score2_raw = get_first_nonempty(latest, ["score2", "p2score", "player2score"], "")
+
+    display = str(latest.get("display", ""))
+
+    if score1_raw == "" or score2_raw == "":
+        parsed1, parsed2 = parse_scores_from_display(display)
+        if score1_raw == "":
+            score1_raw = parsed1
+        if score2_raw == "":
+            score2_raw = parsed2
+
+    score1 = score_to_text(score1_raw)
+    score2 = score_to_text(score2_raw)
+
+    match_info_enabled = str(
+        get_first_nonempty(latest, ["match_info_enabled", "match_title_enabled"], "0")
+    )
+    match_info = clean_single_line(
+        get_first_nonempty(latest, ["match_info", "match_title"], DEFAULT_MATCH_INFO)
+    )
+
+    ts = safe_int(latest.get("ts"), 0)
+
+    player1_plain = build_player_line(score1, player1, False)
+    player2_plain = build_player_line(score2, player2, False)
+    player1_break = build_player_line(score1, player1, breaker == "1")
+    player2_break = build_player_line(score2, player2, breaker == "2")
+
+    if breaker == "1":
+        player1_final = player1_break
+        player2_final = player2_plain
+    elif breaker == "2":
+        player1_final = player1_plain
+        player2_final = player2_break
+    else:
+        player1_final = player1_plain
+        player2_final = player2_plain
+
+    name_box_rect1, name_box_rect2 = get_name_box_rects(player1, player2)
+
+    signature = (
+        f"{visible}|{breaker}|{auto_reset_cancel}|"
+        f"{player1}|{player2}|{score1}|{score2}|"
+        f"{match_info_enabled}|{match_info}|{ts}"
+    )
+
+    if ts > 0:
+        last_seen_ts = ts
+
+    winner_info = None
+    winner_key = None
+
+    if visible == "1" and match_info_enabled == "1":
+        winner_info = get_winner_info(score1, score2, match_info, player1, player2)
+
+    if winner_info:
+        winner_key = (
+            f"{winner_info['winner_num']}|{winner_info['target']}|"
+            f"{winner_info['score1']}|{winner_info['score2']}|"
+            f"{player1}|{player2}|{match_info}"
+        )
+
+        if auto_reset_cancel == "1":
+            if pending_auto_reset_key != winner_key:
+                pending_auto_reset_key = winner_key
+                pending_auto_reset_deadline_ms = None
+            pending_auto_reset_cancelled = True
+            log("Auto reset cancelled by website.")
+        else:
+            if pending_auto_reset_key != winner_key or pending_auto_reset_deadline_ms is None:
+                pending_auto_reset_key = winner_key
+                pending_auto_reset_deadline_ms = now_ms() + (AUTO_RESET_SECONDS * 1000)
+                pending_auto_reset_cancelled = False
+                log(
+                    f"Winner detected: {winner_info['winner_name']} "
+                    f"(target {winner_info['target']}) - auto reset in {AUTO_RESET_SECONDS}s."
+                )
+    else:
+        clear_pending_auto_reset()
+
+    if signature == last_seen_signature:
+        return
+
+    was_visible = (last_visible_value == "1")
+    now_visible = (visible == "1")
+
+    last_seen_signature = signature
+    last_visible_value = visible
+
+    if now_visible and not was_visible:
+        ok_prep1 = prepare_channel_title_line(player1_final)
+        ok_prep2 = prepare_player2_line(player2_final)
+
+        if match_info_enabled == "1" and match_info.strip():
+            ok_prep_info = prepare_match_info(match_info)
+        else:
+            ok_prep_info = hide_match_info()
+
+        p1_has_name = bool(player1)
+        p2_has_name = bool(player2)
+
+        ok_red = set_cover_box(PLAYER1_BOX_INDEX, PLAYER1_BOX_RECT, PLAYER1_BOX_COLOR, 1)
+
+        if p1_has_name:
+            ok_black1 = show_name_box(PLAYER1_NAME_BOX_INDEX, name_box_rect1)
+        else:
+            ok_black1 = hide_name_box(PLAYER1_NAME_BOX_INDEX, name_box_rect1)
+
+        ok_p1 = show_channel_title_line()
+
+        ok_blue = set_cover_box(PLAYER2_BOX_INDEX, PLAYER2_BOX_RECT, PLAYER2_BOX_COLOR, 1)
+
+        if p2_has_name:
+            ok_black2 = show_name_box(PLAYER2_NAME_BOX_INDEX, name_box_rect2)
+        else:
+            ok_black2 = hide_name_box(PLAYER2_NAME_BOX_INDEX, name_box_rect2)
+
+        ok_p2 = show_player2_line()
+
+        if match_info_enabled == "1" and match_info.strip():
+            ok_info = show_match_info()
+        else:
+            ok_info = True
+
+        if ok_prep1 and ok_prep2 and ok_prep_info and ok_red and ok_black1 and ok_p1 and ok_blue and ok_black2 and ok_p2 and ok_info:
+            log(f"Scoreboard shown: {player1_final} / {player2_final} / {match_info}")
+        else:
+            log("Failed to show one or more scoreboard elements.")
+
+    elif (not now_visible) and was_visible:
+        clear_pending_auto_reset()
+
+        if clear_overlay(player1, player2):
+            log("Scoreboard hidden.")
+        else:
+            log("Failed to hide one or more scoreboard elements.")
+
+    elif now_visible:
+        p1_has_name = bool(player1)
+        p2_has_name = bool(player2)
+
+        if p1_has_name:
+            ok_black1 = show_name_box(PLAYER1_NAME_BOX_INDEX, name_box_rect1)
+        else:
+            ok_black1 = hide_name_box(PLAYER1_NAME_BOX_INDEX, name_box_rect1)
+
+        if p2_has_name:
+            ok_black2 = show_name_box(PLAYER2_NAME_BOX_INDEX, name_box_rect2)
+        else:
+            ok_black2 = hide_name_box(PLAYER2_NAME_BOX_INDEX, name_box_rect2)
+
+        if breaker == "1":
+            ok_p2 = set_player2_line(player2_plain, 1)
+            ok_p1 = set_channel_title_line(player1_break, 1)
+        elif breaker == "2":
+            ok_p1 = set_channel_title_line(player1_plain, 1)
+            ok_p2 = set_player2_line(player2_break, 1)
+        else:
+            ok_p1 = set_channel_title_line(player1_plain, 1)
+            ok_p2 = set_player2_line(player2_plain, 1)
+
+        ok_red = set_cover_box(PLAYER1_BOX_INDEX, PLAYER1_BOX_RECT, PLAYER1_BOX_COLOR, 1)
+        ok_blue = set_cover_box(PLAYER2_BOX_INDEX, PLAYER2_BOX_RECT, PLAYER2_BOX_COLOR, 1)
+
+        if match_info_enabled == "1" and match_info.strip():
+            ok_info = set_match_info(match_info, 1)
+        else:
+            ok_info = hide_match_info()
+
+        if ok_black1 and ok_black2 and ok_p1 and ok_p2 and ok_red and ok_blue and ok_info:
+            log(f"Scoreboard updated: {player1_final} / {player2_final} / {match_info}")
+        else:
+            log("Failed to update one or more scoreboard elements.")
+
+    else:
+        clear_pending_auto_reset()
+
+        if clear_overlay(player1, player2):
+            log("Scoreboard remains hidden.")
+        else:
+            log("Failed to maintain hidden scoreboard state.")
+
+def idle_check():
+    global last_seen_signature, last_visible_value, last_seen_ts
+
+    if last_seen_ts <= 0:
+        return
+
+    age_seconds = (now_ms() - last_seen_ts) / 1000.0
+    if age_seconds < IDLE_RESET_SECONDS:
+        return
+
+    log("Inactivity detected. Auto-clearing overlay.")
+    clear_overlay("", "")
+
+    latest = fetch_latest_dweet() or {}
+
+    reset_player1 = clean_single_line(get_first_nonempty(latest, ["player1", "name1"], ""))
+    reset_player2 = clean_single_line(get_first_nonempty(latest, ["player2", "name2"], ""))
+    reset_match_title_enabled = str(
+        get_first_nonempty(latest, ["match_info_enabled", "match_title_enabled"], "0")
+    )
+    reset_match_title = clean_single_line(
+        get_first_nonempty(latest, ["match_info", "match_title"], DEFAULT_MATCH_INFO)
+    )
+
+    dweet_reset_state(
+        player1=reset_player1,
+        player2=reset_player2,
+        match_title_enabled=reset_match_title_enabled,
+        match_title=reset_match_title
+    )
+
+    last_seen_signature = None
+    last_visible_value = "0"
+    last_seen_ts = now_ms()
+    clear_pending_auto_reset()
+
+# =========================
+# MAIN LOOP
+# =========================
+
+def main():
+    global last_camera_status_push_at, last_dweet_poll_at, last_hdmi_poll_at, last_visible_value
+
+    log("Starting headless scoreboard controller.")
+
+    try:
+        if clear_overlay("", ""):
+            log("Startup overlay clear complete.")
+        else:
+            log("Startup overlay clear had one or more failures.")
+    except Exception as e:
+        log(f"Startup overlay clear error: {e}")
+
+    last_visible_value = "0"
+
+    try:
+        stop_hdmi_substream()
+    except Exception as e:
+        log(f"Startup stop HDMI error: {e}")
+
+    while True:
+        loop_started = time.time()
+
+        try:
+            if loop_started - last_camera_status_push_at >= CAMERA_STATUS_SECONDS:
+                online = camera_is_online()
+                push_camera_status(online)
+                last_camera_status_push_at = loop_started
+        except Exception as e:
+            log(f"Camera status section error: {e}")
+
+        try:
+            if loop_started - last_dweet_poll_at >= POLL_SECONDS:
+                process_latest_dweet()
+                last_dweet_poll_at = loop_started
+        except Exception as e:
+            log(f"Dweet processing section error: {e}")
+
+        try:
+            if loop_started - last_hdmi_poll_at >= HDMI_POLL_SECONDS:
+                process_latest_hdmi_dweet()
+                last_hdmi_poll_at = loop_started
+        except Exception as e:
+            log(f"HDMI section error: {e}")
+
+        try:
+            auto_reset_check()
+        except Exception as e:
+            log(f"Auto reset section error: {e}")
+
+        try:
+            idle_check()
+        except Exception as e:
+            log(f"Idle check section error: {e}")
+
+        time.sleep(0.2)
+
+if __name__ == "__main__":
+    try:
+        main()
+    finally:
+        try:
+            stop_hdmi_substream()
+        except Exception:
+            pass
