@@ -808,6 +808,103 @@
       background: rgba(255,255,255,0.1);
     }
 
+    .winner-modal-card {
+      max-width: 520px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .winner-top-glow {
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 120px;
+      background: radial-gradient(circle at top center, rgba(250,204,21,0.28), transparent 68%);
+      pointer-events: none;
+    }
+
+    .winner-body {
+      display: grid;
+      justify-items: center;
+      gap: 10px;
+      text-align: center;
+      padding: 4px 4px 2px;
+    }
+
+    .winner-trophy {
+      font-size: 2.5rem;
+      line-height: 1;
+      filter: drop-shadow(0 6px 14px rgba(250,204,21,0.22));
+    }
+
+    .winner-label {
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: #d6d6d6;
+    }
+
+    .winner-name {
+      font-size: clamp(1.6rem, 5vw, 2.6rem);
+      font-weight: 900;
+      line-height: 1.05;
+      word-break: break-word;
+      text-shadow: 0 8px 24px rgba(0,0,0,0.24);
+    }
+
+    .winner-scoreline {
+      color: #d8d8d8;
+      font-size: 0.98rem;
+    }
+
+    .winner-countdown-box {
+      width: 100%;
+      max-width: 260px;
+      border-radius: 20px;
+      padding: 14px 16px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)),
+        linear-gradient(180deg, #1d1d1d, #151515);
+      border: 1px solid rgba(255,255,255,0.08);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.04),
+        0 12px 28px rgba(0,0,0,0.22);
+      display: grid;
+      gap: 4px;
+      justify-items: center;
+    }
+
+    .winner-countdown-label {
+      font-size: 0.86rem;
+      color: #cfcfcf;
+    }
+
+    .winner-countdown-number {
+      font-size: clamp(2.7rem, 10vw, 4rem);
+      font-weight: 900;
+      line-height: 1;
+      color: #facc15;
+      text-shadow: 0 0 20px rgba(250,204,21,0.12);
+    }
+
+    .winner-countdown-seconds {
+      font-size: 0.86rem;
+      color: #cfcfcf;
+    }
+
+    .winner-note {
+      color: #bdbdbd;
+      font-size: 0.9rem;
+      line-height: 1.35;
+      max-width: 380px;
+    }
+
+    .winner-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
     @media (orientation: portrait) {
       .players {
         grid-template-columns: 1fr;
@@ -1076,6 +1173,41 @@
     </div>
   </div>
 
+  <div id="winnerModal" class="modal-backdrop hidden" aria-hidden="true">
+    <div class="modal-card winner-modal-card" role="dialog" aria-modal="true" aria-labelledby="winnerModalTitle">
+      <div class="winner-top-glow"></div>
+
+      <div class="modal-head">
+        <div class="modal-title-wrap">
+          <div id="winnerModalTitle" class="modal-title">Fin du match</div>
+          <div class="modal-subtitle">Victoire confirmée</div>
+        </div>
+      </div>
+
+      <div class="winner-body">
+        <div class="winner-trophy">🏆</div>
+        <div class="winner-label">Vainqueur</div>
+        <div id="winnerNameText" class="winner-name">JOUEUR</div>
+        <div id="winnerScoreLine" class="winner-scoreline">Score final : 0 - 0</div>
+
+        <div class="winner-countdown-box">
+          <div class="winner-countdown-label">Remise à zéro automatique dans</div>
+          <div id="winnerCountdownText" class="winner-countdown-number">10</div>
+          <div class="winner-countdown-seconds">secondes</div>
+        </div>
+
+        <div class="winner-note">
+          Le score sera effacé automatiquement, même si cette page est fermée.
+        </div>
+      </div>
+
+      <div class="winner-actions">
+        <button id="winnerOkBtn" class="mini-btn" type="button">OK</button>
+        <button id="winnerCancelResetBtn" class="breaker-cancel-btn" type="button">Annuler la remise à zéro</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const DWEET_THING = "cbctesting";
     const CAMERA_STATUS_THING = "cbctesting_camera";
@@ -1102,6 +1234,12 @@
     let cameraReady = false;
     let cameraOnlineState = null;
     let setupDirty = false;
+
+    let autoResetCancelled = false;
+    let winnerCountdownTimer = null;
+    let winnerCountdownDeadline = null;
+    let winnerPopupShownForKey = "";
+    let winnerModalDismissed = false;
 
     const setupScreen = document.getElementById("setupScreen");
     const scoreboardScreen = document.getElementById("scoreboardScreen");
@@ -1150,6 +1288,13 @@
     const breakerPlayer2Btn = document.getElementById("breakerPlayer2Btn");
     const breakerPlayer1Label = document.getElementById("breakerPlayer1Label");
     const breakerPlayer2Label = document.getElementById("breakerPlayer2Label");
+
+    const winnerModal = document.getElementById("winnerModal");
+    const winnerNameText = document.getElementById("winnerNameText");
+    const winnerScoreLine = document.getElementById("winnerScoreLine");
+    const winnerCountdownText = document.getElementById("winnerCountdownText");
+    const winnerOkBtn = document.getElementById("winnerOkBtn");
+    const winnerCancelResetBtn = document.getElementById("winnerCancelResetBtn");
 
     function setLiveStatus(mode, text) {
       liveDot.classList.remove("ready", "waiting", "error");
@@ -1232,6 +1377,149 @@
       return `${left}${score1} - ${score2}${right}`;
     }
 
+    function normalizeMatchText(text) {
+      return String(text || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase()
+        .trim();
+    }
+
+    function parseMatchTarget(text) {
+      const normalized = normalizeMatchText(text);
+
+      const patterns = [
+        /\bpremier\s+a\s+(\d{1,3})\b/i,
+        /\bpremiere?\s+a\s+(\d{1,3})\b/i,
+        /\bfirst\s+to\s+(\d{1,3})\b/i,
+        /\brace\s+to\s+(\d{1,3})\b/i,
+        /\bcourse\s+a\s+(\d{1,3})\b/i
+      ];
+
+      for (const pattern of patterns) {
+        const match = normalized.match(pattern);
+        if (match) {
+          const n = parseInt(match[1], 10);
+          if (Number.isFinite(n) && n > 0) return n;
+        }
+      }
+
+      return null;
+    }
+
+    function getWinnerData() {
+      if (String(state.visible) !== "1") return null;
+
+      const titleText = state.matchTitleEnabled
+        ? String(state.matchTitle || "")
+        : String(matchTitleInput.value || state.matchTitle || "");
+
+      const target = parseMatchTarget(titleText);
+      if (!target) return null;
+
+      const s1 = Number(state.score1) || 0;
+      const s2 = Number(state.score2) || 0;
+
+      if (s1 < target && s2 < target) return null;
+      if (s1 === s2) return null;
+
+      if (s1 >= target && s1 > s2) {
+        return {
+          winner: 1,
+          winnerName: state.player1 || "JOUEUR 1",
+          loserName: state.player2 || "JOUEUR 2",
+          target,
+          score1: s1,
+          score2: s2,
+          key: `1|${target}|${s1}|${s2}|${state.player1}|${state.player2}|${state.matchTitle}`
+        };
+      }
+
+      if (s2 >= target && s2 > s1) {
+        return {
+          winner: 2,
+          winnerName: state.player2 || "JOUEUR 2",
+          loserName: state.player1 || "JOUEUR 1",
+          target,
+          score1: s1,
+          score2: s2,
+          key: `2|${target}|${s1}|${s2}|${state.player1}|${state.player2}|${state.matchTitle}`
+        };
+      }
+
+      return null;
+    }
+
+    function closeWinnerModal() {
+      winnerModal.classList.add("hidden");
+      winnerModal.setAttribute("aria-hidden", "true");
+    }
+
+    function openWinnerModal(winnerData) {
+      winnerNameText.textContent = winnerData.winnerName;
+      winnerScoreLine.textContent = `Score final : ${winnerData.score1} - ${winnerData.score2}`;
+      winnerCountdownText.textContent = "10";
+      winnerModal.classList.remove("hidden");
+      winnerModal.setAttribute("aria-hidden", "false");
+    }
+
+    function stopWinnerCountdownTimer() {
+      if (winnerCountdownTimer) {
+        clearInterval(winnerCountdownTimer);
+        winnerCountdownTimer = null;
+      }
+    }
+
+    function startWinnerCountdown(winnerData) {
+      stopWinnerCountdownTimer();
+
+      winnerCountdownDeadline = Date.now() + 10000;
+      openWinnerModal(winnerData);
+
+      const tick = () => {
+        const remainingMs = Math.max(0, winnerCountdownDeadline - Date.now());
+        const remainingSeconds = Math.ceil(remainingMs / 1000);
+        winnerCountdownText.textContent = String(remainingSeconds);
+
+        if (remainingMs <= 0) {
+          stopWinnerCountdownTimer();
+          closeWinnerModal();
+        }
+      };
+
+      tick();
+      winnerCountdownTimer = setInterval(tick, 200);
+    }
+
+    function evaluateWinnerPopup() {
+      const winnerData = getWinnerData();
+
+      if (!winnerData) {
+        stopWinnerCountdownTimer();
+        closeWinnerModal();
+        winnerPopupShownForKey = "";
+        winnerModalDismissed = false;
+        return;
+      }
+
+      if (autoResetCancelled) {
+        stopWinnerCountdownTimer();
+        closeWinnerModal();
+        return;
+      }
+
+      if (winnerPopupShownForKey !== winnerData.key) {
+        winnerPopupShownForKey = winnerData.key;
+        winnerModalDismissed = false;
+        startWinnerCountdown(winnerData);
+        return;
+      }
+
+      if (!winnerModalDismissed && winnerModal.classList.contains("hidden")) {
+        openWinnerModal(winnerData);
+      }
+    }
+
     function renderScoreboard() {
       clampStateNames();
       player1NameText.textContent = state.player1 || "Joueur 1";
@@ -1241,6 +1529,7 @@
       updateCue();
       updateMatchTitleUi();
       updateClearSetupButtonVisibility();
+      evaluateWinnerPopup();
     }
 
     function populateSetupInputsFromState() {
@@ -1264,6 +1553,12 @@
       state.matchTitleEnabled = false;
       state.matchTitle = getDefaultMatchTitle();
       currentBreaker = 1;
+
+      autoResetCancelled = false;
+      winnerPopupShownForKey = "";
+      winnerModalDismissed = false;
+      stopWinnerCountdownTimer();
+      closeWinnerModal();
 
       populateSetupInputsFromState();
       renderScoreboard();
@@ -1293,9 +1588,11 @@
       const latestBreaker = parseInt(latest.breaker ?? "1", 10);
       const latestTitleEnabled = String(latest.match_title_enabled ?? "0") === "1";
       const latestMatchTitle = String(latest.match_title || getDefaultMatchTitle()).trim().slice(0, 22);
+      const latestAutoResetCancel = String(latest.auto_reset_cancel ?? "0").trim() === "1";
       const parsedDisplay = parsePlayersFromDisplay(latestDisplay);
 
       currentBreaker = latestBreaker === 2 ? 2 : 1;
+      autoResetCancelled = latestAutoResetCancel;
 
       state.matchTitleEnabled = latestTitleEnabled;
       state.matchTitle = latestMatchTitle || getDefaultMatchTitle();
@@ -1306,6 +1603,11 @@
         state.score1 = 0;
         state.score2 = 0;
         state.visible = 0;
+
+        winnerPopupShownForKey = "";
+        winnerModalDismissed = false;
+        stopWinnerCountdownTimer();
+        closeWinnerModal();
 
         populateSetupInputsFromState();
         renderScoreboard();
@@ -1497,12 +1799,14 @@
         const latestBreaker = String(latest.breaker ?? "1").trim();
         const latestTitleEnabled = String(latest.match_title_enabled ?? "0").trim();
         const latestMatchTitle = String(latest.match_title || getDefaultMatchTitle()).trim().slice(0, 22);
+        const latestAutoResetCancel = String(latest.auto_reset_cancel ?? "0").trim();
 
         const currentDisplay = buildDisplayString();
         const currentVisible = String(state.visible);
         const currentBreakerString = String(currentBreaker);
         const currentTitleEnabled = state.matchTitleEnabled ? "1" : "0";
         const currentMatchTitle = String(state.matchTitle || getDefaultMatchTitle()).trim().slice(0, 22);
+        const currentAutoResetCancel = autoResetCancelled ? "1" : "0";
 
         if (Date.now() >= ignoreRemoteUntil) {
           if (scoreboardScreen.classList.contains("hidden")) {
@@ -1515,7 +1819,8 @@
               latestVisible !== currentVisible ||
               latestBreaker !== currentBreakerString ||
               latestTitleEnabled !== currentTitleEnabled ||
-              latestMatchTitle !== currentMatchTitle
+              latestMatchTitle !== currentMatchTitle ||
+              latestAutoResetCancel !== currentAutoResetCancel
             ) {
               applyLatestDweetState(latest);
             }
@@ -1527,6 +1832,7 @@
         const refreshedBreaker = String(currentBreaker);
         const refreshedTitleEnabled = state.matchTitleEnabled ? "1" : "0";
         const refreshedMatchTitle = String(state.matchTitle || getDefaultMatchTitle()).trim().slice(0, 22);
+        const refreshedAutoResetCancel = autoResetCancelled ? "1" : "0";
 
         if (cameraOnlineState === false) {
           setLiveStatus("error", "Caméra hors ligne");
@@ -1537,7 +1843,8 @@
           latestVisible === refreshedVisible &&
           latestBreaker === refreshedBreaker &&
           latestTitleEnabled === refreshedTitleEnabled &&
-          latestMatchTitle === refreshedMatchTitle
+          latestMatchTitle === refreshedMatchTitle &&
+          latestAutoResetCancel === refreshedAutoResetCancel
         ) {
           setLiveStatus("ready", "Prêt");
         } else {
@@ -1580,11 +1887,14 @@
       const params = new URLSearchParams({
         player1: sendPlayer1,
         player2: sendPlayer2,
+        score1: String(sendScore1),
+        score2: String(sendScore2),
         display: displayValue,
         match_title_enabled: overrides.match_title_enabled ?? (state.matchTitleEnabled ? "1" : "0"),
         match_title: overrides.match_title ?? String(state.matchTitle || getDefaultMatchTitle()).trim().slice(0, 22),
         visible: overrides.visible ?? String(state.visible),
         breaker: overrides.breaker ?? String(currentBreaker),
+        auto_reset_cancel: overrides.auto_reset_cancel ?? (autoResetCancelled ? "1" : "0"),
         ts: String(Date.now())
       });
 
@@ -1629,11 +1939,18 @@
       currentBreaker = selectedBreaker === 2 ? 2 : 1;
       setupDirty = false;
 
+      autoResetCancelled = false;
+      winnerPopupShownForKey = "";
+      winnerModalDismissed = false;
+      stopWinnerCountdownTimer();
+      closeWinnerModal();
+
       renderScoreboard();
 
       try {
         await sendState(setupStatus, {
-          breaker: String(currentBreaker)
+          breaker: String(currentBreaker),
+          auto_reset_cancel: "0"
         });
         setupStatus.textContent = "Score démarré.";
         setupScreen.classList.add("hidden");
@@ -1704,16 +2021,24 @@
 
       const previous = { ...state };
       const previousBreaker = currentBreaker;
+      const previousAutoResetCancelled = autoResetCancelled;
+      const previousWinnerPopupShownForKey = winnerPopupShownForKey;
+      const previousWinnerModalDismissed = winnerModalDismissed;
 
       clearSetupValues();
 
       try {
-        await sendState(setupStatus);
+        await sendState(setupStatus, {
+          auto_reset_cancel: "0"
+        });
         setupStatus.textContent = "Valeurs effacées.";
       } catch (error) {
         console.error(error);
         Object.assign(state, previous);
         currentBreaker = previousBreaker;
+        autoResetCancelled = previousAutoResetCancelled;
+        winnerPopupShownForKey = previousWinnerPopupShownForKey;
+        winnerModalDismissed = previousWinnerModalDismissed;
         populateSetupInputsFromState();
         renderScoreboard();
         setupStatus.textContent = "Erreur de communication.";
@@ -1792,6 +2117,9 @@
 
       const previous = { ...state };
       const previousBreaker = currentBreaker;
+      const previousAutoResetCancelled = autoResetCancelled;
+      const previousWinnerPopupShownForKey = winnerPopupShownForKey;
+      const previousWinnerModalDismissed = winnerModalDismissed;
 
       state.player1 = sanitizeName(player1Input.value.trim());
       state.player2 = sanitizeName(player2Input.value.trim());
@@ -1803,13 +2131,20 @@
       currentBreaker = 1;
       setupDirty = false;
 
+      autoResetCancelled = false;
+      winnerPopupShownForKey = "";
+      winnerModalDismissed = false;
+      stopWinnerCountdownTimer();
+      closeWinnerModal();
+
       renderScoreboard();
 
       try {
         await sendState(scoreStatus, {
           score1: 0,
           score2: 0,
-          visible: "0"
+          visible: "0",
+          auto_reset_cancel: "0"
         });
 
         setupStatus.textContent = "";
@@ -1821,6 +2156,9 @@
         console.error(error);
         Object.assign(state, previous);
         currentBreaker = previousBreaker;
+        autoResetCancelled = previousAutoResetCancelled;
+        winnerPopupShownForKey = previousWinnerPopupShownForKey;
+        winnerModalDismissed = previousWinnerModalDismissed;
         renderScoreboard();
         scoreStatus.textContent = "Erreur de communication.";
       }
@@ -1865,6 +2203,28 @@
       if (e.target === breakerModal) closeBreakerModal();
     });
 
+    winnerOkBtn.addEventListener("click", () => {
+      winnerModalDismissed = true;
+      closeWinnerModal();
+    });
+
+    winnerCancelResetBtn.addEventListener("click", async () => {
+      autoResetCancelled = true;
+      winnerModalDismissed = true;
+      stopWinnerCountdownTimer();
+      closeWinnerModal();
+
+      try {
+        await sendState(scoreStatus, {
+          auto_reset_cancel: "1"
+        });
+        scoreStatus.textContent = "Remise à zéro automatique annulée.";
+      } catch (error) {
+        console.error(error);
+        scoreStatus.textContent = "Erreur de communication.";
+      }
+    });
+
     document.addEventListener("keydown", (e) => {
       if (e.key === "Escape" && !tvModal.classList.contains("hidden")) {
         closeTvModal();
@@ -1873,6 +2233,12 @@
 
       if (e.key === "Escape" && !breakerModal.classList.contains("hidden")) {
         closeBreakerModal();
+        return;
+      }
+
+      if (e.key === "Escape" && !winnerModal.classList.contains("hidden")) {
+        winnerModalDismissed = true;
+        closeWinnerModal();
       }
     });
 
