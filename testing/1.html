@@ -809,7 +809,7 @@
     }
 
     .winner-modal-card {
-      max-width: 520px;
+      max-width: 540px;
       overflow: hidden;
       position: relative;
     }
@@ -851,9 +851,64 @@
       text-shadow: 0 8px 24px rgba(0,0,0,0.24);
     }
 
-    .winner-scoreline {
-      color: #d8d8d8;
+    .winner-scoreboard-final {
+      width: 100%;
+      max-width: 360px;
+      display: grid;
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .winner-final-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02)),
+        linear-gradient(180deg, #1c1c1c, #141414);
+      border: 1px solid rgba(255,255,255,0.07);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.03);
+      text-align: left;
+    }
+
+    .winner-final-row.red-accent {
+      border-left: 4px solid var(--red-main);
+    }
+
+    .winner-final-row.blue-accent {
+      border-left: 4px solid var(--blue-main);
+    }
+
+    .winner-final-score {
+      font-size: 1.25rem;
+      font-weight: 900;
+      min-width: 30px;
+      text-align: center;
+    }
+
+    .winner-final-name {
       font-size: 0.98rem;
+      font-weight: 800;
+      line-height: 1.2;
+      word-break: break-word;
+    }
+
+    .winner-final-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+    }
+
+    .winner-final-row.red-accent .winner-final-dot {
+      background: var(--red-main);
+    }
+
+    .winner-final-row.blue-accent .winner-final-dot {
+      background: var(--blue-main);
     }
 
     .winner-countdown-box {
@@ -871,6 +926,7 @@
       display: grid;
       gap: 4px;
       justify-items: center;
+      margin-top: 6px;
     }
 
     .winner-countdown-label {
@@ -891,18 +947,13 @@
       color: #cfcfcf;
     }
 
-    .winner-note {
-      color: #bdbdbd;
-      font-size: 0.9rem;
-      line-height: 1.35;
-      max-width: 380px;
-    }
-
     .winner-actions {
       display: flex;
-      justify-content: flex-end;
+      justify-content: center;
+      align-items: center;
       gap: 10px;
       flex-wrap: wrap;
+      margin-top: 4px;
     }
 
     @media (orientation: portrait) {
@@ -1188,22 +1239,30 @@
         <div class="winner-trophy">🏆</div>
         <div class="winner-label">Vainqueur</div>
         <div id="winnerNameText" class="winner-name">JOUEUR</div>
-        <div id="winnerScoreLine" class="winner-scoreline">Score final : 0 - 0</div>
+
+        <div class="winner-scoreboard-final">
+          <div class="winner-final-row red-accent">
+            <div id="winnerFinalScore1" class="winner-final-score">0</div>
+            <div id="winnerFinalName1" class="winner-final-name">JOUEUR 1</div>
+            <div class="winner-final-dot" aria-hidden="true"></div>
+          </div>
+          <div class="winner-final-row blue-accent">
+            <div id="winnerFinalScore2" class="winner-final-score">0</div>
+            <div id="winnerFinalName2" class="winner-final-name">JOUEUR 2</div>
+            <div class="winner-final-dot" aria-hidden="true"></div>
+          </div>
+        </div>
 
         <div class="winner-countdown-box">
           <div class="winner-countdown-label">Remise à zéro automatique dans</div>
           <div id="winnerCountdownText" class="winner-countdown-number">10</div>
           <div class="winner-countdown-seconds">secondes</div>
         </div>
-
-        <div class="winner-note">
-          Le score sera effacé automatiquement, même si cette page est fermée.
-        </div>
       </div>
 
       <div class="winner-actions">
+        <button id="winnerCancelResetBtn" class="breaker-cancel-btn" type="button">Annuler</button>
         <button id="winnerOkBtn" class="mini-btn" type="button">OK</button>
-        <button id="winnerCancelResetBtn" class="breaker-cancel-btn" type="button">Annuler la remise à zéro</button>
       </div>
     </div>
   </div>
@@ -1291,7 +1350,10 @@
 
     const winnerModal = document.getElementById("winnerModal");
     const winnerNameText = document.getElementById("winnerNameText");
-    const winnerScoreLine = document.getElementById("winnerScoreLine");
+    const winnerFinalScore1 = document.getElementById("winnerFinalScore1");
+    const winnerFinalScore2 = document.getElementById("winnerFinalScore2");
+    const winnerFinalName1 = document.getElementById("winnerFinalName1");
+    const winnerFinalName2 = document.getElementById("winnerFinalName2");
     const winnerCountdownText = document.getElementById("winnerCountdownText");
     const winnerOkBtn = document.getElementById("winnerOkBtn");
     const winnerCancelResetBtn = document.getElementById("winnerCancelResetBtn");
@@ -1427,10 +1489,11 @@
         return {
           winner: 1,
           winnerName: state.player1 || "JOUEUR 1",
-          loserName: state.player2 || "JOUEUR 2",
           target,
           score1: s1,
           score2: s2,
+          player1: state.player1 || "JOUEUR 1",
+          player2: state.player2 || "JOUEUR 2",
           key: `1|${target}|${s1}|${s2}|${state.player1}|${state.player2}|${state.matchTitle}`
         };
       }
@@ -1439,10 +1502,11 @@
         return {
           winner: 2,
           winnerName: state.player2 || "JOUEUR 2",
-          loserName: state.player1 || "JOUEUR 1",
           target,
           score1: s1,
           score2: s2,
+          player1: state.player1 || "JOUEUR 1",
+          player2: state.player2 || "JOUEUR 2",
           key: `2|${target}|${s1}|${s2}|${state.player1}|${state.player2}|${state.matchTitle}`
         };
       }
@@ -1457,7 +1521,10 @@
 
     function openWinnerModal(winnerData) {
       winnerNameText.textContent = winnerData.winnerName;
-      winnerScoreLine.textContent = `Score final : ${winnerData.score1} - ${winnerData.score2}`;
+      winnerFinalScore1.textContent = String(winnerData.score1);
+      winnerFinalScore2.textContent = String(winnerData.score2);
+      winnerFinalName1.textContent = winnerData.player1;
+      winnerFinalName2.textContent = winnerData.player2;
       winnerCountdownText.textContent = "10";
       winnerModal.classList.remove("hidden");
       winnerModal.setAttribute("aria-hidden", "false");
@@ -1467,6 +1534,41 @@
       if (winnerCountdownTimer) {
         clearInterval(winnerCountdownTimer);
         winnerCountdownTimer = null;
+      }
+    }
+
+    async function triggerImmediateReturnToStart(statusElement) {
+      state.player1 = sanitizeName(state.player1);
+      state.player2 = sanitizeName(state.player2);
+      state.score1 = 0;
+      state.score2 = 0;
+      state.visible = 0;
+      currentBreaker = 1;
+      autoResetCancelled = false;
+      winnerPopupShownForKey = "";
+      winnerModalDismissed = false;
+      stopWinnerCountdownTimer();
+      closeWinnerModal();
+
+      renderScoreboard();
+      populateSetupInputsFromState();
+
+      setupScreen.classList.remove("hidden");
+      scoreboardScreen.classList.add("hidden");
+
+      try {
+        await sendState(statusElement, {
+          score1: 0,
+          score2: 0,
+          visible: "0",
+          breaker: "1",
+          auto_reset_cancel: "0",
+          display: ""
+        });
+        statusElement.textContent = "";
+      } catch (error) {
+        console.error(error);
+        statusElement.textContent = "Erreur de communication.";
       }
     }
 
@@ -1483,7 +1585,7 @@
 
         if (remainingMs <= 0) {
           stopWinnerCountdownTimer();
-          closeWinnerModal();
+          triggerImmediateReturnToStart(scoreStatus);
         }
       };
 
@@ -2203,9 +2305,9 @@
       if (e.target === breakerModal) closeBreakerModal();
     });
 
-    winnerOkBtn.addEventListener("click", () => {
+    winnerOkBtn.addEventListener("click", async () => {
       winnerModalDismissed = true;
-      closeWinnerModal();
+      await triggerImmediateReturnToStart(scoreStatus);
     });
 
     winnerCancelResetBtn.addEventListener("click", async () => {
