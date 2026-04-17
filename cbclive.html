@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Cluses Billard Club – Choix de table</title>
 
   <style>
@@ -10,104 +10,124 @@
       --bg: #050505;
       --text: #f5f5f5;
       --muted: #c8c8c8;
-      --red-main: #d71920;
-      --blue-main: #2563eb;
     }
 
     * { box-sizing: border-box; }
 
-    body {
+    html, body {
       margin: 0;
-      min-height: 100vh;
+      min-height: 100%;
       background: var(--bg);
       color: var(--text);
       font-family: Arial, Helvetica, sans-serif;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
     }
 
-    .container {
+    body {
+      padding: 6px 10px 10px;
+    }
+
+    .app {
       width: 100%;
-      max-width: 420px;
-      text-align: center;
+      max-width: 1300px;
+      margin: 0 auto;
     }
 
-    .logo {
-      max-width: 120px;
-      width: 40%;
-      margin: 0 auto 20px;
-      display: block;
-      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4));
+    .top-logo-wrap {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 4px 0 10px;
+    }
+
+    .top-logo {
+      max-width: 110px;
+      width: 20vw;
+      height: auto;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 10px rgba(0,0,0,0.35));
     }
 
     h1 {
       margin: 0 0 6px;
-      font-size: 1.6rem;
+      font-size: clamp(1.2rem, 2vw, 1.9rem);
+      text-align: center;
     }
 
     .subtitle {
+      text-align: center;
       color: var(--muted);
-      margin-bottom: 24px;
+      margin-bottom: 14px;
+      font-size: clamp(0.85rem, 1.3vw, 1rem);
     }
 
-    .buttons {
+    .setup {
       display: grid;
-      gap: 16px;
+      gap: 14px;
+      max-width: 540px;
+      margin: 0 auto;
+      background: #111;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 18px;
     }
 
-    .btn {
-      padding: 18px;
-      font-size: 1.3rem;
-      font-weight: bold;
-      border-radius: 18px;
+    .table-buttons {
+      display: grid;
+      gap: 12px;
+    }
+
+    button {
       border: none;
-      color: white;
+      border-radius: 16px;
+      padding: 16px;
+      font-size: 1.2rem;
+      font-weight: bold;
       cursor: pointer;
+      background: #2b2b2b;
+      color: white;
       transition: 0.15s ease;
     }
 
-    .btn:hover {
-      transform: translateY(-2px);
+    button:hover {
+      transform: translateY(-1px);
+      background: #383838;
     }
 
-    .btn:active {
+    button:active {
       transform: translateY(0);
     }
 
-    .btn.table1 {
-      background: linear-gradient(180deg, var(--red-main), #a40f15);
-    }
-
-    .btn.table3 {
-      background: linear-gradient(180deg, var(--blue-main), #1d4ed8);
-    }
-
-    .footer {
-      margin-top: 20px;
-      font-size: 0.85rem;
+    .status {
+      text-align: center;
       color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 6px;
     }
   </style>
 </head>
 
 <body>
+  <div class="app">
 
-  <div class="container">
-    <img src="https://raw.githubusercontent.com/keep-score/keepscore/refs/heads/main/cluses-billard-club.png" class="logo" />
+    <div class="top-logo-wrap">
+      <img src="https://raw.githubusercontent.com/keep-score/keepscore/refs/heads/main/cluses-billard-club.png" class="top-logo">
+    </div>
 
     <h1>Cluses Billard Club</h1>
     <div class="subtitle">Choisissez une table</div>
 
-    <div class="buttons">
-      <button class="btn table1" onclick="goTable1()">Table 1</button>
-      <button class="btn table3" onclick="goTable3()">Table 3</button>
+    <div class="setup">
+      <div class="table-buttons">
+        <button onclick="goTable1()">Table 1</button>
+        <button onclick="goTable3()">Table 3</button>
+      </div>
     </div>
 
-    <div class="footer">
+    <div class="status">
       Gestion du score en direct
     </div>
+
   </div>
 
   <script>
