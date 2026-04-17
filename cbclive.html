@@ -44,6 +44,7 @@
       max-width: 110px;
       width: 20vw;
       height: auto;
+      display: block;
       object-fit: contain;
       filter: drop-shadow(0 4px 10px rgba(0,0,0,0.35));
     }
@@ -87,6 +88,8 @@
       background: #2b2b2b;
       color: white;
       transition: 0.15s ease;
+      appearance: none;
+      -webkit-appearance: none;
     }
 
     button:hover {
@@ -104,14 +107,32 @@
       font-size: 0.9rem;
       margin-top: 6px;
     }
+
+    @media (orientation: landscape) {
+      body {
+        padding: 4px 8px 8px;
+      }
+
+      .top-logo-wrap {
+        padding: 2px 0 8px;
+      }
+
+      .top-logo {
+        max-width: 90px;
+        width: 10vw;
+      }
+
+      .subtitle {
+        margin-bottom: 10px;
+      }
+    }
   </style>
 </head>
 
 <body>
   <div class="app">
-
     <div class="top-logo-wrap">
-      <img src="https://raw.githubusercontent.com/keep-score/keepscore/refs/heads/main/cluses-billard-club.png" class="top-logo">
+      <img src="https://raw.githubusercontent.com/keep-score/keepscore/refs/heads/main/cluses-billard-club.png" alt="Cluses Billard Club" class="top-logo">
     </div>
 
     <h1>Cluses Billard Club</h1>
@@ -124,10 +145,7 @@
       </div>
     </div>
 
-    <div class="status">
-      Gestion du score en direct
-    </div>
-
+    <div class="status">Gestion du score en direct</div>
   </div>
 
   <script>
@@ -139,6 +157,5 @@
       window.location.href = "https://keepscore.app/249163";
     }
   </script>
-
 </body>
 </html>
