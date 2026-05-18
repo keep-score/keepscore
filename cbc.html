@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Cluses Billard Club – Choix de table</title>
+  <title>Cluses Billard Club</title>
 
   <style>
     :root {
@@ -73,7 +73,7 @@
       padding: 18px;
     }
 
-    .table-buttons {
+    .buttons {
       display: grid;
       gap: 12px;
     }
@@ -101,11 +101,22 @@
       transform: translateY(0);
     }
 
+    .back-button {
+      margin-top: 4px;
+      background: #1b1b1b;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+
     .status {
       text-align: center;
       color: var(--muted);
       font-size: 0.9rem;
       margin-top: 6px;
+    }
+
+    .hidden {
+      display: none;
     }
 
     @media (orientation: landscape) {
@@ -127,11 +138,12 @@
       }
     }
   </style>
-<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
-<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-<link rel="shortcut icon" href="/favicon.ico" />
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-<link rel="manifest" href="/site.webmanifest" />
+
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
 </head>
 
 <body>
@@ -141,19 +153,43 @@
     </div>
 
     <h1>Cluses Billard Club</h1>
-    <div class="subtitle">Choisissez une table</div>
+    <div class="subtitle" id="subtitle">Choisissez une option</div>
 
     <div class="setup">
-      <div class="table-buttons">
+      <div id="homeScreen" class="buttons">
+        <button onclick="goLive()">Regarder le live</button>
+        <button onclick="showTables()">Gérer le score vidéo</button>
+      </div>
+
+      <div id="tableScreen" class="buttons hidden">
         <button onclick="goTable1()">Table 1</button>
         <button onclick="goTable3()">Table 3</button>
+        <button class="back-button" onclick="showHome()">Retour</button>
       </div>
     </div>
 
-    <div class="status">Gestion du score en direct</div>
+    <div class="status" id="status">Live YouTube et gestion du score en direct</div>
   </div>
 
   <script>
+    function goLive() {
+      window.location.href = "https://www.youtube.com/@ClusesBillardClub";
+    }
+
+    function showTables() {
+      document.getElementById("homeScreen").classList.add("hidden");
+      document.getElementById("tableScreen").classList.remove("hidden");
+      document.getElementById("subtitle").textContent = "Choisissez une table";
+      document.getElementById("status").textContent = "Gestion du score vidéo";
+    }
+
+    function showHome() {
+      document.getElementById("tableScreen").classList.add("hidden");
+      document.getElementById("homeScreen").classList.remove("hidden");
+      document.getElementById("subtitle").textContent = "Choisissez une option";
+      document.getElementById("status").textContent = "Live YouTube et gestion du score en direct";
+    }
+
     function goTable1() {
       window.location.href = "https://keepscore.app/184922";
     }
