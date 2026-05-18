@@ -102,17 +102,21 @@
     }
 
     .back-button {
+      justify-self: center;
       margin-top: 4px;
-      background: #1b1b1b;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: transparent;
       color: var(--muted);
-      font-size: 1rem;
+      font-size: 0.95rem;
+      font-weight: normal;
+      border: 1px solid rgba(255,255,255,0.14);
     }
 
-    .status {
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.9rem;
-      margin-top: 6px;
+    .back-button:hover {
+      background: rgba(255,255,255,0.08);
+      color: white;
+      transform: translateY(-1px);
     }
 
     .hidden {
@@ -164,11 +168,9 @@
       <div id="tableScreen" class="buttons hidden">
         <button onclick="goTable1()">Table 1</button>
         <button onclick="goTable3()">Table 3</button>
-        <button class="back-button" onclick="showHome()">Retour</button>
+        <button class="back-button" onclick="showHome()">← Retour</button>
       </div>
     </div>
-
-    <div class="status" id="status">Live YouTube et gestion du score en direct</div>
   </div>
 
   <script>
@@ -180,14 +182,12 @@
       document.getElementById("homeScreen").classList.add("hidden");
       document.getElementById("tableScreen").classList.remove("hidden");
       document.getElementById("subtitle").textContent = "Choisissez une table";
-      document.getElementById("status").textContent = "Gestion du score vidéo";
     }
 
     function showHome() {
       document.getElementById("tableScreen").classList.add("hidden");
       document.getElementById("homeScreen").classList.remove("hidden");
       document.getElementById("subtitle").textContent = "Choisissez une option";
-      document.getElementById("status").textContent = "Live YouTube et gestion du score en direct";
     }
 
     function goTable1() {
