@@ -101,6 +101,23 @@
       transform: translateY(0);
     }
 
+    .url-box {
+      display: block;
+      text-align: center;
+      color: white;
+      background: #1b1b1b;
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 0.95rem;
+      word-break: break-word;
+      text-decoration: none;
+    }
+
+    .url-box:hover {
+      background: #252525;
+    }
+
     .back-button {
       justify-self: center;
       margin-top: 4px;
@@ -161,8 +178,18 @@
 
     <div class="setup">
       <div id="homeScreen" class="buttons">
-        <button onclick="goLive()">Regarder le live</button>
+        <button onclick="showLive()">Regarder le live</button>
         <button onclick="showTables()">Gérer le score vidéo</button>
+      </div>
+
+      <div id="liveScreen" class="buttons hidden">
+        <a class="url-box" id="youtubeLink" href="https://www.youtube.com/@ClusesBillardClub" target="_blank" rel="noopener">
+          https://www.youtube.com/@ClusesBillardClub
+        </a>
+
+        <button onclick="goLive()">Regarder sur YouTube</button>
+        <button onclick="shareLive()">Partager le lien</button>
+        <button class="back-button" onclick="showHome()">← Retour</button>
       </div>
 
       <div id="tableScreen" class="buttons hidden">
@@ -174,20 +201,55 @@
   </div>
 
   <script>
-    function goLive() {
-      window.location.href = "https://www.youtube.com/@ClusesBillardClub";
+    const youtubeUrl = "https://www.youtube.com/@ClusesBillardClub";
+
+    function hideAllScreens() {
+      document.getElementById("homeScreen").classList.add("hidden");
+      document.getElementById("liveScreen").classList.add("hidden");
+      document.getElementById("tableScreen").classList.add("hidden");
+    }
+
+    function showHome() {
+      hideAllScreens();
+      document.getElementById("homeScreen").classList.remove("hidden");
+      document.getElementById("subtitle").textContent = "Choisissez une option";
+    }
+
+    function showLive() {
+      hideAllScreens();
+      document.getElementById("liveScreen").classList.remove("hidden");
+      document.getElementById("subtitle").textContent = "Regarder le live";
     }
 
     function showTables() {
-      document.getElementById("homeScreen").classList.add("hidden");
+      hideAllScreens();
       document.getElementById("tableScreen").classList.remove("hidden");
       document.getElementById("subtitle").textContent = "Choisissez une table";
     }
 
-    function showHome() {
-      document.getElementById("tableScreen").classList.add("hidden");
-      document.getElementById("homeScreen").classList.remove("hidden");
-      document.getElementById("subtitle").textContent = "Choisissez une option";
+    function goLive() {
+      window.location.href = youtubeUrl;
+    }
+
+    async function shareLive() {
+      if (navigator.share) {
+        try {
+          await navigator.share({
+            title: "Cluses Billard Club",
+            text: "Regarder le live du Cluses Billard Club :",
+            url: youtubeUrl
+          });
+        } catch (error) {
+          // User cancelled sharing - no problem.
+        }
+      } else {
+        try {
+          await navigator.clipboard.writeText(youtubeUrl);
+          alert("Lien copié !");
+        } catch (error) {
+          alert("Impossible de partager automatiquement. Vous pouvez copier le lien affiché.");
+        }
+      }
     }
 
     function goTable1() {
