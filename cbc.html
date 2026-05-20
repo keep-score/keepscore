@@ -187,7 +187,7 @@
     <div class="setup">
       <div id="homeScreen" class="buttons">
         <button onclick="showLive()">Regarder le live</button>
-        <button onclick="showTables()">Gérer le score vidéo</button>
+        <button onclick="showCueScoreQuestion()">Gérer le score vidéo</button>
       </div>
 
       <div id="liveScreen" class="buttons hidden">
@@ -197,6 +197,12 @@
 
         <button onclick="goLive()">Regarder sur YouTube</button>
         <button onclick="shareLive()">Partager le lien</button>
+        <button class="back-button" onclick="showHome()">← Retour</button>
+      </div>
+
+      <div id="cueScoreScreen" class="buttons hidden">
+        <button onclick="cueScoreYes()">Oui</button>
+        <button onclick="cueScoreNo()">Non</button>
         <button class="back-button" onclick="showHome()">← Retour</button>
       </div>
 
@@ -214,6 +220,7 @@
     function hideAllScreens() {
       document.getElementById("homeScreen").classList.add("hidden");
       document.getElementById("liveScreen").classList.add("hidden");
+      document.getElementById("cueScoreScreen").classList.add("hidden");
       document.getElementById("tableScreen").classList.add("hidden");
     }
 
@@ -227,6 +234,21 @@
       hideAllScreens();
       document.getElementById("liveScreen").classList.remove("hidden");
       document.getElementById("subtitle").textContent = "Regarder le live";
+    }
+
+    function showCueScoreQuestion() {
+      hideAllScreens();
+      document.getElementById("cueScoreScreen").classList.remove("hidden");
+      document.getElementById("subtitle").textContent = "Le match est-il géré par CueScore ?";
+    }
+
+    function cueScoreYes() {
+      alert("Le score devrait se mettre à jour automatiquement. Aucune action manuelle n’est nécessaire.");
+      showHome();
+    }
+
+    function cueScoreNo() {
+      showTables();
     }
 
     function showTables() {
