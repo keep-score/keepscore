@@ -105,30 +105,39 @@
     position: absolute;
     inset: 0;
     z-index: 3;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 0.18em;
     text-align: center;
     line-height: 1;
-    transform: translateY(1%);
+    transform: none;
   }
 
   .number {
-    display: block;
-    min-width: 2ch;
+    position: absolute;
+    left: 50%;
+    top: 42.5%;
+    width: 68%;
+    height: 34%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     text-align: center;
+    font-family: Georgia, "Times New Roman", serif;
     font-weight: 700;
     font-size: clamp(17px, 2.00vw, 42px);
     color: var(--text);
     letter-spacing: -0.02em;
-    line-height: 0.88;
+    line-height: 1;
     font-variant-numeric: tabular-nums lining-nums;
     font-feature-settings: "tnum" 1, "lnum" 1;
+    white-space: nowrap;
   }
 
   .sec {
+    position: absolute;
+    left: 50%;
+    top: 63.5%;
+    width: 68%;
+    transform: translateX(-50%);
     display: block;
     text-align: center;
     font-size: clamp(6px, 0.48vw, 10px);
@@ -136,6 +145,7 @@
     letter-spacing: 0.12em;
     line-height: 1;
     font-weight: 700;
+    white-space: nowrap;
   }
 
   .timer.live {
@@ -152,18 +162,27 @@
   }
 
   .timer.live .timer-content {
+    position: absolute;
     inset: 0;
-    justify-content: center;
-    transform: translateY(0%);
+    transform: none;
   }
 
   .timer.live .number {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 82%;
+    height: auto;
+    transform: translate(-50%, -50%);
+    display: block;
     font-family: "Arial Black", "Segoe UI", "Trebuchet MS", Arial, sans-serif;
     font-size: clamp(13px, 1.42vw, 27px);
     font-weight: 900;
+    line-height: 1;
     letter-spacing: 0.14em;
     color: #ffffff;
     text-shadow: 0 0.07em 0.14em rgba(95, 0, 0, 0.45);
+    white-space: nowrap;
   }
 
   .timer.live .sec {
